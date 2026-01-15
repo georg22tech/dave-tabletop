@@ -9,7 +9,6 @@
         
         h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; text-align: center; }
         
-        /* WIZARD STEPS */
         .step { display: none; animation: fadeIn 0.3s; }
         .step.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -22,7 +21,7 @@
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
         .stat-box label { margin: 0 0 5px 0; color: #aaa; }
-        .stat-box select { text-align: center; font-weight: bold; font-size: 1.1em; background: #1a1a1a; padding: 5px; cursor:pointer; }
+        .stat-box select { text-align: center; font-weight: bold; font-size: 1.1em; background: #1a1a1a; padding: 5px; cursor:pointer; color: #fff; }
         .bonus-badge { font-size: 0.8em; color: #4f4; display: block; height: 1.2em; margin-top: 5px; }
         
         /* RP GRID */
@@ -31,6 +30,11 @@
         /* SKILLS */
         .auto-skill { background: #2a7a3a; color: white; padding: 5px 10px; border-radius: 4px; margin-bottom: 5px; display: inline-block; font-size: 0.9em; }
         .skill-select-group { margin-bottom: 10px; }
+
+        /* EQUIPMENT TOGGLE */
+        .equip-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .equip-opt { flex: 1; padding: 10px; border: 1px solid #444; text-align: center; cursor: pointer; background: #222; border-radius: 4px; }
+        .equip-opt.selected { background: #e51e25; color: white; border-color: #e51e25; }
 
         /* FOOTER NAV */
         .nav-btns { margin-top: auto; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
@@ -67,7 +71,7 @@
     <div id="step2" class="step">
         <div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9em;">
             Assign Standard Array: 15, 14, 13, 12, 10, 8.<br>
-            (Numbers are removed from the list as you pick them)
+            <span style="color:#e51e25">You must select a value for every stat.</span>
         </div>
         
         <div class="stat-grid">
@@ -106,7 +110,25 @@
             <option value="Chaotic Evil">Chaotic Evil</option>
         </select>
 
-        <label>Appearance Details</label>
+        <label>Starting Equipment</label>
+        <div class="equip-toggle">
+            <div class="equip-opt selected" id="optLoadout" onclick="setEquipMode('loadout')">Class Loadout</div>
+            <div class="equip-opt" id="optGold" onclick="setEquipMode('gold')">Starting Gold</div>
+        </div>
+
+        <div id="loadoutSection">
+            <div class="summary-box" id="classGearList"></div>
+            <label>Add Tool / Kit</label>
+            <select id="toolSelect"></select>
+        </div>
+
+        <div id="goldSection" style="display:none;">
+            <label>Starting Gold Pieces (GP)</label>
+            <input type="number" id="startGold" value="100">
+            <div style="font-size:0.8em; color:#888; margin-top:5px;">Your inventory will start empty.</div>
+        </div>
+
+        <label>Appearance & Roleplay</label>
         <div class="rp-grid">
             <input type="text" id="rpAge" placeholder="Age">
             <input type="text" id="rpHeight" placeholder="Height">
@@ -117,14 +139,7 @@
             <input type="text" id="rpHair" placeholder="Hair">
             <input type="text" id="rpSkin" placeholder="Skin">
         </div>
-        
-        <label>Backstory / Notes</label>
-        <textarea id="charBack" rows="4" placeholder="Character history, personality traits, bonds, flaws..."></textarea>
-        
-        <div class="summary-box" style="margin-top:20px;">
-            <div><strong>Starting Gear:</strong> <span id="gearSummary"></span></div>
-            <div style="margin-top:5px;"><strong>Spells:</strong> <span id="spellSummary"></span></div>
-        </div>
+        <textarea id="charBack" rows="3" placeholder="Backstory / Notes" style="margin-top:10px;"></textarea>
     </div>
 
     <div class="nav-btns">
@@ -143,6 +158,8 @@
     const totalSteps = 4;
     const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
     const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+    const TOOLS_LIST = ["None", "Thieves' Tools", "Smith's Tools", "Brewer's Supplies", "Mason's Tools", "Herbalism Kit", "Navigator's Tools", "Disguise Kit", "Poisoner's Kit", "Musical Instrument"];
+    let equipMode = 'loadout';
 
     // --- POPULATION ---
     const raceSel = document.getElementById('charRace');
@@ -155,51 +172,49 @@
         let opt = document.createElement('option'); opt.value = c; opt.innerText = c; classSel.appendChild(opt);
     });
 
-    // Initialize Standard Array UI (Auto-assign 15-8 down the list)
-    STAT_KEYS.forEach((s, idx) => {
+    const toolSel = document.getElementById('toolSelect');
+    TOOLS_LIST.forEach(t => {
+        let opt = document.createElement('option'); opt.value = t; opt.innerText = t; toolSel.appendChild(opt);
+    });
+
+    // Initialize Stats (Start Empty)
+    STAT_KEYS.forEach(s => {
         let sel = document.getElementById(`base_${s}`);
+        let opt = document.createElement('option'); opt.value = ""; opt.innerText = "--"; opt.selected = true;
+        sel.appendChild(opt);
         STANDARD_ARRAY.forEach(num => {
-            let opt = document.createElement('option'); opt.value = num; opt.innerText = num;
-            if(idx < STANDARD_ARRAY.length && num === STANDARD_ARRAY[idx]) opt.selected = true;
-            sel.appendChild(opt);
+            let nOpt = document.createElement('option'); nOpt.value = num; nOpt.innerText = num;
+            sel.appendChild(nOpt);
         });
     });
 
     // --- LOGIC ---
     function updateStatOptions() {
-        // 1. Get currently selected values
-        let selectedValues = [];
-        STAT_KEYS.forEach(s => {
-            let val = parseInt(document.getElementById(`base_${s}`).value);
-            selectedValues.push(val);
-        });
-
-        // 2. Rebuild options for all dropdowns
+        // 1. Rebuild options for all dropdowns based on what is selected elsewhere
         STAT_KEYS.forEach(s => {
             let sel = document.getElementById(`base_${s}`);
             let currentVal = parseInt(sel.value);
             
-            // Save selection
+            // Clear current options
             sel.innerHTML = "";
             
+            // Always add Default (Empty)
+            let def = document.createElement('option'); def.value = ""; def.innerText = "--"; 
+            if(isNaN(currentVal)) def.selected = true;
+            sel.appendChild(def);
+
             STANDARD_ARRAY.forEach(num => {
-                // Show option if it's NOT taken by another box, OR if it's the current box's value
-                // Logic: Count how many times 'num' appears in selectedValues. 
-                // Since Standard Array numbers are unique, max occurrences is 1.
-                // Actually, simpler logic: Is this number available?
-                
-                // We need to know if *other* boxes are holding this number.
-                let takenByOthers = false;
+                // Is this number taken by another box?
+                let taken = false;
                 STAT_KEYS.forEach(otherS => {
                     if(s !== otherS) {
-                        if(parseInt(document.getElementById(`base_${otherS}`).value) === num) takenByOthers = true;
+                        if(parseInt(document.getElementById(`base_${otherS}`).value) === num) taken = true;
                     }
                 });
 
-                if (!takenByOthers) {
+                if (!taken) {
                     let opt = document.createElement('option');
-                    opt.value = num;
-                    opt.innerText = num;
+                    opt.value = num; opt.innerText = num;
                     if(num === currentVal) opt.selected = true;
                     sel.appendChild(opt);
                 }
@@ -219,6 +234,11 @@
     function updateClassInfo() {
         const c = CLASSES[classSel.value];
         document.getElementById('classSummary').innerText = `Hit Die: d${c.hit_die} | Saves: ${c.saves.join(', ')}`;
+        
+        // Update Loadout Text
+        let gear = [...(c.items || c.starting_gear || []), "Rations", "Waterskin"];
+        document.getElementById('classGearList').innerText = gear.join(", ");
+        
         calcStats();
         renderSkillSelectors();
     }
@@ -226,18 +246,17 @@
     function calcStats() {
         const rData = RACES[raceSel.value];
         const cData = CLASSES[classSel.value];
-        
         let conTotal = 10;
 
         STAT_KEYS.forEach(s => {
-            let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
+            let val = document.getElementById(`base_${s}`).value;
+            let base = (val === "") ? 0 : parseInt(val);
             let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             
-            // UI Update
             let badge = document.getElementById(`bon_${s}`);
             badge.innerText = bonus > 0 ? `+${bonus} Race` : "";
             
-            if(s === 'CON') conTotal = base + bonus;
+            if(s === 'CON') conTotal = (base === 0) ? 10 : base + bonus;
         });
 
         // HP Calc
@@ -264,7 +283,6 @@
         if(classSel.value === "Bard" || classSel.value === "Ranger") count = 3;
         
         document.getElementById('skillCount').innerText = count;
-
         const options = cData.skill_options || Object.keys(SKILLS_LIST); 
 
         for(let i=0; i<count; i++) {
@@ -273,25 +291,39 @@
             sel.style.marginBottom = "10px";
             options.forEach(sk => {
                 if(!rSkills.includes(sk)) {
-                    let opt = document.createElement('option');
-                    opt.value = sk; opt.innerText = sk;
-                    sel.appendChild(opt);
+                    let opt = document.createElement('option'); opt.value = sk; opt.innerText = sk; sel.appendChild(opt);
                 }
             });
             cArea.appendChild(sel);
         }
-        
-        // Summary for Step 4
-        let gear = [...(cData.items || cData.starting_gear || []), "Rations (1 Day)", "Torch", "Waterskin"];
-        document.getElementById('gearSummary').innerText = gear.join(", ");
-        
-        let spells = [...(rData.auto_spells || []), ...(cData.auto_spells || [])];
-        document.getElementById('spellSummary').innerText = spells.length > 0 ? spells.join(", ") : "None";
+    }
+
+    function setEquipMode(mode) {
+        equipMode = mode;
+        if(mode === 'loadout') {
+            document.getElementById('optLoadout').className = 'equip-opt selected';
+            document.getElementById('optGold').className = 'equip-opt';
+            document.getElementById('loadoutSection').style.display = 'block';
+            document.getElementById('goldSection').style.display = 'none';
+        } else {
+            document.getElementById('optLoadout').className = 'equip-opt';
+            document.getElementById('optGold').className = 'equip-opt selected';
+            document.getElementById('loadoutSection').style.display = 'none';
+            document.getElementById('goldSection').style.display = 'block';
+        }
     }
 
     // --- NAVIGATION & SAVE ---
     function changeStep(dir) {
+        // Validation Step 1
         if(currentStep === 1 && dir === 1 && !document.getElementById('charName').value) return alert("Please enter a name.");
+        
+        // Validation Step 2 (Stats)
+        if(currentStep === 2 && dir === 1) {
+            let allFilled = true;
+            STAT_KEYS.forEach(s => { if(document.getElementById(`base_${s}`).value === "") allFilled = false; });
+            if(!allFilled) return alert("Please select a value for every Ability Score.");
+        }
 
         document.getElementById(`step${currentStep}`).classList.remove('active');
         currentStep += dir;
@@ -315,7 +347,7 @@
         
         let stats = {};
         STAT_KEYS.forEach(s => {
-            let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
+            let base = parseInt(document.getElementById(`base_${s}`).value);
             let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             stats[s] = base + bonus;
         });
@@ -328,7 +360,19 @@
             if(!finalSkills.includes(sel.value)) finalSkills.push(sel.value);
         });
 
-        let items = [...(cData.items || cData.starting_gear || []), "Rations", "Torch", "Waterskin"];
+        // Inventory Logic
+        let items = [];
+        let coins = {cp:0, sp:0, ep:0, gp:0, pp:0};
+        
+        if(equipMode === 'loadout') {
+            items = [...(cData.items || cData.starting_gear || []), "Rations", "Waterskin"];
+            let tool = document.getElementById('toolSelect').value;
+            if(tool !== "None") items.push(tool);
+            coins.gp = 10; // Standard starter cash
+        } else {
+            coins.gp = parseInt(document.getElementById('startGold').value) || 0;
+        }
+
         let autoSpells = [...(rData.auto_spells || []), ...(cData.auto_spells || [])];
         autoSpells.forEach(s => items.push(s)); 
 
@@ -339,7 +383,7 @@
             class: classSel.value,
             alignment: document.getElementById('charAlign').value,
             backstory: document.getElementById('charBack').value,
-            // New Roleplay Fields
+            // Roleplay Fields
             age: document.getElementById('rpAge').value,
             height: document.getElementById('rpHeight').value,
             weight: document.getElementById('rpWeight').value,
@@ -352,6 +396,7 @@
             hp_max: hp,
             skills: finalSkills,
             inventory: items,
+            coins: coins,
             slots_used: {},
             charges: {}
         }).then(() => {
@@ -366,7 +411,6 @@
     // Run once on load to filter drop downs immediately
     updateRaceInfo();
     updateClassInfo();
-    updateStatOptions();
 </script>
 </body>
 </html>
