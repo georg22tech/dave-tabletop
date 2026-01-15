@@ -186,7 +186,6 @@
     // --- LOAD DATA IF EDITING ---
     if(EDIT_ID) {
         document.getElementById('headerTitle').innerText = "Edit Character";
-        // Hide Equipment Selector when editing (preserve existing)
         document.getElementById('equipSectionWrapper').style.display = 'none';
         document.getElementById('editModeNotice').style.display = 'block';
 
@@ -247,7 +246,8 @@
         document.getElementById('classGearList').innerText = gear.join(", ");
         
         calcStats();
-        renderSkills();
+        // THIS IS THE FIX:
+        renderSkillSelectors(); 
     }
 
     function calcStats() {
@@ -265,29 +265,30 @@
     }
 
     function renderSkillSelectors() {
-        const c = CLASSES[classSel.value];
-        const r = RACES[raceSel.value];
+        const cData = CLASSES[classSel.value];
+        const rData = RACES[raceSel.value];
         
         // Race Skills
         const rArea = document.getElementById('racialSkillsArea');
         rArea.innerHTML = "";
-        (r.skills || []).forEach(s => rArea.innerHTML += `<div class="auto-skill">${s}</div>`);
-        if(!(r.skills || []).length) rArea.innerHTML = "<span style='color:#555;'>None</span>";
+        (rData.skills || []).forEach(s => rArea.innerHTML += `<div class="auto-skill">${s}</div>`);
+        if(!(rData.skills || []).length) rArea.innerHTML = "<span style='color:#555;'>None</span>";
 
         // Class Skills
         const cArea = document.getElementById('skillSelectArea');
         cArea.innerHTML = "";
-        let count = c.num_skills || 2;
+        let count = cData.num_skills || 2;
         if(classSel.value==="Rogue") count=4; if(classSel.value==="Bard"||classSel.value==="Ranger") count=3;
         document.getElementById('skillCount').innerText = count;
         
-        let opts = c.skill_options || Object.keys(SKILLS_LIST);
+        // Using Game Rules for options
+        let opts = cData.skill_options || Object.keys(SKILLS_LIST);
         for(let i=0; i<count; i++) {
             let sel = document.createElement('select');
             sel.className = "skill-select";
             sel.style.marginBottom = "10px";
             opts.forEach(sk => {
-                if(!(r.skills||[]).includes(sk)) sel.add(new Option(sk, sk));
+                if(!(rData.skills||[]).includes(sk)) sel.add(new Option(sk, sk));
             });
             cArea.appendChild(sel);
         }
@@ -394,7 +395,7 @@
             let spells = [...(rData.auto_spells||[]), ...(cData.auto_spells||[])];
             spells.forEach(s => items.push(s));
             
-            data.inventory = items.map(i => ({name: i, equip: false})); // Correct format
+            data.inventory = items.map(i => ({name: i, equip: false}));
             data.coins = coins;
         }
 
