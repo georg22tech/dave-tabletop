@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .builder-container { max-width: 600px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
+        .builder-container { max-width: 650px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
         
         h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; text-align: center; }
         
@@ -19,11 +19,14 @@
         input:focus, select:focus { border-color: #e51e25; outline: none; }
         
         /* STAT GRID */
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
         .stat-box label { margin: 0 0 5px 0; color: #aaa; }
-        .stat-box input { text-align: center; font-weight: bold; font-size: 1.2em; border: none; background: transparent; padding: 5px; }
-        .bonus-badge { font-size: 0.8em; color: #4f4; display: block; height: 1.2em; }
+        .stat-box select { text-align: center; font-weight: bold; font-size: 1.1em; background: #1a1a1a; padding: 5px; cursor:pointer; }
+        .bonus-badge { font-size: 0.8em; color: #4f4; display: block; height: 1.2em; margin-top: 5px; }
+        
+        /* RP GRID */
+        .rp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 
         /* SKILLS */
         .auto-skill { background: #2a7a3a; color: white; padding: 5px 10px; border-radius: 4px; margin-bottom: 5px; display: inline-block; font-size: 0.9em; }
@@ -62,17 +65,22 @@
     </div>
 
     <div id="step2" class="step">
-        <div style="text-align:center; color:#888; margin-bottom:15px;">Enter Base Stats (before racial bonuses)</div>
-        <div class="stat-grid">
-            <div class="stat-box"><label>STR</label><input type="number" id="base_STR" value="10" onchange="calcStats()"><span id="bon_STR" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>DEX</label><input type="number" id="base_DEX" value="10" onchange="calcStats()"><span id="bon_DEX" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>CON</label><input type="number" id="base_CON" value="10" onchange="calcStats()"><span id="bon_CON" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>INT</label><input type="number" id="base_INT" value="10" onchange="calcStats()"><span id="bon_INT" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>WIS</label><input type="number" id="base_WIS" value="10" onchange="calcStats()"><span id="bon_WIS" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>CHA</label><input type="number" id="base_CHA" value="10" onchange="calcStats()"><span id="bon_CHA" class="bonus-badge"></span></div>
+        <div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9em;">
+            Assign Standard Array: 15, 14, 13, 12, 10, 8.<br>
+            (Numbers are removed from the list as you pick them)
         </div>
+        
+        <div class="stat-grid">
+            <div class="stat-box"><label>STR</label><select id="base_STR" class="stat-sel" onchange="updateStatOptions()"></select><span id="bon_STR" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>DEX</label><select id="base_DEX" class="stat-sel" onchange="updateStatOptions()"></select><span id="bon_DEX" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>CON</label><select id="base_CON" class="stat-sel" onchange="updateStatOptions()"></select><span id="bon_CON" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>INT</label><select id="base_INT" class="stat-sel" onchange="updateStatOptions()"></select><span id="bon_INT" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>WIS</label><select id="base_WIS" class="stat-sel" onchange="updateStatOptions()"></select><span id="bon_WIS" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>CHA</label><select id="base_CHA" class="stat-sel" onchange="updateStatOptions()"></select><span id="bon_CHA" class="bonus-badge"></span></div>
+        </div>
+        
         <div class="summary-box" style="margin-top:20px; text-align:center;">
-            <strong>Total HP:</strong> <span id="calcHP" style="color:#4f4; font-weight:bold;"></span>
+            <strong>Starting HP:</strong> <span id="calcHP" style="color:#4f4; font-weight:bold;"></span>
         </div>
     </div>
 
@@ -86,14 +94,36 @@
 
     <div id="step4" class="step">
         <label>Alignment</label>
-        <input type="text" id="charAlign" placeholder="e.g. Chaotic Good">
+        <select id="charAlign">
+            <option value="Lawful Good">Lawful Good</option>
+            <option value="Neutral Good">Neutral Good</option>
+            <option value="Chaotic Good">Chaotic Good</option>
+            <option value="Lawful Neutral">Lawful Neutral</option>
+            <option value="True Neutral" selected>True Neutral</option>
+            <option value="Chaotic Neutral">Chaotic Neutral</option>
+            <option value="Lawful Evil">Lawful Evil</option>
+            <option value="Neutral Evil">Neutral Evil</option>
+            <option value="Chaotic Evil">Chaotic Evil</option>
+        </select>
+
+        <label>Appearance Details</label>
+        <div class="rp-grid">
+            <input type="text" id="rpAge" placeholder="Age">
+            <input type="text" id="rpHeight" placeholder="Height">
+            <input type="text" id="rpWeight" placeholder="Weight">
+        </div>
+        <div class="rp-grid" style="margin-top:10px;">
+            <input type="text" id="rpEyes" placeholder="Eyes">
+            <input type="text" id="rpHair" placeholder="Hair">
+            <input type="text" id="rpSkin" placeholder="Skin">
+        </div>
         
         <label>Backstory / Notes</label>
-        <textarea id="charBack" rows="4"></textarea>
+        <textarea id="charBack" rows="4" placeholder="Character history, personality traits, bonds, flaws..."></textarea>
         
         <div class="summary-box" style="margin-top:20px;">
             <div><strong>Starting Gear:</strong> <span id="gearSummary"></span></div>
-            <div style="margin-top:5px;"><strong>Starting Spells:</strong> <span id="spellSummary"></span></div>
+            <div style="margin-top:5px;"><strong>Spells:</strong> <span id="spellSummary"></span></div>
         </div>
     </div>
 
@@ -111,6 +141,8 @@
 
     let currentStep = 1;
     const totalSteps = 4;
+    const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
+    const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 
     // --- POPULATION ---
     const raceSel = document.getElementById('charRace');
@@ -123,46 +155,89 @@
         let opt = document.createElement('option'); opt.value = c; opt.innerText = c; classSel.appendChild(opt);
     });
 
-    // Initialize UI
-    updateRaceInfo();
-    updateClassInfo();
-    calcStats();
+    // Initialize Standard Array UI (Auto-assign 15-8 down the list)
+    STAT_KEYS.forEach((s, idx) => {
+        let sel = document.getElementById(`base_${s}`);
+        STANDARD_ARRAY.forEach(num => {
+            let opt = document.createElement('option'); opt.value = num; opt.innerText = num;
+            if(idx < STANDARD_ARRAY.length && num === STANDARD_ARRAY[idx]) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    });
 
     // --- LOGIC ---
-    
+    function updateStatOptions() {
+        // 1. Get currently selected values
+        let selectedValues = [];
+        STAT_KEYS.forEach(s => {
+            let val = parseInt(document.getElementById(`base_${s}`).value);
+            selectedValues.push(val);
+        });
+
+        // 2. Rebuild options for all dropdowns
+        STAT_KEYS.forEach(s => {
+            let sel = document.getElementById(`base_${s}`);
+            let currentVal = parseInt(sel.value);
+            
+            // Save selection
+            sel.innerHTML = "";
+            
+            STANDARD_ARRAY.forEach(num => {
+                // Show option if it's NOT taken by another box, OR if it's the current box's value
+                // Logic: Count how many times 'num' appears in selectedValues. 
+                // Since Standard Array numbers are unique, max occurrences is 1.
+                // Actually, simpler logic: Is this number available?
+                
+                // We need to know if *other* boxes are holding this number.
+                let takenByOthers = false;
+                STAT_KEYS.forEach(otherS => {
+                    if(s !== otherS) {
+                        if(parseInt(document.getElementById(`base_${otherS}`).value) === num) takenByOthers = true;
+                    }
+                });
+
+                if (!takenByOthers) {
+                    let opt = document.createElement('option');
+                    opt.value = num;
+                    opt.innerText = num;
+                    if(num === currentVal) opt.selected = true;
+                    sel.appendChild(opt);
+                }
+            });
+        });
+        calcStats();
+    }
+
     function updateRaceInfo() {
         const r = RACES[raceSel.value];
         let txt = "Bonuses: ";
         for(let s in r.bonuses) txt += `${s} +${r.bonuses[s]} `;
         document.getElementById('raceSummary').innerText = txt;
-        calcStats(); // Recalc bonuses
+        calcStats();
     }
 
     function updateClassInfo() {
         const c = CLASSES[classSel.value];
         document.getElementById('classSummary').innerText = `Hit Die: d${c.hit_die} | Saves: ${c.saves.join(', ')}`;
-        calcStats(); // Recalc HP
+        calcStats();
         renderSkillSelectors();
     }
 
     function calcStats() {
         const rData = RACES[raceSel.value];
         const cData = CLASSES[classSel.value];
-        const stats = ['STR','DEX','CON','INT','WIS','CHA'];
         
         let conTotal = 10;
 
-        stats.forEach(s => {
+        STAT_KEYS.forEach(s => {
             let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
             let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
-            let total = base + bonus;
-            let mod = Math.floor((total - 10) / 2);
             
             // UI Update
             let badge = document.getElementById(`bon_${s}`);
             badge.innerText = bonus > 0 ? `+${bonus} Race` : "";
             
-            if(s === 'CON') conTotal = total;
+            if(s === 'CON') conTotal = base + bonus;
         });
 
         // HP Calc
@@ -175,39 +250,28 @@
         const cData = CLASSES[classSel.value];
         const rData = RACES[raceSel.value];
         
-        // Racial Skills
         const rArea = document.getElementById('racialSkillsArea');
         rArea.innerHTML = "";
         const rSkills = rData.skills || [];
         if(rSkills.length === 0) rArea.innerHTML = "<span style='color:#555; font-style:italic;'>None</span>";
         else rSkills.forEach(s => { rArea.innerHTML += `<div class="auto-skill">${s}</div>`; });
 
-        // Class Skills
         const cArea = document.getElementById('skillSelectArea');
         cArea.innerHTML = "";
         
-        // Determine number of skills (Default 2 if missing from game_rules.js)
-        // V82 game_rules.py had num_skills, we check if game_rules.js has it.
-        // Fallback: Rogue=4, Bard/Ranger=3, else 2.
-        let count = cData.num_skills;
-        if(!count) {
-            if(classSel.value === "Rogue") count = 4;
-            else if(classSel.value === "Bard" || classSel.value === "Ranger") count = 3;
-            else count = 2;
-        }
+        let count = cData.num_skills || 2;
+        if(classSel.value === "Rogue") count = 4;
+        if(classSel.value === "Bard" || classSel.value === "Ranger") count = 3;
+        
         document.getElementById('skillCount').innerText = count;
 
-        const options = cData.skill_options || []; // V82 rules
-        // Fallback options if game_rules.js is old V79 version without skill_options
-        const fallbackOptions = Object.keys(SKILLS_LIST); 
-        const validOptions = options.length > 0 ? options : fallbackOptions;
+        const options = cData.skill_options || Object.keys(SKILLS_LIST); 
 
         for(let i=0; i<count; i++) {
             let sel = document.createElement('select');
             sel.className = "skill-select";
             sel.style.marginBottom = "10px";
-            validOptions.forEach(sk => {
-                // Don't show skills already granted by race
+            options.forEach(sk => {
                 if(!rSkills.includes(sk)) {
                     let opt = document.createElement('option');
                     opt.value = sk; opt.innerText = sk;
@@ -217,8 +281,8 @@
             cArea.appendChild(sel);
         }
         
-        // Update Gear Summary for Step 4
-        let gear = [...(cData.items || cData.starting_gear || []), "Rations (1 Day)", "Torch"];
+        // Summary for Step 4
+        let gear = [...(cData.items || cData.starting_gear || []), "Rations (1 Day)", "Torch", "Waterskin"];
         document.getElementById('gearSummary').innerText = gear.join(", ");
         
         let spells = [...(rData.auto_spells || []), ...(cData.auto_spells || [])];
@@ -227,26 +291,17 @@
 
     // --- NAVIGATION & SAVE ---
     function changeStep(dir) {
-        // Validation Step 1
-        if(currentStep === 1 && dir === 1) {
-            if(!document.getElementById('charName').value) return alert("Please enter a name.");
-        }
+        if(currentStep === 1 && dir === 1 && !document.getElementById('charName').value) return alert("Please enter a name.");
 
         document.getElementById(`step${currentStep}`).classList.remove('active');
         currentStep += dir;
         
-        if(currentStep > totalSteps) {
-            saveCharacter();
-            return;
-        }
+        if(currentStep > totalSteps) { saveCharacter(); return; }
         
         document.getElementById(`step${currentStep}`).classList.add('active');
-        
-        // Button State
         document.getElementById('btnPrev').style.visibility = (currentStep === 1) ? 'hidden' : 'visible';
         document.getElementById('btnNext').innerText = (currentStep === totalSteps) ? 'Create Character' : 'Next';
         
-        // Titles
         const titles = ["", "Identity", "Ability Scores", "Skills", "Finalize"];
         document.getElementById('headerTitle').innerText = titles[currentStep];
     }
@@ -258,33 +313,25 @@
         const rData = RACES[raceSel.value];
         const cData = CLASSES[classSel.value];
         
-        // Stats
         let stats = {};
-        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
+        STAT_KEYS.forEach(s => {
             let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
             let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             stats[s] = base + bonus;
         });
 
-        // HP
         let conMod = Math.floor((stats['CON'] - 10) / 2);
         let hp = cData.hit_die + conMod + (rData.hp_bonus || 0);
 
-        // Skills
         let finalSkills = [...(rData.skills || [])];
         document.querySelectorAll('.skill-select').forEach(sel => {
             if(!finalSkills.includes(sel.value)) finalSkills.push(sel.value);
         });
 
-        // Items & Spells
         let items = [...(cData.items || cData.starting_gear || []), "Rations", "Torch", "Waterskin"];
-        
-        // Auto-add spells to inventory for rolling purposes (Firebase sheet logic)
         let autoSpells = [...(rData.auto_spells || []), ...(cData.auto_spells || [])];
-        // Only add if they exist in game_rules (Spells usually have 'dice' data there)
-        autoSpells.forEach(s => items.push(s)); // In V80 sheet, spells are just items with category='Spell'
+        autoSpells.forEach(s => items.push(s)); 
 
-        // Save
         const charRef = firebase.database().ref(`campaigns/${ROOM_ID}/characters`).push();
         charRef.set({
             name: document.getElementById('charName').value,
@@ -292,6 +339,14 @@
             class: classSel.value,
             alignment: document.getElementById('charAlign').value,
             backstory: document.getElementById('charBack').value,
+            // New Roleplay Fields
+            age: document.getElementById('rpAge').value,
+            height: document.getElementById('rpHeight').value,
+            weight: document.getElementById('rpWeight').value,
+            eyes: document.getElementById('rpEyes').value,
+            hair: document.getElementById('rpHair').value,
+            skin: document.getElementById('rpSkin').value,
+            
             stats: stats,
             hp_curr: hp,
             hp_max: hp,
@@ -300,17 +355,18 @@
             slots_used: {},
             charges: {}
         }).then(() => {
-            // Add to combat tracker
             firebase.database().ref(`campaigns/${ROOM_ID}/encounters`).push({
                 name: document.getElementById('charName').value,
-                hp: hp,
-                max_hp: hp,
-                init: 0,
-                type: 'player'
+                hp: hp, max_hp: hp, init: 0, type: 'player'
             });
             window.location.href = `sheet.html?room=${ROOM_ID}&id=${charRef.key}`;
         });
     }
+
+    // Run once on load to filter drop downs immediately
+    updateRaceInfo();
+    updateClassInfo();
+    updateStatOptions();
 </script>
 </body>
 </html>
