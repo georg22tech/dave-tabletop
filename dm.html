@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DM Screen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* (Use the same CSS from your previous versions for consistency) */
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; display: flex; height: 100vh; margin: 0; }
+        .col { padding: 10px; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .left { width: 300px; background: #1a1a1a; }
+        .mid { flex: 1; background: #222; position: relative; }
+        .right { width: 300px; background: #1a1a1a; }
+        
+        .tracker-item { display: flex; align-items: center; background: #333; margin-bottom: 5px; padding: 5px; border-radius: 4px; }
+        .init-box { width: 40px; text-align: center; font-weight: bold; background: #111; color: #fff; border: 1px solid #555; padding: 5px; margin-right: 10px; }
+        .hp-box { width: 60px; background: #111; color: #4f4; border: 1px solid #555; text-align: center; }
+        
+        #chat { flex: 1; overflow-y: auto; padding: 10px; font-family: monospace; }
+        .msg { margin-bottom: 5px; padding: 5px; background: #222; border-left: 3px solid #555; font-size: 0.9em; }
+        .msg strong { color: #8af; }
+        .roll-res { font-weight: bold; color: #e51e25; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+</head>
+<body>
+
+<div class="col left">
+    <h3>Initiative Tracker</h3>
+    <div id="tracker"></div>
+    <div style="margin-top:10px;">
+        <button onclick="clearTracker()">Clear</button>
+        <button onclick="sortTracker()">Sort</button>
+    </div>
+</div>
+
+<div class="col mid">
+    <h3>Monster Search</h3>
+    <input type="text" id="monSearch" placeholder="Search D&D 5e API..." onkeyup="searchMonster()">
+    <div id="searchResults" style="background:#111; position:absolute; width:100%; z-index:10;"></div>
+    
+    <div style="margin-top:20px; border-top:1px solid #444; padding-top:10px;">
+        <h4>Add Custom</h4>
+        <input type="text" id="custName" placeholder="Name">
+        <input type="number" id="custInit" placeholder="Init" style="width:50px">
+        <input type="number" id="custHP" placeholder="HP" style="width:50px">
+        <button onclick="addCustom()">Add</button>
+    </div>
+</div>
+
+<div class="col right">
+    <h3>Roll Log</h3>
+    <div id="chat"></div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const ROOM_ID = params.get('room');
+    if (!ROOM_ID) window.location.href = "index.html";
+
+    // --- 1. LISTEN FOR TRACKER UPDATES ---
+    db.ref(`campaigns/${ROOM_ID}/encounters`).on('value', snap => {
+        const list = document.getElementById('tracker');
+        list.innerHTML = "";
+        snap.forEach(child => {
+            const m = child.val();
+            const key = child.key;
+            list.innerHTML += `
+                <div class="tracker-item" style="border-left: 4px solid ${m.type==='player'?'#8af':'#e51e25'}">
+                    <input class="init-box" type="number" value="${m.init}" onchange="updateMon('${key}', 'init', this.value)">
+                    <span style="flex:1; font-weight:bold; color:white;">${m.name}</span>
+                    <input class="hp-box" type="number" value="${m.hp}" onchange="updateMon('${key}', 'hp', this.value)">
+                    <button style="background:none; border:none; color:#f44; cursor:pointer;" onclick="delMon('${key}')">x</button>
+                </div>`;
+        });
+    });
+
+    // --- 2. LISTEN FOR ROLLS ---
+    db.ref(`campaigns/${ROOM_ID}/chat`).limitToLast(20).on('child_added', snap => {
+        const d = snap.val();
+        const chat = document.getElementById('chat');
+        chat.innerHTML = `<div class="msg">
+            <strong>${d.user}</strong>: ${d.lbl} -> <span class="roll-res">${d.val}</span>
+        </div>` + chat.innerHTML;
+    });
+
+    // --- 3. ACTIONS ---
+    function updateMon(key, field, val) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}/${field}`).set(parseInt(val)); }
+    function delMon(key) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}`).remove(); }
+    function clearTracker() { db.ref(`campaigns/${ROOM_ID}/encounters`).remove(); }
+    
+    function addCustom() {
+        const name = document.getElementById('custName').value;
+        const init = parseInt(document.getElementById('custInit').value) || 0;
+        const hp = parseInt(document.getElementById('custHP').value) || 10;
+        db.ref(`campaigns/${ROOM_ID}/encounters`).push({
+            name: name, init: init, hp: hp, type: 'monster'
+        });
+    }
+
+    // --- 4. API SEARCH ---
+    function searchMonster() {
+        const q = document.getElementById('monSearch').value;
+        if(q.length < 2) return;
+        fetch(`https://www.dnd5eapi.co/api/monsters?name=${q}`)
+            .then(r=>r.json())
+            .then(data => {
+                const div = document.getElementById('searchResults');
+                div.innerHTML = "";
+                data.results.slice(0,5).forEach(m => {
+                    div.innerHTML += `<div style="padding:10px; cursor:pointer; border-bottom:1px solid #333;" onclick="fetchMon('${m.index}', '${m.name}')">${m.name}</div>`;
+                });
+            });
+    }
+
+    function fetchMon(index, name) {
+        fetch(`https://www.dnd5eapi.co/api/monsters/${index}`)
+            .then(r=>r.json())
+            .then(data => {
+                const dexMod = Math.floor((data.dexterity - 10) / 2);
+                const init = Math.floor(Math.random() * 20) + 1 + dexMod;
+                db.ref(`campaigns/${ROOM_ID}/encounters`).push({
+                    name: name, init: init, hp: data.hit_points, type: 'monster'
+                });
+                document.getElementById('searchResults').innerHTML = "";
+                document.getElementById('monSearch').value = "";
+            });
+    }
+</script>
+</body>
+</html>

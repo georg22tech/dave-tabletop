@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Character Builder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .builder-container { max-width: 600px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; }
+        
+        h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
+        .step { margin-bottom: 25px; }
+        label { display: block; color: #888; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        
+        input, select, textarea { width: 100%; padding: 12px; background: #252525; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; font-size: 1em; margin-bottom: 10px; }
+        input:focus, select:focus { border-color: #8af; outline: none; }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .stat-box { text-align: center; background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #333; }
+        .stat-box label { margin-bottom: 0; color: #8af; }
+        .stat-box input { text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 0; border: none; background: transparent; }
+        
+        .btn-save { width: 100%; padding: 15px; background: #2b5fa3; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 20px; }
+        .btn-save:hover { background: #4a8fdd; }
+        
+        .load-box { background: #222; padding: 10px; margin-bottom: 20px; border-radius: 4px; text-align: center; border: 1px dashed #444; }
+        .load-box a { color: #8af; text-decoration: none; font-weight: bold; display: block; padding: 5px; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+    <script src="game_rules.js"></script>
+</head>
+<body>
+
+<div class="builder-container">
+    <h1>Character Builder</h1>
+    
+    <div id="existingChars" class="load-box" style="display:none;">
+        <label>Resume Character:</label>
+        <div id="charLinks"></div>
+    </div>
+
+    <div class="step">
+        <label>Character Name</label>
+        <input type="text" id="charName" placeholder="e.g. Valeros">
+    </div>
+
+    <div class="step">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label>Race</label>
+                <select id="charRace"></select>
+            </div>
+            <div>
+                <label>Class</label>
+                <select id="charClass"></select>
+            </div>
+        </div>
+    </div>
+
+    <div class="step">
+        <label>Ability Scores (Base)</label>
+        <div class="stat-grid">
+            <div class="stat-box"><label>STR</label><input type="number" id="base_STR" value="10"></div>
+            <div class="stat-box"><label>DEX</label><input type="number" id="base_DEX" value="10"></div>
+            <div class="stat-box"><label>CON</label><input type="number" id="base_CON" value="10"></div>
+            <div class="stat-box"><label>INT</label><input type="number" id="base_INT" value="10"></div>
+            <div class="stat-box"><label>WIS</label><input type="number" id="base_WIS" value="10"></div>
+            <div class="stat-box"><label>CHA</label><input type="number" id="base_CHA" value="10"></div>
+        </div>
+        <div style="text-align:center; font-size:0.8em; color:#666; margin-top:5px;">Racial bonuses will be applied automatically.</div>
+    </div>
+
+    <div class="step">
+        <label>Roleplay Details</label>
+        <input type="text" id="charAlign" placeholder="Alignment (e.g. Chaotic Good)">
+        <textarea id="charBack" placeholder="Backstory / Notes" rows="3"></textarea>
+    </div>
+
+    <button class="btn-save" onclick="saveCharacter()">Create & Play</button>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const ROOM_ID = params.get('room');
+    if(!ROOM_ID) window.location.href = "index.html";
+
+    // --- POPULATE DROPDOWNS ---
+    const raceSel = document.getElementById('charRace');
+    Object.keys(RACES).sort().forEach(r => {
+        let opt = document.createElement('option');
+        opt.value = r; opt.innerText = r;
+        raceSel.appendChild(opt);
+    });
+
+    const classSel = document.getElementById('charClass');
+    Object.keys(CLASSES).sort().forEach(c => {
+        let opt = document.createElement('option');
+        opt.value = c; opt.innerText = c;
+        classSel.appendChild(opt);
+    });
+
+    // --- CHECK FOR EXISTING CHARACTERS ---
+    // If a player joins a room, show characters already in that room so they can rejoin.
+    firebase.database().ref(`campaigns/${ROOM_ID}/characters`).once('value', snap => {
+        if(snap.exists()) {
+            document.getElementById('existingChars').style.display = 'block';
+            const div = document.getElementById('charLinks');
+            snap.forEach(child => {
+                let c = child.val();
+                let a = document.createElement('a');
+                a.href = `sheet.html?room=${ROOM_ID}&id=${child.key}`;
+                a.innerText = `${c.name} (${c.race} ${c.class})`;
+                div.appendChild(a);
+            });
+        }
+    });
+
+    // --- SAVE LOGIC ---
+    function saveCharacter() {
+        const name = document.getElementById('charName').value;
+        if(!name) return alert("Please enter a name!");
+
+        const raceName = raceSel.value;
+        const className = classSel.value;
+        
+        // 1. Calculate Stats (Base + Race Bonus)
+        const raceData = RACES[raceName];
+        const classData = CLASSES[className];
+        
+        let stats = {};
+        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
+            let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
+            let bonus = (raceData.bonuses && raceData.bonuses[s]) || 0;
+            stats[s] = base + bonus;
+        });
+
+        // 2. Calculate HP
+        let conMod = Math.floor((stats['CON'] - 10) / 2);
+        let hp = classData.hit_die + conMod + (raceData.hp_bonus || 0);
+
+        // 3. Default Inventory
+        let inventory = [...(classData.items || []), "Rations (1 day)", "Torch"];
+
+        // 4. Default Spells (if any)
+        // (Logic to auto-add class/race spells could go here, for now we leave it clean)
+
+        // 5. Save to Firebase
+        const charRef = firebase.database().ref(`campaigns/${ROOM_ID}/characters`).push();
+        charRef.set({
+            name: name,
+            race: raceName,
+            class: className,
+            stats: stats,
+            hp_curr: hp,
+            hp_max: hp,
+            alignment: document.getElementById('charAlign').value,
+            backstory: document.getElementById('charBack').value,
+            inventory: inventory,
+            saves: classData.saves || [],
+            skills: [], // Could add skill selection step, but simpler to let them roll raw stats
+            slots_used: {},
+            charges: {}
+        }).then(() => {
+            // Also add to Combat Tracker automatically
+            firebase.database().ref(`campaigns/${ROOM_ID}/encounters`).push({
+                name: name,
+                hp: hp,
+                max_hp: hp,
+                init: 0,
+                type: 'player'
+            });
+            
+            // Redirect
+            window.location.href = `sheet.html?room=${ROOM_ID}&id=${charRef.key}`;
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DMDave - Virtual Tabletop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .lobby-box { background: #1e1e1e; padding: 40px; border-radius: 12px; border: 1px solid #333; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        h1 { color: #e51e25; margin-top: 0; letter-spacing: 1px; }
+        p { color: #888; font-size: 0.9em; margin-bottom: 30px; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 0.8em; color: #aaa; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 12px; background: #252525; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
+        input:focus { border-color: #8af; outline: none; }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 1em; cursor: pointer; transition: 0.2s; }
+        .btn-create { background: #e51e25; color: white; margin-bottom: 10px; }
+        .btn-create:hover { background: #ff3b3b; }
+        .btn-join { background: #2b5fa3; color: white; }
+        .btn-join:hover { background: #4a8fdd; }
+        
+        .divider { border-top: 1px solid #333; margin: 25px 0; position: relative; }
+        .divider span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #1e1e1e; padding: 0 10px; color: #555; font-size: 0.8em; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="config.js"></script>
+</head>
+<body>
+
+<div class="lobby-box">
+    <h1>DMDave</h1>
+    <p>D&D 5e Virtual Tabletop</p>
+    
+    <div class="input-group">
+        <label>Campaign Name</label>
+        <input type="text" id="campName" placeholder="e.g. Curse of Strahd">
+    </div>
+    <button class="btn-create" onclick="createGame()">Create Campaign</button>
+    
+    <div class="divider"><span>OR</span></div>
+    
+    <div class="input-group">
+        <label>Join Code</label>
+        <input type="text" id="joinCode" placeholder="e.g. A1B2C3">
+    </div>
+    <button class="btn-join" onclick="joinGame()">Join Game</button>
+</div>
+
+<script>
+    function createGame() {
+        const name = document.getElementById('campName').value.trim();
+        if(!name) return alert("Please enter a campaign name.");
+        
+        // Generate a random 6-character room code
+        const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        // Save to Firebase
+        firebase.database().ref('campaigns/' + roomId).set({
+            name: name,
+            created_at: Date.now(),
+            status: "active"
+        }).then(() => {
+            // Redirect DM
+            window.location.href = `dm.html?room=${roomId}`;
+        });
+    }
+
+    function joinGame() {
+        const code = document.getElementById('joinCode').value.trim().toUpperCase();
+        if(!code) return alert("Please enter a join code.");
+        
+        // Check validity
+        firebase.database().ref('campaigns/' + code).once('value', snapshot => {
+            if (snapshot.exists()) {
+                window.location.href = `builder.html?room=${code}`;
+            } else {
+                alert("Campaign not found! Check the code.");
+            }
+        });
+    }
+</script>
+</body>
+</html>
