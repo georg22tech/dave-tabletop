@@ -59,20 +59,19 @@
         .btn-equip.equipped { background: #2b5fa3; color: white; border-color: #2b5fa3; }
         .btn-del { color: #f44; cursor: pointer; font-weight: bold; padding: 0 5px; }
 
-        /* SEARCH BOX FIX */
+        /* SEARCH BOX */
         .inv-search { display: flex; gap: 5px; margin-bottom: 10px; position: relative; }
         .inv-search input { flex: 1; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
         .search-results { background: #111; border: 1px solid #444; max-height: 200px; overflow-y: auto; position: absolute; top: 38px; width: 100%; z-index: 100; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .search-res-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
         .search-res-item:hover { background: #2b5fa3; color: white; }
 
-        /* SLOTS & SKILLS */
+        /* SKILLS & SLOTS */
         .slot-container { background: #222; padding: 10px; border-radius: 6px; border: 1px solid #444; margin-bottom: 20px; }
         .slot-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #333; }
         .slot-bubbles { display: flex; gap: 5px; }
         .bubble { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #666; cursor: pointer; background: #333; }
         .bubble.used { background: #8af; border-color: #8af; box-shadow: 0 0 5px #8af; }
-        
         .saves-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 20px; }
         .save-box { background: #252525; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #444; cursor: pointer; }
         .save-val { font-size: 1.2em; font-weight: bold; color: #fff; }
@@ -171,7 +170,6 @@
     const CHAR_ID = params.get('id');
     if (!ROOM_ID || !CHAR_ID) window.location.href = "index.html";
 
-    // Link Edit Button
     document.getElementById('editLink').href = `builder.html?room=${ROOM_ID}&id=${CHAR_ID}`;
 
     let CHAR = {};
@@ -180,12 +178,12 @@
     let INIT_BONUS = 0;
     let searchTimeout;
 
-    // --- FIREBASE LISTENERS ---
+    // --- FIREBASE ---
     db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).on('value', snap => {
         if(!snap.exists()) return;
         let data = snap.val();
         
-        // Data Migration (String to Object)
+        // MIGRATION: Convert old string inv to object
         if(data.inventory && data.inventory.length > 0 && typeof data.inventory[0] === 'string') {
             let newInv = data.inventory.map(i => ({name: i, equip: false}));
             db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(newInv);
@@ -193,6 +191,8 @@
         }
 
         CHAR = data;
+        // Ensure defaults
+        if(!CHAR.inventory) CHAR.inventory = [];
         if(!CHAR.slots_used) CHAR.slots_used = {};
         if(!CHAR.coins) CHAR.coins = {cp:0, sp:0, ep:0, gp:0, pp:0};
         
@@ -216,8 +216,7 @@
         document.getElementById('hpInput').value = CHAR.hp_curr;
         document.getElementById('hpMax').innerText = CHAR.hp_max;
 
-        let level = 1; 
-        PROF = 2 + Math.floor((level - 1)/4);
+        PROF = 2; // Simplified level
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
             STATS[s] = Math.floor((CHAR.stats[s] - 10) / 2);
         });
@@ -226,28 +225,25 @@
             document.getElementById(`coin_${c}`).value = CHAR.coins[c] || 0;
         });
 
-        // AC Calculation
+        // AC Calc
         let ac = 10 + STATS['DEX'];
         let shieldBonus = 0;
         let hasArmor = false;
 
-        if (CHAR.inventory) {
-            CHAR.inventory.forEach(item => {
-                if (item.equip) {
-                    let rule = ALL_ACTIONS.find(r => r.name === item.name);
-                    if (rule && rule.category === 'Armor') {
-                        if (rule.armor_type === 'Shield') {
-                            shieldBonus += rule.ac;
-                        } else {
-                            hasArmor = true;
-                            if (rule.armor_type === 'Light') ac = rule.ac + STATS['DEX'];
-                            else if (rule.armor_type === 'Medium') ac = rule.ac + Math.min(STATS['DEX'], 2);
-                            else if (rule.armor_type === 'Heavy') ac = rule.ac;
-                        }
+        CHAR.inventory.forEach(item => {
+            if (item.equip) {
+                let rule = ALL_ACTIONS.find(r => r.name === item.name);
+                if (rule && rule.category === 'Armor') {
+                    if (rule.armor_type === 'Shield') shieldBonus += rule.ac;
+                    else {
+                        hasArmor = true;
+                        if (rule.armor_type === 'Light') ac = rule.ac + STATS['DEX'];
+                        else if (rule.armor_type === 'Medium') ac = rule.ac + Math.min(STATS['DEX'], 2);
+                        else if (rule.armor_type === 'Heavy') ac = rule.ac;
                     }
                 }
-            });
-        }
+            }
+        });
 
         if (!hasArmor && shieldBonus === 0) {
             if (CHAR.class === "Monk") ac = 10 + STATS['DEX'] + STATS['WIS'];
@@ -269,94 +265,72 @@
         const spellDiv = document.getElementById('spellList');
         atkDiv.innerHTML = ""; spellDiv.innerHTML = "";
 
-        if(!CHAR.inventory) return;
+        // 1. ALWAYS ADD UNARMORED STRIKE
+        let unarmed = ALL_ACTIONS.find(a => a.name === "Unarmed Strike") || {name: "Unarmed Strike", dice: "1", type: "Bludgeoning", stat: "STR", category: "Simple Melee"};
+        renderActionCard(unarmed, atkDiv);
 
+        // 2. Render Inventory Items
         CHAR.inventory.forEach(item => {
             let data = ALL_ACTIONS.find(a => a.name === item.name);
+            
+            // Special handling for Spells or Features found in rules but not inventory objects (legacy)
             if(!data && ALL_SPELLS) data = ALL_SPELLS.find(a => a.name === item.name);
+            
+            // If item has no rules, skip actions (it's just a rope or ration)
             if(!data) return; 
 
+            // Logic: Weapons must be equipped. Spells/Features always show.
             if (data.category !== "Spell" && data.category !== "Feature" && !item.equip) return;
 
-            let useStat = data.stat || "STR";
-            if(data.category === "Spell") useStat = "INT"; 
-            let mod = STATS[useStat] || 0;
-            let hitBonus = mod + PROF;
-            let dmgStr = (data.dice && data.dice.includes('d')) ? `${data.dice} ${mod>=0?'+':''}${mod}` : data.dice;
-
-            const card = document.createElement('div');
-            card.className = "card " + (data.category === "Spell" ? "card-spell" : "");
-            
-            let btns = "";
-            if(data.category === "Spell" && data.type === "Healing") {
-                btns = `<button class="roll-btn btn-heal" onclick="rollDmg('${item.name}', '${data.dice}', ${mod}, 'heal')">💚 Heal (${dmgStr})</button>`;
-            } else if(data.dice && data.dice.includes('d')) {
-                btns = `<div class="roll-btn-row">
-                    <button class="roll-btn btn-hit" onclick="rollAtk('${item.name}', ${hitBonus})">⚔️ Hit (${hitBonus>=0?'+':''}${hitBonus})</button>
-                    <button class="roll-btn btn-dmg" onclick="rollDmg('${item.name}', '${data.dice}', ${mod}, 'dmg')">🩸 Dmg (${dmgStr})</button>
-                </div>`;
-            } else {
-                btns = `<button class="roll-btn btn-effect" onclick="pushChat('${item.name}', 'Used Feature', '-')">Use Feature</button>`;
-            }
-
-            card.innerHTML = `<div class="card-header"><span class="card-title">${item.name}</span><span class="card-meta">${data.type}</span></div><div class="card-desc">${data.desc || ''}</div>${btns}`;
-
-            if(data.category === "Spell") spellDiv.appendChild(card);
-            else atkDiv.appendChild(card);
+            if (data.category === "Spell") renderActionCard(data, spellDiv);
+            else renderActionCard(data, atkDiv);
         });
     }
 
-    function renderSlots() {
-        const div = document.getElementById('slotTracker');
-        div.innerHTML = "";
-        let maxSlots = [0, 0]; 
-        if(CHAR.class === "Wizard") maxSlots = [2, 0];
-        if(CHAR.class === "Cleric") maxSlots = [2, 0];
-        if(CHAR.class === "Warlock") maxSlots = [1, 0]; 
+    function renderActionCard(data, container) {
+        let useStat = data.stat || "STR";
+        if(data.category === "Spell") useStat = "INT"; 
+        let mod = STATS[useStat] || 0;
+        let hitBonus = mod + PROF;
+        let dmgStr = (data.dice && data.dice.includes('d')) ? `${data.dice} ${mod>=0?'+':''}${mod}` : data.dice;
 
-        maxSlots.forEach((max, idx) => {
-            if(max === 0) return;
-            let lvl = idx + 1;
-            let used = (CHAR.slots_used && CHAR.slots_used[lvl]) || 0;
-            let bubbles = "";
-            for(let i=0; i<max; i++) {
-                let cls = (i < used) ? "bubble used" : "bubble";
-                bubbles += `<div class="${cls}" onclick="toggleSlot(${lvl}, ${i})"></div>`;
-            }
-            div.innerHTML += `<div class="slot-row"><span style="color:#8af; font-weight:bold;">Level ${lvl}</span><div class="slot-bubbles">${bubbles}</div></div>`;
-        });
-    }
-
-    function renderSkills() {
-        const div = document.getElementById('skillList'); div.innerHTML = "";
-        const saveDiv = document.getElementById('savesList'); saveDiv.innerHTML = "";
-
-        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
-            let mod = STATS[s];
-            if(CHAR.saves && CHAR.saves.includes(s)) mod += PROF;
-            saveDiv.innerHTML += `<div class="save-box" onclick="rollCheck('${s} Save', ${mod})"><div style="font-size:0.7em; color:#888;">${s}</div><div class="save-val">${mod>=0?'+':''}${mod}</div></div>`;
-        });
-
-        for (const [skill, stat] of Object.entries(SKILLS_LIST)) {
-            let mod = STATS[stat];
-            if(CHAR.skills && CHAR.skills.includes(skill)) mod += PROF;
-            div.innerHTML += `<div class="skill-btn" onclick="rollCheck('${skill}', ${mod})"><span>${skill} <small style="color:#666">(${stat})</small></span><span class="skill-mod">${mod>=0?'+':''}${mod}</span></div>`;
+        const card = document.createElement('div');
+        card.className = "card " + (data.category === "Spell" ? "card-spell" : "");
+        
+        let btns = "";
+        if(data.category === "Spell" && data.type === "Healing") {
+            btns = `<button class="roll-btn btn-heal" onclick="rollDmg('${data.name}', '${data.dice}', ${mod}, 'heal')">💚 Heal (${dmgStr})</button>`;
+        } else if(data.dice && (data.dice.includes('d') || !isNaN(data.dice))) { // Handle flat dmg too
+            btns = `<div class="roll-btn-row">
+                <button class="roll-btn btn-hit" onclick="rollAtk('${data.name}', ${hitBonus})">⚔️ Hit (${hitBonus>=0?'+':''}${hitBonus})</button>
+                <button class="roll-btn btn-dmg" onclick="rollDmg('${data.name}', '${data.dice}', ${mod}, 'dmg')">🩸 Dmg (${dmgStr})</button>
+            </div>`;
+        } else {
+            btns = `<button class="roll-btn btn-effect" onclick="pushChat('${data.name}', 'Used Feature', '-')">Use Feature</button>`;
         }
+
+        card.innerHTML = `<div class="card-header"><span class="card-title">${data.name}</span><span class="card-meta">${data.type}</span></div><div class="card-desc">${data.desc || ''}</div>${btns}`;
+        container.appendChild(card);
     }
 
     function renderInv() {
         const div = document.getElementById('invList');
         div.innerHTML = "";
-        if(!CHAR.inventory) return;
+        
+        if(!CHAR.inventory || CHAR.inventory.length === 0) {
+            div.innerHTML = "<div style='color:#666; font-style:italic; text-align:center;'>Inventory is empty</div>";
+            return;
+        }
 
         CHAR.inventory.forEach((item, idx) => {
             let name = item.name || item; 
             let equipState = item.equip ? "equipped" : "";
             let btnTxt = item.equip ? "Unequip" : "Equip";
             
+            // Check if equippable
             let isEquippable = false;
             let rule = ALL_ACTIONS.find(r => r.name === name);
-            if(rule && (rule.category === 'Weapon' || rule.category === 'Armor')) isEquippable = true;
+            if(rule && (rule.category === 'Weapon' || rule.category === 'Armor' || rule.category === 'Simple Melee' || rule.category === 'Martial Melee' || rule.category.includes('Ranged'))) isEquippable = true;
 
             let eqBtn = isEquippable ? `<button class="btn-equip ${equipState}" onclick="toggleEquip(${idx})">${btnTxt}</button>` : '';
 
@@ -364,7 +338,7 @@
         });
     }
 
-    // --- EQUIPMENT LOGIC ---
+    // --- EQUIPMENT SEARCH ---
     function searchEquipment() {
         clearTimeout(searchTimeout);
         const q = document.getElementById('apiSearch').value;
@@ -382,10 +356,26 @@
                             let div = document.createElement('div');
                             div.className = "search-res-item";
                             div.innerText = item.name;
-                            div.onmousedown = () => addItem(item.name); // onmousedown fires before onblur
+                            div.onmousedown = () => addItem(item.name);
                             resDiv.appendChild(div);
                         });
-                    } else { resDiv.style.display = 'none'; }
+                    } else { 
+                        // Fallback Magic Items
+                        fetch(`https://www.dnd5eapi.co/api/magic-items?name=${q}`)
+                        .then(r2 => r2.json()).then(d2 => {
+                            if(d2.results.length>0) {
+                                resDiv.style.display='block';
+                                d2.results.forEach(item=>{
+                                    let div = document.createElement('div');
+                                    div.className="search-res-item";
+                                    div.innerText=item.name;
+                                    div.style.color="#d4af37";
+                                    div.onmousedown=()=>addItem(item.name);
+                                    resDiv.appendChild(div);
+                                });
+                            } else resDiv.style.display='none';
+                        });
+                    }
                 });
         }, 300);
     }
@@ -421,7 +411,7 @@
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/coins`).set(c);
     }
 
-    // --- GENERIC LOGIC ---
+    // --- STANDARD LOGIC ---
     function updateHP() {
         const val = parseInt(document.getElementById('hpInput').value);
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(val);
@@ -429,32 +419,30 @@
             s.forEach(child => child.ref.update({hp: val}));
         });
     }
-
     function toggleSlot(lvl, idx) {
         let current = (CHAR.slots_used && CHAR.slots_used[lvl]) || 0;
         let newVal = (idx + 1 === current) ? idx : idx + 1;
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/slots_used/${lvl}`).set(newVal);
     }
-
     function takeRest(type) {
         if(!confirm(`Take a ${type} rest?`)) return;
         let updates = {};
-        if(type === 'long') {
-            updates['hp_curr'] = CHAR.hp_max;
-            updates['slots_used'] = {}; 
-        }
+        if(type === 'long') { updates['hp_curr'] = CHAR.hp_max; updates['slots_used'] = {}; }
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).update(updates);
     }
-
     function rollInit() { rollCheck("Initiative", INIT_BONUS); }
     function rollAtk(name, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(`Atk ${name}`, d20+mod, `${d20} + ${mod}`, 'hit', d20===20); }
     function rollCheck(lbl, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(lbl, d20+mod, `${d20} + ${mod}`); }
     function rollDmg(name, dice, mod, type) {
-        if(!dice.includes('d')) return;
-        let parts = dice.split('d');
-        let n = parseInt(parts[0]); let s = parseInt(parts[1]);
-        let t = 0; for(let i=0; i<n; i++) t += Math.floor(Math.random()*s)+1;
-        pushChat(`${name}`, t+mod, `[${dice}] + ${mod}`, type);
+        let total = 0;
+        // Simple Parser
+        if(!isNaN(dice)) total = parseInt(dice);
+        else if(dice.includes('d')) {
+            let parts = dice.split('d');
+            let n = parseInt(parts[0]); let s = parseInt(parts[1]);
+            for(let i=0; i<n; i++) total += Math.floor(Math.random()*s)+1;
+        }
+        pushChat(`${name}`, total+mod, `[${dice}] + ${mod}`, type);
     }
     function pushChat(lbl, val, formula, subType='gen', nat20=false) {
         db.ref(`campaigns/${ROOM_ID}/chat`).push({ user: CHAR.name, lbl: lbl, val: val, formula: formula, sub_type: subType, nat20: nat20, timestamp: Date.now() });
@@ -464,6 +452,20 @@
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         event.target.classList.add('active');
+    }
+    
+    // UTILS
+    function renderSkills() {
+        const div = document.getElementById('skillList'); div.innerHTML = "";
+        const saveDiv = document.getElementById('savesList'); saveDiv.innerHTML = "";
+        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
+            let mod = STATS[s]; if(CHAR.saves && CHAR.saves.includes(s)) mod += PROF;
+            saveDiv.innerHTML += `<div class="save-box" onclick="rollCheck('${s} Save', ${mod})"><div style="font-size:0.7em; color:#888;">${s}</div><div class="save-val">${mod>=0?'+':''}${mod}</div></div>`;
+        });
+        for (const [skill, stat] of Object.entries(SKILLS_LIST)) {
+            let mod = STATS[stat]; if(CHAR.skills && CHAR.skills.includes(skill)) mod += PROF;
+            div.innerHTML += `<div class="skill-btn" onclick="rollCheck('${skill}', ${mod})"><span>${skill} <small style="color:#666">(${stat})</small></span><span class="skill-mod">${mod>=0?'+':''}${mod}</span></div>`;
+        }
     }
 </script>
 </body>
