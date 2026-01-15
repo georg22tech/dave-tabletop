@@ -26,9 +26,10 @@
         .init-box .stat-val { color: #e51e25; }
 
         .rest-group { display: flex; flex-direction: column; gap: 3px; }
-        .btn-rest { border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 0.75em; text-transform: uppercase; }
+        .btn-rest { border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 0.75em; text-transform: uppercase; text-decoration: none; text-align: center; }
         .btn-rest.short { background: #d4af37; color: #111; } 
         .btn-rest.long { background: #2a7a3a; }
+        .btn-edit { background: #444; color: #ddd; } .btn-edit:hover { background: #666; color: #fff; }
         
         /* TABS */
         .tab-nav { display: flex; background: #1f1f1f; border-bottom: 1px solid #444; flex-shrink: 0; }
@@ -49,25 +50,21 @@
         
         .roll-btn-row { display: flex; gap: 5px; }
         .roll-btn { flex: 1; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; font-size: 0.9em; transition: 0.2s; }
-        .btn-hit { background: #2b5fa3; }
-        .btn-dmg { background: #a33; }
-        .btn-heal { background: #2a7a3a; }
-        .btn-effect { background: #444; color:#d4af37; }
+        .btn-hit { background: #2b5fa3; } .btn-dmg { background: #a33; } .btn-heal { background: #2a7a3a; } .btn-effect { background: #444; color:#d4af37; }
 
         /* INVENTORY LIST */
         .inv-item { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #333; }
         .inv-name { font-weight: bold; color: #ddd; flex: 1; }
-        .inv-meta { font-size: 0.8em; color: #888; margin-right: 10px; }
         .btn-equip { background: #444; border: 1px solid #666; color: #aaa; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-right: 5px; }
         .btn-equip.equipped { background: #2b5fa3; color: white; border-color: #2b5fa3; }
         .btn-del { color: #f44; cursor: pointer; font-weight: bold; padding: 0 5px; }
 
-        /* SEARCH BOX */
-        .inv-search { display: flex; gap: 5px; margin-bottom: 10px; }
+        /* SEARCH BOX FIX */
+        .inv-search { display: flex; gap: 5px; margin-bottom: 10px; position: relative; }
         .inv-search input { flex: 1; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
-        .search-results { background: #111; border: 1px solid #444; max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: none; }
-        .search-res-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
-        .search-res-item:hover { background: #2b5fa3; }
+        .search-results { background: #111; border: 1px solid #444; max-height: 200px; overflow-y: auto; position: absolute; top: 38px; width: 100%; z-index: 100; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .search-res-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
+        .search-res-item:hover { background: #2b5fa3; color: white; }
 
         /* SLOTS & SKILLS */
         .slot-container { background: #222; padding: 10px; border-radius: 6px; border: 1px solid #444; margin-bottom: 20px; }
@@ -79,7 +76,6 @@
         .saves-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 20px; }
         .save-box { background: #252525; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #444; cursor: pointer; }
         .save-val { font-size: 1.2em; font-weight: bold; color: #fff; }
-        
         .skill-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .skill-btn { background: #252525; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; }
         .skill-mod { font-weight: bold; color: #fff; }
@@ -121,7 +117,8 @@
             <div class="stat-val" id="dispInit">+0</div>
             <div class="stat-label">Init</div>
         </div>
-        <a href="index.html" class="btn-rest" style="text-decoration:none; background:#444;">Exit</a>
+        <a href="#" id="editLink" class="btn-rest btn-edit">Edit</a>
+        <a href="index.html" class="btn-rest btn-edit">Exit</a>
     </div>
 </header>
 
@@ -158,9 +155,9 @@
         
         <h3 style="color:#e51e25;">Equipment</h3>
         <div class="inv-search">
-            <input type="text" id="apiSearch" placeholder="Add Item (D&D 5e API)..." onkeyup="searchEquipment()">
+            <input type="text" id="apiSearch" placeholder="Search D&D 5e API..." onkeyup="searchEquipment()" autocomplete="off">
+            <div id="apiResults" class="search-results"></div>
         </div>
-        <div id="apiResults" class="search-results"></div>
         <div id="invList"></div>
     </div>
 </div>
@@ -174,6 +171,9 @@
     const CHAR_ID = params.get('id');
     if (!ROOM_ID || !CHAR_ID) window.location.href = "index.html";
 
+    // Link Edit Button
+    document.getElementById('editLink').href = `builder.html?room=${ROOM_ID}&id=${CHAR_ID}`;
+
     let CHAR = {};
     let STATS = {};
     let PROF = 2;
@@ -185,16 +185,15 @@
         if(!snap.exists()) return;
         let data = snap.val();
         
-        // MIGRATION: Convert old string inventory to object format
+        // Data Migration (String to Object)
         if(data.inventory && data.inventory.length > 0 && typeof data.inventory[0] === 'string') {
             let newInv = data.inventory.map(i => ({name: i, equip: false}));
             db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(newInv);
-            return; // Wait for update
+            return;
         }
 
         CHAR = data;
         if(!CHAR.slots_used) CHAR.slots_used = {};
-        if(!CHAR.charges) CHAR.charges = {};
         if(!CHAR.coins) CHAR.coins = {cp:0, sp:0, ep:0, gp:0, pp:0};
         
         renderAll();
@@ -217,20 +216,18 @@
         document.getElementById('hpInput').value = CHAR.hp_curr;
         document.getElementById('hpMax').innerText = CHAR.hp_max;
 
-        // Calc Mods
         let level = 1; 
         PROF = 2 + Math.floor((level - 1)/4);
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
             STATS[s] = Math.floor((CHAR.stats[s] - 10) / 2);
         });
 
-        // Coins
         ['cp','sp','ep','gp','pp'].forEach(c => {
             document.getElementById(`coin_${c}`).value = CHAR.coins[c] || 0;
         });
 
-        // 1. Calculate AC (Armor/Shield Logic)
-        let ac = 10 + STATS['DEX']; // Default
+        // AC Calculation
+        let ac = 10 + STATS['DEX'];
         let shieldBonus = 0;
         let hasArmor = false;
 
@@ -252,17 +249,13 @@
             });
         }
 
-        // Unarmored Defense
         if (!hasArmor && shieldBonus === 0) {
             if (CHAR.class === "Monk") ac = 10 + STATS['DEX'] + STATS['WIS'];
             if (CHAR.class === "Barbarian") ac = 10 + STATS['DEX'] + STATS['CON'];
         }
-
         document.getElementById('dispAC').innerText = ac + shieldBonus;
 
-        // Init
         INIT_BONUS = STATS['DEX'];
-        if(CHAR.class === "Ranger" && CHAR.subclass === "Gloom Stalker") INIT_BONUS += STATS['WIS']; // Example
         document.getElementById('dispInit').innerText = (INIT_BONUS>=0?"+":"") + INIT_BONUS;
 
         renderActions();
@@ -280,10 +273,9 @@
 
         CHAR.inventory.forEach(item => {
             let data = ALL_ACTIONS.find(a => a.name === item.name);
-            // Fallback for Spells or Features that are in the list but not inventory items
+            if(!data && ALL_SPELLS) data = ALL_SPELLS.find(a => a.name === item.name);
             if(!data) return; 
 
-            // Only show Weapons if equipped (Spells always show)
             if (data.category !== "Spell" && data.category !== "Feature" && !item.equip) return;
 
             let useStat = data.stat || "STR";
@@ -307,11 +299,7 @@
                 btns = `<button class="roll-btn btn-effect" onclick="pushChat('${item.name}', 'Used Feature', '-')">Use Feature</button>`;
             }
 
-            card.innerHTML = `
-                <div class="card-header"><span class="card-title">${item.name}</span><span class="card-meta">${data.type}</span></div>
-                <div class="card-desc">${data.desc || ''}</div>
-                ${btns}
-            `;
+            card.innerHTML = `<div class="card-header"><span class="card-title">${item.name}</span><span class="card-meta">${data.type}</span></div><div class="card-desc">${data.desc || ''}</div>${btns}`;
 
             if(data.category === "Spell") spellDiv.appendChild(card);
             else atkDiv.appendChild(card);
@@ -362,25 +350,17 @@
         if(!CHAR.inventory) return;
 
         CHAR.inventory.forEach((item, idx) => {
-            let name = item.name || item; // Handle legacy string
+            let name = item.name || item; 
             let equipState = item.equip ? "equipped" : "";
             let btnTxt = item.equip ? "Unequip" : "Equip";
             
-            // Check if it's equippable (present in ALL_ACTIONS as Weapon or Armor)
             let isEquippable = false;
             let rule = ALL_ACTIONS.find(r => r.name === name);
             if(rule && (rule.category === 'Weapon' || rule.category === 'Armor')) isEquippable = true;
 
             let eqBtn = isEquippable ? `<button class="btn-equip ${equipState}" onclick="toggleEquip(${idx})">${btnTxt}</button>` : '';
 
-            div.innerHTML += `
-                <div class="inv-item">
-                    <span class="inv-name">${name}</span>
-                    <div>
-                        ${eqBtn}
-                        <span class="btn-del" onclick="deleteItem(${idx})">x</span>
-                    </div>
-                </div>`;
+            div.innerHTML += `<div class="inv-item"><span class="inv-name">${name}</span><div>${eqBtn}<span class="btn-del" onclick="deleteItem(${idx})">x</span></div></div>`;
         });
     }
 
@@ -402,33 +382,16 @@
                             let div = document.createElement('div');
                             div.className = "search-res-item";
                             div.innerText = item.name;
-                            div.onclick = () => addItem(item.name);
+                            div.onmousedown = () => addItem(item.name); // onmousedown fires before onblur
                             resDiv.appendChild(div);
                         });
-                    } else {
-                        // Fallback to Magic Items if not found in Equipment
-                        fetch(`https://www.dnd5eapi.co/api/magic-items?name=${q}`)
-                        .then(r2 => r2.json())
-                        .then(data2 => {
-                            if(data2.results.length > 0) {
-                                resDiv.style.display = 'block';
-                                data2.results.forEach(item => {
-                                    let div = document.createElement('div');
-                                    div.className = "search-res-item";
-                                    div.innerText = item.name;
-                                    div.style.color = "#d4af37";
-                                    div.onclick = () => addItem(item.name);
-                                    resDiv.appendChild(div);
-                                });
-                            } else { resDiv.style.display = 'none'; }
-                        });
-                    }
+                    } else { resDiv.style.display = 'none'; }
                 });
         }, 300);
     }
 
     function addItem(name) {
-        let inv = CHAR.inventory || [];
+        let inv = CHAR.inventory ? [...CHAR.inventory] : [];
         inv.push({name: name, equip: false});
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(inv);
         document.getElementById('apiSearch').value = "";
@@ -458,7 +421,7 @@
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/coins`).set(c);
     }
 
-    // --- EXISTING LOGIC ---
+    // --- GENERIC LOGIC ---
     function updateHP() {
         const val = parseInt(document.getElementById('hpInput').value);
         db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(val);
@@ -484,39 +447,18 @@
     }
 
     function rollInit() { rollCheck("Initiative", INIT_BONUS); }
-
-    function rollAtk(name, mod) {
-        const d20 = Math.floor(Math.random()*20)+1;
-        pushChat(`Atk ${name}`, d20+mod, `${d20} + ${mod}`, 'hit', d20===20);
-    }
-
+    function rollAtk(name, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(`Atk ${name}`, d20+mod, `${d20} + ${mod}`, 'hit', d20===20); }
+    function rollCheck(lbl, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(lbl, d20+mod, `${d20} + ${mod}`); }
     function rollDmg(name, dice, mod, type) {
         if(!dice.includes('d')) return;
         let parts = dice.split('d');
-        let n = parseInt(parts[0]);
-        let sides = parseInt(parts[1]);
-        let total = 0;
-        for(let i=0; i<n; i++) total += Math.floor(Math.random()*sides)+1;
-        pushChat(`${name}`, total+mod, `[${dice}] + ${mod}`, type);
+        let n = parseInt(parts[0]); let s = parseInt(parts[1]);
+        let t = 0; for(let i=0; i<n; i++) t += Math.floor(Math.random()*s)+1;
+        pushChat(`${name}`, t+mod, `[${dice}] + ${mod}`, type);
     }
-
-    function rollCheck(lbl, mod) {
-        const d20 = Math.floor(Math.random()*20)+1;
-        pushChat(lbl, d20+mod, `${d20} + ${mod}`);
-    }
-
     function pushChat(lbl, val, formula, subType='gen', nat20=false) {
-        db.ref(`campaigns/${ROOM_ID}/chat`).push({
-            user: CHAR.name,
-            lbl: lbl,
-            val: val,
-            formula: formula,
-            sub_type: subType,
-            nat20: nat20,
-            timestamp: Date.now()
-        });
+        db.ref(`campaigns/${ROOM_ID}/chat`).push({ user: CHAR.name, lbl: lbl, val: val, formula: formula, sub_type: subType, nat20: nat20, timestamp: Date.now() });
     }
-
     function openTab(id) {
         document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
