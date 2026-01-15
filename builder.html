@@ -4,26 +4,38 @@
     <title>Character Builder</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .builder-container { max-width: 600px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+        .builder-container { max-width: 600px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
         
-        h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
-        .step { margin-bottom: 25px; }
-        label { display: block; color: #888; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; text-align: center; }
         
-        input, select, textarea { width: 100%; padding: 12px; background: #252525; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; font-size: 1em; margin-bottom: 10px; }
-        input:focus, select:focus { border-color: #8af; outline: none; }
+        /* WIZARD STEPS */
+        .step { display: none; animation: fadeIn 0.3s; }
+        .step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        label { display: block; color: #8af; font-weight: bold; margin-bottom: 5px; margin-top: 15px; font-size: 0.9em; }
+        input, select, textarea { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        input:focus, select:focus { border-color: #e51e25; outline: none; }
         
+        /* STAT GRID */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .stat-box { text-align: center; background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #333; }
-        .stat-box label { margin-bottom: 0; color: #8af; }
-        .stat-box input { text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 0; border: none; background: transparent; }
+        .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
+        .stat-box label { margin: 0 0 5px 0; color: #aaa; }
+        .stat-box input { text-align: center; font-weight: bold; font-size: 1.2em; border: none; background: transparent; padding: 5px; }
+        .bonus-badge { font-size: 0.8em; color: #4f4; display: block; height: 1.2em; }
+
+        /* SKILLS */
+        .auto-skill { background: #2a7a3a; color: white; padding: 5px 10px; border-radius: 4px; margin-bottom: 5px; display: inline-block; font-size: 0.9em; }
+        .skill-select-group { margin-bottom: 10px; }
+
+        /* FOOTER NAV */
+        .nav-btns { margin-top: auto; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
+        .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em; transition: 0.2s; }
+        .btn-next { background: #e51e25; color: white; } .btn-next:hover { background: #ff3b3b; }
+        .btn-prev { background: #444; color: white; } .btn-prev:hover { background: #555; }
         
-        .btn-save { width: 100%; padding: 15px; background: #2b5fa3; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 20px; }
-        .btn-save:hover { background: #4a8fdd; }
-        
-        .load-box { background: #222; padding: 10px; margin-bottom: 20px; border-radius: 4px; text-align: center; border: 1px dashed #444; }
-        .load-box a { color: #8af; text-decoration: none; font-weight: bold; display: block; padding: 5px; }
+        .summary-box { background: #252525; padding: 10px; border-radius: 4px; font-size: 0.9em; color: #ccc; margin-top: 5px; }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -34,145 +46,268 @@
 <body>
 
 <div class="builder-container">
-    <h1>Character Builder</h1>
+    <h1 id="headerTitle">Basic Info</h1>
     
-    <div id="existingChars" class="load-box" style="display:none;">
-        <label>Resume Character:</label>
-        <div id="charLinks"></div>
-    </div>
-
-    <div class="step">
+    <div id="step1" class="step active">
         <label>Character Name</label>
         <input type="text" id="charName" placeholder="e.g. Valeros">
+        
+        <label>Race</label>
+        <select id="charRace" onchange="updateRaceInfo()"></select>
+        <div id="raceSummary" class="summary-box"></div>
+
+        <label>Class</label>
+        <select id="charClass" onchange="updateClassInfo()"></select>
+        <div id="classSummary" class="summary-box"></div>
     </div>
 
-    <div class="step">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-                <label>Race</label>
-                <select id="charRace"></select>
-            </div>
-            <div>
-                <label>Class</label>
-                <select id="charClass"></select>
-            </div>
-        </div>
-    </div>
-
-    <div class="step">
-        <label>Ability Scores (Base)</label>
+    <div id="step2" class="step">
+        <div style="text-align:center; color:#888; margin-bottom:15px;">Enter Base Stats (before racial bonuses)</div>
         <div class="stat-grid">
-            <div class="stat-box"><label>STR</label><input type="number" id="base_STR" value="10"></div>
-            <div class="stat-box"><label>DEX</label><input type="number" id="base_DEX" value="10"></div>
-            <div class="stat-box"><label>CON</label><input type="number" id="base_CON" value="10"></div>
-            <div class="stat-box"><label>INT</label><input type="number" id="base_INT" value="10"></div>
-            <div class="stat-box"><label>WIS</label><input type="number" id="base_WIS" value="10"></div>
-            <div class="stat-box"><label>CHA</label><input type="number" id="base_CHA" value="10"></div>
+            <div class="stat-box"><label>STR</label><input type="number" id="base_STR" value="10" onchange="calcStats()"><span id="bon_STR" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>DEX</label><input type="number" id="base_DEX" value="10" onchange="calcStats()"><span id="bon_DEX" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>CON</label><input type="number" id="base_CON" value="10" onchange="calcStats()"><span id="bon_CON" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>INT</label><input type="number" id="base_INT" value="10" onchange="calcStats()"><span id="bon_INT" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>WIS</label><input type="number" id="base_WIS" value="10" onchange="calcStats()"><span id="bon_WIS" class="bonus-badge"></span></div>
+            <div class="stat-box"><label>CHA</label><input type="number" id="base_CHA" value="10" onchange="calcStats()"><span id="bon_CHA" class="bonus-badge"></span></div>
         </div>
-        <div style="text-align:center; font-size:0.8em; color:#666; margin-top:5px;">Racial bonuses will be applied automatically.</div>
+        <div class="summary-box" style="margin-top:20px; text-align:center;">
+            <strong>Total HP:</strong> <span id="calcHP" style="color:#4f4; font-weight:bold;"></span>
+        </div>
     </div>
 
-    <div class="step">
-        <label>Roleplay Details</label>
-        <input type="text" id="charAlign" placeholder="Alignment (e.g. Chaotic Good)">
-        <textarea id="charBack" placeholder="Backstory / Notes" rows="3"></textarea>
+    <div id="step3" class="step">
+        <label>Racial Skills (Auto-Added)</label>
+        <div id="racialSkillsArea"></div>
+        
+        <label>Class Skills (Choose <span id="skillCount">2</span>)</label>
+        <div id="skillSelectArea"></div>
     </div>
 
-    <button class="btn-save" onclick="saveCharacter()">Create & Play</button>
+    <div id="step4" class="step">
+        <label>Alignment</label>
+        <input type="text" id="charAlign" placeholder="e.g. Chaotic Good">
+        
+        <label>Backstory / Notes</label>
+        <textarea id="charBack" rows="4"></textarea>
+        
+        <div class="summary-box" style="margin-top:20px;">
+            <div><strong>Starting Gear:</strong> <span id="gearSummary"></span></div>
+            <div style="margin-top:5px;"><strong>Starting Spells:</strong> <span id="spellSummary"></span></div>
+        </div>
+    </div>
+
+    <div class="nav-btns">
+        <button class="btn btn-prev" onclick="changeStep(-1)" id="btnPrev" style="visibility:hidden;">Back</button>
+        <button class="btn btn-next" onclick="changeStep(1)" id="btnNext">Next</button>
+    </div>
 </div>
 
 <script>
+    // --- SETUP ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     if(!ROOM_ID) window.location.href = "index.html";
 
-    // --- POPULATE DROPDOWNS ---
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    // --- POPULATION ---
     const raceSel = document.getElementById('charRace');
     Object.keys(RACES).sort().forEach(r => {
-        let opt = document.createElement('option');
-        opt.value = r; opt.innerText = r;
-        raceSel.appendChild(opt);
+        let opt = document.createElement('option'); opt.value = r; opt.innerText = r; raceSel.appendChild(opt);
     });
 
     const classSel = document.getElementById('charClass');
     Object.keys(CLASSES).sort().forEach(c => {
-        let opt = document.createElement('option');
-        opt.value = c; opt.innerText = c;
-        classSel.appendChild(opt);
+        let opt = document.createElement('option'); opt.value = c; opt.innerText = c; classSel.appendChild(opt);
     });
 
-    // --- CHECK FOR EXISTING CHARACTERS ---
-    // If a player joins a room, show characters already in that room so they can rejoin.
-    firebase.database().ref(`campaigns/${ROOM_ID}/characters`).once('value', snap => {
-        if(snap.exists()) {
-            document.getElementById('existingChars').style.display = 'block';
-            const div = document.getElementById('charLinks');
-            snap.forEach(child => {
-                let c = child.val();
-                let a = document.createElement('a');
-                a.href = `sheet.html?room=${ROOM_ID}&id=${child.key}`;
-                a.innerText = `${c.name} (${c.race} ${c.class})`;
-                div.appendChild(a);
-            });
+    // Initialize UI
+    updateRaceInfo();
+    updateClassInfo();
+    calcStats();
+
+    // --- LOGIC ---
+    
+    function updateRaceInfo() {
+        const r = RACES[raceSel.value];
+        let txt = "Bonuses: ";
+        for(let s in r.bonuses) txt += `${s} +${r.bonuses[s]} `;
+        document.getElementById('raceSummary').innerText = txt;
+        calcStats(); // Recalc bonuses
+    }
+
+    function updateClassInfo() {
+        const c = CLASSES[classSel.value];
+        document.getElementById('classSummary').innerText = `Hit Die: d${c.hit_die} | Saves: ${c.saves.join(', ')}`;
+        calcStats(); // Recalc HP
+        renderSkillSelectors();
+    }
+
+    function calcStats() {
+        const rData = RACES[raceSel.value];
+        const cData = CLASSES[classSel.value];
+        const stats = ['STR','DEX','CON','INT','WIS','CHA'];
+        
+        let conTotal = 10;
+
+        stats.forEach(s => {
+            let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
+            let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
+            let total = base + bonus;
+            let mod = Math.floor((total - 10) / 2);
+            
+            // UI Update
+            let badge = document.getElementById(`bon_${s}`);
+            badge.innerText = bonus > 0 ? `+${bonus} Race` : "";
+            
+            if(s === 'CON') conTotal = total;
+        });
+
+        // HP Calc
+        let conMod = Math.floor((conTotal - 10) / 2);
+        let hp = cData.hit_die + conMod + (rData.hp_bonus || 0);
+        document.getElementById('calcHP').innerText = hp;
+    }
+
+    function renderSkillSelectors() {
+        const cData = CLASSES[classSel.value];
+        const rData = RACES[raceSel.value];
+        
+        // Racial Skills
+        const rArea = document.getElementById('racialSkillsArea');
+        rArea.innerHTML = "";
+        const rSkills = rData.skills || [];
+        if(rSkills.length === 0) rArea.innerHTML = "<span style='color:#555; font-style:italic;'>None</span>";
+        else rSkills.forEach(s => { rArea.innerHTML += `<div class="auto-skill">${s}</div>`; });
+
+        // Class Skills
+        const cArea = document.getElementById('skillSelectArea');
+        cArea.innerHTML = "";
+        
+        // Determine number of skills (Default 2 if missing from game_rules.js)
+        // V82 game_rules.py had num_skills, we check if game_rules.js has it.
+        // Fallback: Rogue=4, Bard/Ranger=3, else 2.
+        let count = cData.num_skills;
+        if(!count) {
+            if(classSel.value === "Rogue") count = 4;
+            else if(classSel.value === "Bard" || classSel.value === "Ranger") count = 3;
+            else count = 2;
         }
-    });
+        document.getElementById('skillCount').innerText = count;
 
-    // --- SAVE LOGIC ---
+        const options = cData.skill_options || []; // V82 rules
+        // Fallback options if game_rules.js is old V79 version without skill_options
+        const fallbackOptions = Object.keys(SKILLS_LIST); 
+        const validOptions = options.length > 0 ? options : fallbackOptions;
+
+        for(let i=0; i<count; i++) {
+            let sel = document.createElement('select');
+            sel.className = "skill-select";
+            sel.style.marginBottom = "10px";
+            validOptions.forEach(sk => {
+                // Don't show skills already granted by race
+                if(!rSkills.includes(sk)) {
+                    let opt = document.createElement('option');
+                    opt.value = sk; opt.innerText = sk;
+                    sel.appendChild(opt);
+                }
+            });
+            cArea.appendChild(sel);
+        }
+        
+        // Update Gear Summary for Step 4
+        let gear = [...(cData.items || cData.starting_gear || []), "Rations (1 Day)", "Torch"];
+        document.getElementById('gearSummary').innerText = gear.join(", ");
+        
+        let spells = [...(rData.auto_spells || []), ...(cData.auto_spells || [])];
+        document.getElementById('spellSummary').innerText = spells.length > 0 ? spells.join(", ") : "None";
+    }
+
+    // --- NAVIGATION & SAVE ---
+    function changeStep(dir) {
+        // Validation Step 1
+        if(currentStep === 1 && dir === 1) {
+            if(!document.getElementById('charName').value) return alert("Please enter a name.");
+        }
+
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        currentStep += dir;
+        
+        if(currentStep > totalSteps) {
+            saveCharacter();
+            return;
+        }
+        
+        document.getElementById(`step${currentStep}`).classList.add('active');
+        
+        // Button State
+        document.getElementById('btnPrev').style.visibility = (currentStep === 1) ? 'hidden' : 'visible';
+        document.getElementById('btnNext').innerText = (currentStep === totalSteps) ? 'Create Character' : 'Next';
+        
+        // Titles
+        const titles = ["", "Identity", "Ability Scores", "Skills", "Finalize"];
+        document.getElementById('headerTitle').innerText = titles[currentStep];
+    }
+
     function saveCharacter() {
-        const name = document.getElementById('charName').value;
-        if(!name) return alert("Please enter a name!");
+        document.getElementById('btnNext').disabled = true;
+        document.getElementById('btnNext').innerText = "Saving...";
 
-        const raceName = raceSel.value;
-        const className = classSel.value;
+        const rData = RACES[raceSel.value];
+        const cData = CLASSES[classSel.value];
         
-        // 1. Calculate Stats (Base + Race Bonus)
-        const raceData = RACES[raceName];
-        const classData = CLASSES[className];
-        
+        // Stats
         let stats = {};
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
             let base = parseInt(document.getElementById(`base_${s}`).value) || 10;
-            let bonus = (raceData.bonuses && raceData.bonuses[s]) || 0;
+            let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             stats[s] = base + bonus;
         });
 
-        // 2. Calculate HP
+        // HP
         let conMod = Math.floor((stats['CON'] - 10) / 2);
-        let hp = classData.hit_die + conMod + (raceData.hp_bonus || 0);
+        let hp = cData.hit_die + conMod + (rData.hp_bonus || 0);
 
-        // 3. Default Inventory
-        let inventory = [...(classData.items || []), "Rations (1 day)", "Torch"];
+        // Skills
+        let finalSkills = [...(rData.skills || [])];
+        document.querySelectorAll('.skill-select').forEach(sel => {
+            if(!finalSkills.includes(sel.value)) finalSkills.push(sel.value);
+        });
 
-        // 4. Default Spells (if any)
-        // (Logic to auto-add class/race spells could go here, for now we leave it clean)
+        // Items & Spells
+        let items = [...(cData.items || cData.starting_gear || []), "Rations", "Torch", "Waterskin"];
+        
+        // Auto-add spells to inventory for rolling purposes (Firebase sheet logic)
+        let autoSpells = [...(rData.auto_spells || []), ...(cData.auto_spells || [])];
+        // Only add if they exist in game_rules (Spells usually have 'dice' data there)
+        autoSpells.forEach(s => items.push(s)); // In V80 sheet, spells are just items with category='Spell'
 
-        // 5. Save to Firebase
+        // Save
         const charRef = firebase.database().ref(`campaigns/${ROOM_ID}/characters`).push();
         charRef.set({
-            name: name,
-            race: raceName,
-            class: className,
+            name: document.getElementById('charName').value,
+            race: raceSel.value,
+            class: classSel.value,
+            alignment: document.getElementById('charAlign').value,
+            backstory: document.getElementById('charBack').value,
             stats: stats,
             hp_curr: hp,
             hp_max: hp,
-            alignment: document.getElementById('charAlign').value,
-            backstory: document.getElementById('charBack').value,
-            inventory: inventory,
-            saves: classData.saves || [],
-            skills: [], // Could add skill selection step, but simpler to let them roll raw stats
+            skills: finalSkills,
+            inventory: items,
             slots_used: {},
             charges: {}
         }).then(() => {
-            // Also add to Combat Tracker automatically
+            // Add to combat tracker
             firebase.database().ref(`campaigns/${ROOM_ID}/encounters`).push({
-                name: name,
+                name: document.getElementById('charName').value,
                 hp: hp,
                 max_hp: hp,
                 init: 0,
                 type: 'player'
             });
-            
-            // Redirect
             window.location.href = `sheet.html?room=${ROOM_ID}&id=${charRef.key}`;
         });
     }
