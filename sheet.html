@@ -7,7 +7,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="config.js"></script>
     <script src="game_rules.js"></script>
-    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; display:flex; flex-direction:column; height:100vh; box-sizing:border-box;}
         
@@ -165,6 +164,11 @@
 <div id="chat"></div>
 
 <script>
+    // --- SAFETY CHECK ---
+    // In case game_rules.js fails to load
+    if (typeof ALL_ACTIONS === 'undefined') window.ALL_ACTIONS = [];
+    if (typeof ALL_SPELLS === 'undefined') window.ALL_SPELLS = [];
+
     // --- SETUP ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
@@ -217,7 +221,7 @@
         document.getElementById('hpInput').value = CHAR.hp_curr;
         document.getElementById('hpMax').innerText = CHAR.hp_max;
 
-        PROF = 2; // Simplified level
+        PROF = 2; 
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
             STATS[s] = Math.floor((CHAR.stats[s] - 10) / 2);
         });
@@ -226,95 +230,28 @@
             document.getElementById(`coin_${c}`).value = CHAR.coins[c] || 0;
         });
 
-        // AC Calc
+        // Init/AC Calc (Simple)
         let ac = 10 + STATS['DEX'];
-        let shieldBonus = 0;
-        let hasArmor = false;
-
         CHAR.inventory.forEach(item => {
-            if (item.equip) {
-                let rule = ALL_ACTIONS.find(r => r.name === item.name);
-                if (rule && rule.category === 'Armor') {
-                    if (rule.armor_type === 'Shield') shieldBonus += rule.ac;
-                    else {
-                        hasArmor = true;
-                        if (rule.armor_type === 'Light') ac = rule.ac + STATS['DEX'];
-                        else if (rule.armor_type === 'Medium') ac = rule.ac + Math.min(STATS['DEX'], 2);
-                        else if (rule.armor_type === 'Heavy') ac = rule.ac;
-                    }
+            if(item.equip) {
+                let r = ALL_ACTIONS.find(x => x.name === item.name);
+                if(r && r.category==='Armor') {
+                    if(r.armor_type==='Shield') ac+=r.ac;
+                    else if(r.armor_type==='Light') ac=r.ac+STATS['DEX'];
+                    else if(r.armor_type==='Medium') ac=r.ac+Math.min(STATS['DEX'],2);
+                    else if(r.armor_type==='Heavy') ac=r.ac;
                 }
             }
         });
-
-        if (!hasArmor && shieldBonus === 0) {
-            if (CHAR.class === "Monk") ac = 10 + STATS['DEX'] + STATS['WIS'];
-            if (CHAR.class === "Barbarian") ac = 10 + STATS['DEX'] + STATS['CON'];
-        }
-        document.getElementById('dispAC').innerText = ac + shieldBonus;
-
+        document.getElementById('dispAC').innerText = ac;
         INIT_BONUS = STATS['DEX'];
         document.getElementById('dispInit').innerText = (INIT_BONUS>=0?"+":"") + INIT_BONUS;
 
-        renderActions();
-        renderSkills();
-        renderSlots();
-        renderInv();
-    }
-
-    function renderActions() {
-        const atkDiv = document.getElementById('attackList');
-        const spellDiv = document.getElementById('spellList');
-        atkDiv.innerHTML = ""; spellDiv.innerHTML = "";
-
-        // 1. ALWAYS ADD UNARMED STRIKE (Hardcoded to prevent missing rule error)
-        let unarmed = {
-            name: "Unarmed Strike", dice: "1", type: "Bludgeoning", stat: "STR", category: "Simple Melee", desc: "Basic melee strike"
-        };
-        renderActionCard(unarmed, atkDiv, true); // Force render
-
-        // 2. Render Inventory Items
-        CHAR.inventory.forEach(item => {
-            // Find rule, or create dummy if missing to prevent crash
-            let data = ALL_ACTIONS.find(a => a.name === item.name);
-            if(!data) {
-                // Fallback for non-rule items (like Rations), we skip them in Action list usually
-                // BUT if it's a legacy spell/feature, we look there too
-                // For safety, we only render if it has an action type in rules
-                return; 
-            }
-
-            // Logic: Weapons must be equipped. Spells/Features always show.
-            if (data.category !== "Spell" && data.category !== "Feature" && !item.equip) return;
-
-            if (data.category === "Spell") renderActionCard(data, spellDiv);
-            else renderActionCard(data, atkDiv);
-        });
-    }
-
-    function renderActionCard(data, container, isDefault=false) {
-        let useStat = data.stat || "STR";
-        if(data.category === "Spell") useStat = "INT"; 
-        let mod = STATS[useStat] || 0;
-        let hitBonus = mod + PROF;
-        let dmgStr = (data.dice && data.dice.includes('d')) ? `${data.dice} ${mod>=0?'+':''}${mod}` : data.dice;
-
-        const card = document.createElement('div');
-        card.className = "card " + (data.category === "Spell" ? "card-spell" : "");
-        
-        let btns = "";
-        if(data.category === "Spell" && data.type === "Healing") {
-            btns = `<button class="roll-btn btn-heal" onclick="rollDmg('${data.name}', '${data.dice}', ${mod}, 'heal')">💚 Heal (${dmgStr})</button>`;
-        } else if(data.dice && (data.dice.includes('d') || !isNaN(data.dice))) { // Handle flat dmg too
-            btns = `<div class="roll-btn-row">
-                <button class="roll-btn btn-hit" onclick="rollAtk('${data.name}', ${hitBonus})">⚔️ Hit (${hitBonus>=0?'+':''}${hitBonus})</button>
-                <button class="roll-btn btn-dmg" onclick="rollDmg('${data.name}', '${data.dice}', ${mod}, 'dmg')">🩸 Dmg (${dmgStr})</button>
-            </div>`;
-        } else {
-            btns = `<button class="roll-btn btn-effect" onclick="pushChat('${data.name}', 'Used Feature', '-')">Use Feature</button>`;
-        }
-
-        card.innerHTML = `<div class="card-header"><span class="card-title">${data.name}</span><span class="card-meta">${data.type}</span></div><div class="card-desc">${data.desc || ''}</div>${btns}`;
-        container.appendChild(card);
+        // CRITICAL: Render Inventory FIRST so user can see items even if Actions crash
+        try { renderInv(); } catch(e) { console.error("Inv Render Error", e); }
+        try { renderActions(); } catch(e) { console.error("Action Render Error", e); }
+        try { renderSkills(); } catch(e) { console.error("Skill Render Error", e); }
+        try { renderSlots(); } catch(e) { console.error("Slot Render Error", e); }
     }
 
     function renderInv() {
@@ -331,15 +268,65 @@
             let equipState = item.equip ? "equipped" : "";
             let btnTxt = item.equip ? "Unequip" : "Equip";
             
-            // Check if equippable (Logic: If it's in the rules as a weapon/armor)
+            // Check equippable safety
             let isEquippable = false;
             let rule = ALL_ACTIONS.find(r => r.name === name);
-            if(rule && (rule.category === 'Weapon' || rule.category === 'Armor' || rule.category === 'Simple Melee' || rule.category === 'Martial Melee' || rule.category.includes('Ranged'))) isEquippable = true;
+            if(rule && (rule.category === 'Weapon' || rule.category === 'Armor' || rule.category.includes('Melee') || rule.category.includes('Ranged'))) isEquippable = true;
 
             let eqBtn = isEquippable ? `<button class="btn-equip ${equipState}" onclick="toggleEquip(${idx})">${btnTxt}</button>` : '';
 
             div.innerHTML += `<div class="inv-item"><span class="inv-name">${name}</span><div>${eqBtn}<span class="btn-del" onclick="deleteItem(${idx})">x</span></div></div>`;
         });
+    }
+
+    function renderActions() {
+        const atkDiv = document.getElementById('attackList');
+        const spellDiv = document.getElementById('spellList');
+        atkDiv.innerHTML = ""; spellDiv.innerHTML = "";
+
+        // 1. Force Unarmed
+        let unarmed = { name: "Unarmed Strike", dice: "1", type: "Bludgeoning", stat: "STR", category: "Simple Melee" };
+        renderActionCard(unarmed, atkDiv);
+
+        // 2. Render Items
+        CHAR.inventory.forEach(item => {
+            let data = ALL_ACTIONS.find(a => a.name === item.name);
+            if(!data && ALL_SPELLS) data = ALL_SPELLS.find(a => a.name === item.name);
+            
+            if(!data) return; 
+
+            // Weapon Logic
+            if (data.category !== "Spell" && data.category !== "Feature" && !item.equip) return;
+
+            if (data.category === "Spell") renderActionCard(data, spellDiv);
+            else renderActionCard(data, atkDiv);
+        });
+    }
+
+    function renderActionCard(data, container) {
+        let useStat = data.stat || "STR";
+        if(data.category === "Spell") useStat = "INT"; 
+        let mod = STATS[useStat] || 0;
+        let hitBonus = mod + PROF;
+        let dmgStr = (data.dice && data.dice.includes('d')) ? `${data.dice} ${mod>=0?'+':''}${mod}` : data.dice;
+
+        const card = document.createElement('div');
+        card.className = "card " + (data.category === "Spell" ? "card-spell" : "");
+        
+        let btns = "";
+        if(data.category === "Spell" && data.type === "Healing") {
+            btns = `<button class="roll-btn btn-heal" onclick="rollDmg('${data.name}', '${data.dice}', ${mod}, 'heal')">💚 Heal (${dmgStr})</button>`;
+        } else if(data.dice && (data.dice.includes('d') || !isNaN(data.dice))) {
+            btns = `<div class="roll-btn-row">
+                <button class="roll-btn btn-hit" onclick="rollAtk('${data.name}', ${hitBonus})">⚔️ Hit (${hitBonus>=0?'+':''}${hitBonus})</button>
+                <button class="roll-btn btn-dmg" onclick="rollDmg('${data.name}', '${data.dice}', ${mod}, 'dmg')">🩸 Dmg (${dmgStr})</button>
+            </div>`;
+        } else {
+            btns = `<button class="roll-btn btn-effect" onclick="pushChat('${data.name}', 'Used Feature', '-')">Use Feature</button>`;
+        }
+
+        card.innerHTML = `<div class="card-header"><span class="card-title">${data.name}</span><span class="card-meta">${data.type}</span></div><div class="card-desc">${data.desc || ''}</div>${btns}`;
+        container.appendChild(card);
     }
 
     // --- EQUIPMENT SEARCH ---
@@ -364,7 +351,6 @@
                             resDiv.appendChild(div);
                         });
                     } else { 
-                        // Fallback Magic Items
                         fetch(`https://www.dnd5eapi.co/api/magic-items?name=${q}`)
                         .then(r2 => r2.json()).then(d2 => {
                             if(d2.results.length>0) {
@@ -439,7 +425,6 @@
     function rollCheck(lbl, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(lbl, d20+mod, `${d20} + ${mod}`); }
     function rollDmg(name, dice, mod, type) {
         let total = 0;
-        // Simple Parser
         if(!isNaN(dice)) total = parseInt(dice);
         else if(dice.includes('d')) {
             let parts = dice.split('d');
