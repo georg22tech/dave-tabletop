@@ -10,47 +10,203 @@ const SKILLS_LIST = {
 };
 
 // --- RACES ---
-const RACES = {
-    "Human": { bonuses: {STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1}, hp_bonus: 0 },
-    "High Elf": { bonuses: {DEX: 2, INT: 1}, hp_bonus: 0 },
-    "Wood Elf": { bonuses: {DEX: 2, WIS: 1}, hp_bonus: 0 },
-    "Drow": { bonuses: {DEX: 2, CHA: 1}, hp_bonus: 0 },
-    "Hill Dwarf": { bonuses: {CON: 2, WIS: 1}, hp_bonus: 1 },
-    "Mountain Dwarf": { bonuses: {STR: 2, CON: 2}, hp_bonus: 0 },
-    "Lightfoot Halfling": { bonuses: {DEX: 2, CHA: 1}, hp_bonus: 0 },
-    "Stout Halfling": { bonuses: {DEX: 2, CON: 1}, hp_bonus: 0 },
-    "Dragonborn": { bonuses: {STR: 2, CHA: 1}, hp_bonus: 0 },
-    "Tiefling": { bonuses: {CHA: 2, INT: 1}, hp_bonus: 0 },
-    "Half-Orc": { bonuses: {STR: 2, CON: 1}, hp_bonus: 0 },
-    "Gnome (Forest)": { bonuses: {INT: 2, DEX: 1}, hp_bonus: 0 },
-    "Gnome (Rock)": { bonuses: {INT: 2, CON: 1}, hp_bonus: 0 },
-    "Half-Elf": { bonuses: {CHA: 2, DEX: 1, CON: 1}, hp_bonus: 0 },
-    "Goliath": { bonuses: {STR: 2, CON: 1}, hp_bonus: 0 },
-    "Firbolg": { bonuses: {WIS: 2, STR: 1}, hp_bonus: 0 },
-    "Tabaxi": { bonuses: {DEX: 2, CHA: 1}, hp_bonus: 0 },
-    "Tortle": { bonuses: {STR: 2, WIS: 1}, hp_bonus: 0 },
-    "Warforged": { bonuses: {CON: 2, STR: 1}, hp_bonus: 0 },
-    "Aasimar": { bonuses: {CHA: 2}, hp_bonus: 0 },
-    "Genasi (Fire)": { bonuses: {CON: 2, INT: 1}, hp_bonus: 0 },
-    "Genasi (Water)": { bonuses: {CON: 2, WIS: 1}, hp_bonus: 0 }
+const CLASSES = {
+    "Artificer": { 
+        hit_die: 8, saves: ["CON", "INT"], items: ["Light Crossbow", "Scale Mail", "Thieves' Tools"], 
+        features: [[1, "Magical Tinkering"], [2, "Infuse Item"]],
+        subclasses: {
+            "Alchemist": { features: [[3, "Experimental Elixir"]] },
+            "Armorer": { features: [[3, "Arcane Armor"], [3, "Thunder Gauntlets"]] },
+            "Artillerist": { features: [[3, "Eldritch Cannon"]] },
+            "Battle Smith": { features: [[3, "Steel Defender"], [3, "Battle Ready"]] }
+        }
+    },
+    "Barbarian": { 
+        hit_die: 12, saves: ["STR", "CON"], items: ["Greataxe", "Handaxe", "Javelin"],
+        features: [[1, "Rage"], [1, "Unarmored Defense"], [2, "Reckless Attack"], [5, "Extra Attack"]],
+        subclasses: {
+            "Ancestral Guardian": { features: [[3, "Ancestral Protectors"]] },
+            "Battlerager": { features: [[3, "Battlerager Armor"]] },
+            "Beast": { features: [[3, "Form of the Beast"]] },
+            "Berserker": { features: [[3, "Frenzy (Bonus Attack)"]] },
+            "Storm Herald": { features: [[3, "Storm Aura"]] },
+            "Totem Warrior": { features: [[3, "Spirit Seeker"], [3, "Totem Spirit"]] },
+            "Wild Magic": { features: [[3, "Wild Surge"]] },
+            "Zealot": { features: [[3, "Divine Fury"]] }
+        }
+    },
+    "Bard": { 
+        hit_die: 8, saves: ["DEX", "CHA"], items: ["Rapier", "Leather Armor", "Dagger"], num_skills: 3,
+        features: [[1, "Bardic Inspiration"], [2, "Jack of All Trades"], [3, "Expertise"]],
+        subclasses: {
+            "Creation": { features: [[3, "Mote of Potential"]] },
+            "Eloquence": { features: [[3, "Silver Tongue"]] },
+            "Glamour": { features: [[3, "Mantle of Inspiration"]] },
+            "Lore": { features: [[3, "Cutting Words"]] },
+            "Spirits": { features: [[3, "Tales from Beyond"]] },
+            "Swords": { features: [[3, "Blade Flourish"]] },
+            "Valor": { features: [[3, "Combat Inspiration"]] },
+            "Whispers": { features: [[3, "Psychic Blades"]] }
+        }
+    },
+    "Cleric": { 
+        hit_die: 8, saves: ["WIS", "CHA"], items: ["Mace", "Scale Mail", "Shield"],
+        features: [[2, "Channel Divinity"], [5, "Destroy Undead"]],
+        subclasses: {
+            "Arcana": { features: [[1, "Arcane Initiate"]] },
+            "Death": { features: [[1, "Reaper"]] },
+            "Forge": { features: [[1, "Blessing of the Forge"]] },
+            "Grave": { features: [[1, "Circle of Mortality"]] },
+            "Knowledge": { features: [[1, "Blessings of Knowledge"]] },
+            "Life": { features: [[1, "Disciple of Life"]] },
+            "Light": { features: [[1, "Warding Flare"]] },
+            "Nature": { features: [[1, "Acolyte of Nature"]] },
+            "Order": { features: [[1, "Voice of Authority"]] },
+            "Peace": { features: [[1, "Emboldening Bond"]] },
+            "Tempest": { features: [[1, "Wrath of the Storm"]] },
+            "Trickery": { features: [[1, "Blessing of the Trickster"]] },
+            "Twilight": { features: [[1, "Eyes of Night"], [1, "Vigilant Blessing"]] },
+            "War": { features: [[1, "War Priest"]] }
+        }
+    },
+    "Druid": { 
+        hit_die: 8, saves: ["INT", "WIS"], items: ["Scimitar", "Leather Armor", "Shield"],
+        features: [[1, "Druidic"], [2, "Wild Shape"]],
+        subclasses: {
+            "Dreams": { features: [[2, "Balm of the Summer Court"]] },
+            "Land": { features: [[2, "Natural Recovery"]] },
+            "Moon": { features: [[2, "Combat Wild Shape"]] },
+            "Shepherd": { features: [[2, "Spirit Totem"]] },
+            "Spores": { features: [[2, "Symbiotic Entity"]] },
+            "Stars": { features: [[2, "Starry Form"]] },
+            "Wildfire": { features: [[2, "Summon Wildfire Spirit"]] }
+        }
+    },
+    "Fighter": { 
+        hit_die: 10, saves: ["STR", "CON"], items: ["Chain Mail", "Longsword", "Shield"],
+        features: [[1, "Fighting Style"], [1, "Second Wind"], [2, "Action Surge"], [5, "Extra Attack"]],
+        subclasses: {
+            "Arcane Archer": { features: [[3, "Arcane Shot"]] },
+            "Banneret": { features: [[3, "Rallying Cry"]] },
+            "Battle Master": { features: [[3, "Combat Superiority"]] },
+            "Cavalier": { features: [[3, "Unwavering Mark"]] },
+            "Champion": { features: [[3, "Improved Critical"]] },
+            "Echo Knight": { features: [[3, "Manifest Echo"]] },
+            "Eldritch Knight": { features: [[3, "Spellcasting (EK)"], [3, "Weapon Bond"]] },
+            "Psi Warrior": { features: [[3, "Psionic Power"]] },
+            "Rune Knight": { features: [[3, "Rune Carver"]] },
+            "Samurai": { features: [[3, "Fighting Spirit"]] }
+        }
+    },
+    "Monk": { 
+        hit_die: 8, saves: ["STR", "DEX"], items: ["Shortsword", "Dart"],
+        features: [[1, "Unarmored Defense"], [1, "Martial Arts"], [2, "Ki"], [2, "Flurry of Blows"], [5, "Stunning Strike"]],
+        subclasses: {
+            "Ascendant Dragon": { features: [[3, "Draconic Disciple"]] },
+            "Astral Self": { features: [[3, "Arms of the Astral Self"]] },
+            "Drunken Master": { features: [[3, "Drunken Technique"]] },
+            "Four Elements": { features: [[3, "Disciple of the Elements"]] },
+            "Kensei": { features: [[3, "Kensei Weapons"], [3, "Agile Parry"]] },
+            "Long Death": { features: [[3, "Touch of Death"]] },
+            "Mercy": { features: [[3, "Hand of Healing"], [3, "Hand of Harm"]] },
+            "Open Hand": { features: [[3, "Open Hand Technique"]] },
+            "Shadow": { features: [[3, "Shadow Arts"]] },
+            "Sun Soul": { features: [[3, "Radiant Sun Bolt"]] }
+        }
+    },
+    "Paladin": { 
+        hit_die: 10, saves: ["WIS", "CHA"], items: ["Longsword", "Shield", "Chain Mail"],
+        features: [[1, "Divine Sense"], [1, "Lay on Hands"], [2, "Divine Smite"], [5, "Extra Attack"]],
+        subclasses: {
+            "Ancients": { features: [[3, "Nature's Wrath"]] },
+            "Conquest": { features: [[3, "Conquering Presence"]] },
+            "Crown": { features: [[3, "Champion Challenge"]] },
+            "Devotion": { features: [[3, "Sacred Weapon"]] },
+            "Glory": { features: [[3, "Peerless Athlete"]] },
+            "Redemption": { features: [[3, "Emissary of Peace"]] },
+            "Vengeance": { features: [[3, "Vow of Enmity"]] },
+            "Watchers": { features: [[3, "Watcher's Will"]] },
+            "Oathbreaker": { features: [[3, "Control Undead"]] }
+        }
+    },
+    "Ranger": { 
+        hit_die: 10, saves: ["STR", "DEX"], items: ["Scale Mail", "Shortsword", "Longbow"], num_skills: 3,
+        features: [[1, "Favored Enemy"], [2, "Fighting Style"], [2, "Spellcasting"], [5, "Extra Attack"]],
+        subclasses: {
+            "Beast Master": { features: [[3, "Ranger's Companion"]] },
+            "Drake Warden": { features: [[3, "Drake Companion"]] },
+            "Fey Wanderer": { features: [[3, "Dreadful Strikes"]] },
+            "Gloom Stalker": { features: [[3, "Dread Ambusher"]] },
+            "Horizon Walker": { features: [[3, "Planar Warrior"]] },
+            "Hunter": { features: [[3, "Colossus Slayer"]] },
+            "Monster Slayer": { features: [[3, "Hunter's Sense"]] },
+            "Swarmkeeper": { features: [[3, "Gathered Swarm"]] }
+        }
+    },
+    "Rogue": { 
+        hit_die: 8, saves: ["DEX", "INT"], items: ["Rapier", "Shortbow", "Leather Armor"], num_skills: 4,
+        features: [[1, "Sneak Attack"], [1, "Thieves' Cant"], [2, "Cunning Action"], [5, "Uncanny Dodge"]],
+        subclasses: {
+            "Arcane Trickster": { features: [[3, "Spellcasting (AT)"]] },
+            "Assassin": { features: [[3, "Assassinate"]] },
+            "Inquisitive": { features: [[3, "Ear for Deceit"]] },
+            "Mastermind": { features: [[3, "Master of Tactics"]] },
+            "Phantom": { features: [[3, "Whispers of the Dead"]] },
+            "Scout": { features: [[3, "Skirmisher"]] },
+            "Soulknife": { features: [[3, "Psychic Blades"]] },
+            "Swashbuckler": { features: [[3, "Fancy Footwork"]] },
+            "Thief": { features: [[3, "Fast Hands"]] }
+        }
+    },
+    "Sorcerer": { 
+        hit_die: 6, saves: ["CON", "CHA"], items: ["Light Crossbow", "Dagger"],
+        features: [[1, "Spellcasting"], [2, "Font of Magic"], [3, "Metamagic"]],
+        subclasses: {
+            "Aberrant Mind": { features: [[1, "Telepathic Speech"]] },
+            "Clockwork Soul": { features: [[1, "Restore Balance"]] },
+            "Divine Soul": { features: [[1, "Favored by the Gods"]] },
+            "Draconic Bloodline": { features: [[1, "Draconic Resilience"]] },
+            "Shadow Magic": { features: [[1, "Eyes of the Dark"]] },
+            "Storm Sorcery": { features: [[1, "Tempestuous Magic"]] },
+            "Wild Magic": { features: [[1, "Tides of Chaos"]] }
+        }
+    },
+    "Warlock": { 
+        hit_die: 8, saves: ["WIS", "CHA"], items: ["Light Crossbow", "Leather Armor"],
+        features: [[1, "Pact Magic"], [2, "Eldritch Invocations"], [3, "Pact Boon"]],
+        subclasses: {
+            "Archfey": { features: [[1, "Fey Presence"]] },
+            "Celestial": { features: [[1, "Healing Light"]] },
+            "Fathomless": { features: [[1, "Tentacle of the Deeps"]] },
+            "Fiend": { features: [[1, "Dark One's Blessing"]] },
+            "Genie": { features: [[1, "Genie's Vessel"]] },
+            "Great Old One": { features: [[1, "Awakened Mind"]] },
+            "Hexblade": { features: [[1, "Hexblade's Curse"]] },
+            "Undead": { features: [[1, "Form of Dread"]] },
+            "Undying": { features: [[1, "Among the Dead"]] }
+        }
+    },
+    "Wizard": { 
+        hit_die: 6, saves: ["INT", "WIS"], items: ["Dagger", "Quarterstaff"],
+        features: [[1, "Spellcasting"], [1, "Arcane Recovery"]],
+        subclasses: {
+            "Abjuration": { features: [[2, "Arcane Ward"]] },
+            "Bladesinging": { features: [[2, "Bladesong"]] },
+            "Chronurgy": { features: [[2, "Chronal Shift"]] },
+            "Conjuration": { features: [[2, "Minor Conjuration"]] },
+            "Divination": { features: [[2, "Portent"]] },
+            "Enchantment": { features: [[2, "Hypnotic Gaze"]] },
+            "Evocation": { features: [[2, "Sculpt Spells"]] },
+            "Graviturgy": { features: [[2, "Adjust Density"]] },
+            "Illusion": { features: [[2, "Improved Minor Illusion"]] },
+            "Necromancy": { features: [[2, "Grim Harvest"]] },
+            "Order of Scribes": { features: [[2, "Wizardly Quill"]] },
+            "Transmutation": { features: [[2, "Minor Alchemy"]] },
+            "War Magic": { features: [[2, "Arcane Deflection"]] }
+        }
+    }
 };
 
-// --- CLASSES ---
-const CLASSES = {
-    "Artificer": { hit_die: 8, saves: ["CON", "INT"], items: ["Light Crossbow", "Scale Mail", "Thieves' Tools"] },
-    "Barbarian": { hit_die: 12, saves: ["STR", "CON"], items: ["Greataxe", "Handaxe", "Javelin"] },
-    "Bard": { hit_die: 8, saves: ["DEX", "CHA"], items: ["Rapier", "Leather Armor", "Dagger"] },
-    "Cleric": { hit_die: 8, saves: ["WIS", "CHA"], items: ["Mace", "Scale Mail", "Shield"] },
-    "Druid": { hit_die: 8, saves: ["INT", "WIS"], items: ["Scimitar", "Leather Armor", "Shield"] },
-    "Fighter": { hit_die: 10, saves: ["STR", "CON"], items: ["Chain Mail", "Longsword", "Shield"] },
-    "Monk": { hit_die: 8, saves: ["STR", "DEX"], items: ["Shortsword", "Dart"] },
-    "Paladin": { hit_die: 10, saves: ["WIS", "CHA"], items: ["Longsword", "Shield", "Chain Mail"] },
-    "Ranger": { hit_die: 10, saves: ["STR", "DEX"], items: ["Scale Mail", "Shortsword", "Longbow"] },
-    "Rogue": { hit_die: 8, saves: ["DEX", "INT"], items: ["Rapier", "Shortbow", "Leather Armor"] },
-    "Sorcerer": { hit_die: 6, saves: ["CON", "CHA"], items: ["Light Crossbow", "Dagger"] },
-    "Warlock": { hit_die: 8, saves: ["WIS", "CHA"], items: ["Light Crossbow", "Leather Armor"] },
-    "Wizard": { hit_die: 6, saves: ["INT", "WIS"], items: ["Dagger", "Quarterstaff"] }
-};
 
 // --- SUBCLASS FEATURES (Simplified for JS) ---
 const SUBCLASS_FEATURES = [
@@ -524,5 +680,6 @@ const ALL_WEAPONS = [
     {name: "Weird", dice: "4d10", type: "Psychic", category: "Spell", level: 9, desc: "Mass fear/damage."},
     {name: "Wish", dice: "-", type: "Unlimited", category: "Spell", level: 9, desc: "Alter reality."}
 ];
+
 
 const ALL_ACTIONS = ALL_WEAPONS.concat(ALL_SPELLS).concat(SUBCLASS_FEATURES);
