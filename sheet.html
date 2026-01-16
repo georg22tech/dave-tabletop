@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="config.js"></script>
     <script src="game_rules.js"></script>
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; display:flex; flex-direction:column; height:100vh; box-sizing:border-box;}
         
@@ -66,7 +67,7 @@
         .search-res-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
         .search-res-item:hover { background: #2b5fa3; color: white; }
 
-        /* SKILLS & SLOTS */
+        /* SLOTS & SKILLS */
         .slot-container { background: #222; padding: 10px; border-radius: 6px; border: 1px solid #444; margin-bottom: 20px; }
         .slot-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #333; }
         .slot-bubbles { display: flex; gap: 5px; }
@@ -265,19 +266,22 @@
         const spellDiv = document.getElementById('spellList');
         atkDiv.innerHTML = ""; spellDiv.innerHTML = "";
 
-        // 1. ALWAYS ADD UNARMORED STRIKE
-        let unarmed = ALL_ACTIONS.find(a => a.name === "Unarmed Strike") || {name: "Unarmed Strike", dice: "1", type: "Bludgeoning", stat: "STR", category: "Simple Melee"};
-        renderActionCard(unarmed, atkDiv);
+        // 1. ALWAYS ADD UNARMED STRIKE (Hardcoded to prevent missing rule error)
+        let unarmed = {
+            name: "Unarmed Strike", dice: "1", type: "Bludgeoning", stat: "STR", category: "Simple Melee", desc: "Basic melee strike"
+        };
+        renderActionCard(unarmed, atkDiv, true); // Force render
 
         // 2. Render Inventory Items
         CHAR.inventory.forEach(item => {
+            // Find rule, or create dummy if missing to prevent crash
             let data = ALL_ACTIONS.find(a => a.name === item.name);
-            
-            // Special handling for Spells or Features found in rules but not inventory objects (legacy)
-            if(!data && ALL_SPELLS) data = ALL_SPELLS.find(a => a.name === item.name);
-            
-            // If item has no rules, skip actions (it's just a rope or ration)
-            if(!data) return; 
+            if(!data) {
+                // Fallback for non-rule items (like Rations), we skip them in Action list usually
+                // BUT if it's a legacy spell/feature, we look there too
+                // For safety, we only render if it has an action type in rules
+                return; 
+            }
 
             // Logic: Weapons must be equipped. Spells/Features always show.
             if (data.category !== "Spell" && data.category !== "Feature" && !item.equip) return;
@@ -287,7 +291,7 @@
         });
     }
 
-    function renderActionCard(data, container) {
+    function renderActionCard(data, container, isDefault=false) {
         let useStat = data.stat || "STR";
         if(data.category === "Spell") useStat = "INT"; 
         let mod = STATS[useStat] || 0;
@@ -327,7 +331,7 @@
             let equipState = item.equip ? "equipped" : "";
             let btnTxt = item.equip ? "Unequip" : "Equip";
             
-            // Check if equippable
+            // Check if equippable (Logic: If it's in the rules as a weapon/armor)
             let isEquippable = false;
             let rule = ALL_ACTIONS.find(r => r.name === name);
             if(rule && (rule.category === 'Weapon' || rule.category === 'Armor' || rule.category === 'Simple Melee' || rule.category === 'Martial Melee' || rule.category.includes('Ranged'))) isEquippable = true;
