@@ -164,63 +164,80 @@
     // --- CONFIG & LOADOUTS ---
     const SUBCLASS_UNLOCK_LEVELS = { "Artificer": 3, "Barbarian": 3, "Bard": 3, "Cleric": 1, "Druid": 2, "Fighter": 3, "Monk": 3, "Paladin": 3, "Ranger": 3, "Rogue": 3, "Sorcerer": 1, "Warlock": 1, "Wizard": 2 };
     
-    // DEFINING CLASS LOADOUTS (Fixed + Choices)
     const CLASS_LOADOUTS = {
         "Artificer": { fixed: ["Thieves' Tools"], choices: [ ["Simple Weapon", "Simple Weapon"], ["Scale Mail", "Studded Leather"], ["Light Crossbow", "Simple Weapon"] ] },
         "Barbarian": { fixed: ["Explorer's Pack", "Javelin", "Javelin", "Javelin", "Javelin"], choices: [ ["Greataxe", "Martial Melee"], ["Handaxe", "Simple Weapon"] ] },
         "Bard": { fixed: ["Leather Armor", "Dagger"], choices: [ ["Rapier", "Longsword", "Simple Weapon"], ["Diplomat's Pack", "Entertainer's Pack"], ["Lute", "Drum", "Flute", "Lyre"] ] },
-        "Cleric": { fixed: ["Shield", "Holy Symbol"], choices: [ ["Mace", "Warhammer"], ["Scale Mail", "Leather Armor", "Chain Mail"], ["Light Crossbow", "Simple Weapon"], ["Priest's Pack", "Explorer's Pack"] ] },
-        "Druid": { fixed: ["Leather Armor", "Explorer's Pack", "Druidic Focus"], choices: [ ["Shield", "Simple Weapon"], ["Scimitar", "Simple Melee"] ] },
+        "Cleric": { fixed: ["Shield", "Holy Symbol (Amulet)"], choices: [ ["Mace", "Warhammer"], ["Scale Mail", "Leather Armor", "Chain Mail"], ["Light Crossbow", "Simple Weapon"], ["Priest's Pack", "Explorer's Pack"] ] },
+        "Druid": { fixed: ["Leather Armor", "Explorer's Pack", "Druidic Focus (Sprig)"], choices: [ ["Shield", "Simple Weapon"], ["Scimitar", "Simple Melee"] ] },
         "Fighter": { fixed: [], choices: [ ["Chain Mail", "Leather Armor, Longbow, 20 Arrows"], ["Martial Weapon, Shield", "Martial Weapon, Martial Weapon"], ["Light Crossbow", "Handaxe"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
         "Monk": { fixed: ["Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart"], choices: [ ["Shortsword", "Simple Weapon"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Paladin": { fixed: ["Chain Mail", "Holy Symbol"], choices: [ ["Martial Weapon, Shield", "Martial Weapon, Martial Weapon"], ["Javelin", "Simple Melee"], ["Priest's Pack", "Explorer's Pack"] ] },
+        "Paladin": { fixed: ["Chain Mail", "Holy Symbol (Emblem)"], choices: [ ["Martial Weapon, Shield", "Martial Weapon, Martial Weapon"], ["Javelin", "Simple Melee"], ["Priest's Pack", "Explorer's Pack"] ] },
         "Ranger": { fixed: ["Longbow", "20 Arrows"], choices: [ ["Scale Mail", "Leather Armor"], ["Shortsword", "Simple Melee"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
         "Rogue": { fixed: ["Leather Armor", "Thieves' Tools", "Dagger", "Dagger"], choices: [ ["Rapier", "Shortsword"], ["Shortbow", "Shortsword"], ["Burglar's Pack", "Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Sorcerer": { fixed: ["Dagger", "Dagger"], choices: [ ["Light Crossbow", "Simple Weapon"], ["Component Pouch", "Arcane Focus"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Warlock": { fixed: ["Leather Armor", "Dagger", "Dagger"], choices: [ ["Light Crossbow", "Simple Weapon"], ["Component Pouch", "Arcane Focus"], ["Scholar's Pack", "Dungeoneer's Pack"] ] },
-        "Wizard": { fixed: ["Spellbook"], choices: [ ["Quarterstaff", "Dagger"], ["Component Pouch", "Arcane Focus"], ["Scholar's Pack", "Explorer's Pack"] ] }
+        "Sorcerer": { fixed: ["Dagger", "Dagger"], choices: [ ["Light Crossbow", "Simple Weapon"], ["Component Pouch", "Arcane Focus (Orb)"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
+        "Warlock": { fixed: ["Leather Armor", "Dagger", "Dagger"], choices: [ ["Light Crossbow", "Simple Weapon"], ["Component Pouch", "Arcane Focus (Rod)"], ["Scholar's Pack", "Dungeoneer's Pack"] ] },
+        "Wizard": { fixed: ["Spellbook"], choices: [ ["Quarterstaff", "Dagger"], ["Component Pouch", "Arcane Focus (Staff)"], ["Scholar's Pack", "Explorer's Pack"] ] }
     };
 
     const BACKGROUNDS = {
-        "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol", "Prayer Book", "Vestments", "Rations"] },
+        "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol (Amulet)", "Prayer Book", "Vestments", "Rations"] },
         "Criminal": { skills: ["Deception", "Stealth"], items: ["Crowbar", "Dark Clothes", "Rations"] },
-        "Folk Hero": { skills: ["Animal Handling", "Survival"], items: ["Shovel", "Pot", "Civilian Clothes", "Rations"] },
-        "Noble": { skills: ["History", "Persuasion"], items: ["Fine Clothes", "Signet Ring"] },
+        "Folk Hero": { skills: ["Animal Handling", "Survival"], items: ["Shovel", "Pot", "Civilian Clothes", "Rations", "Smith's Tools"] },
+        "Noble": { skills: ["History", "Persuasion"], items: ["Fine Clothes", "Signet Ring", "Dice Set"] },
         "Sage": { skills: ["Arcana", "History"], items: ["Ink Pen", "Small Knife", "Common Clothes"] },
-        "Soldier": { skills: ["Athletics", "Intimidation"], items: ["Rank Insignia", "Bone Dice", "Common Clothes"] },
+        "Soldier": { skills: ["Athletics", "Intimidation"], items: ["Rank Insignia", "Dice Set", "Common Clothes"] },
         "Charlatan": { skills: ["Deception", "Sleight of Hand"], items: ["Disguise Kit", "Fine Clothes"] },
-        "Entertainer": { skills: ["Acrobatics", "Performance"], items: ["Musical Instrument", "Costume"] },
-        "Outlander": { skills: ["Athletics", "Survival"], items: ["Staff", "Hunting Trap", "Traveler's Clothes"] },
-        "Urchin": { skills: ["Sleight of Hand", "Stealth"], items: ["Small Knife", "Map of the City", "Common Clothes"] }
+        "Entertainer": { skills: ["Acrobatics", "Performance"], items: ["Lute", "Costume", "Disguise Kit"] },
+        "Outlander": { skills: ["Athletics", "Survival"], items: ["Arcane Focus (Staff)", "Hunting Trap", "Traveler's Clothes"] },
+        "Urchin": { skills: ["Sleight of Hand", "Stealth"], items: ["Small Knife", "Map of the City", "Pet Mouse", "Common Clothes"] }
     };
 
     const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
     const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
     let statMode = 'array'; 
-    let selectedInventory = []; // Stores manual additions
-    let classInventory = []; // Stores selections from dropdowns
+    let selectedInventory = []; // Manual additions
+    let classInventory = [];    // Class choices
+    let backgroundInventory = []; // Background items
     let currentStep = 1;
     let totalLevels = 1;
 
+    // --- INIT ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     const EDIT_ID = params.get('id');
+    
     if (!window.db && typeof firebase !== 'undefined') window.db = firebase.database();
 
-    // INIT UI
     const raceSel = document.getElementById('charRace');
+    raceSel.innerHTML = "";
     Object.keys(RACES).sort().forEach(r => raceSel.add(new Option(r,r)));
+
     const bgSel = document.getElementById('charBackground');
+    bgSel.innerHTML = '<option value="">Select Background...</option>';
     Object.keys(BACKGROUNDS).sort().forEach(b => bgSel.add(new Option(b,b)));
 
-    // --- GEAR CHOICE LOGIC ---
-    
-    // 1. Generate Dropdowns for Step 4
+    const statGrid = document.querySelector('.stat-grid');
+    statGrid.innerHTML = ""; 
+    STAT_KEYS.forEach(stat => {
+        statGrid.innerHTML += `
+            <div class="stat-box">
+                <label>${stat}</label>
+                <select id="base_${stat}" onchange="recalcStats()">
+                    <option value="">-</option>
+                    ${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}
+                </select>
+                <span id="bon_${stat}" class="bonus-badge"></span>
+            </div>
+        `;
+    });
+
+    // --- GEAR LOGIC (Updated for Backgrounds) ---
+
+    // 1. Render Class Choices (Step 4)
     window.renderClassGearOptions = function() {
         const rows = document.querySelectorAll('.class-row');
         if(rows.length === 0) return;
-        
-        // Only do primary class for starting gear
         const clsName = rows[0].querySelector('.cls-select').value;
         const loadout = CLASS_LOADOUTS[clsName];
         const container = document.getElementById('classGearArea');
@@ -228,37 +245,32 @@
 
         if (!loadout) return;
 
-        // Render Fixed Items
         if (loadout.fixed.length > 0) {
             container.innerHTML += `<div style="color:#aaa; font-size:0.9em; margin:5px 0;">Includes: ${loadout.fixed.join(", ")}</div>`;
         }
 
-        // Render Choices
         if (loadout.choices) {
             loadout.choices.forEach((choiceSet, idx) => {
                 const div = document.createElement('div');
                 div.className = 'gear-choice-row';
-                
                 let selectHTML = `<select id="gear_choice_${idx}" onchange="updateClassInventory()">`;
                 
                 choiceSet.forEach(opt => {
-                    // Logic to Expand "Simple Weapon" or "Martial Weapon" into actual lists
                     if (opt === "Simple Weapon" || opt === "Simple Melee") {
-                         // Add group
                          let simple = ALL_ACTIONS.filter(i => i.category === "Simple Melee" || i.category === "Simple Ranged");
                          simple.forEach(w => selectHTML += `<option value="${w.name}">${w.name}</option>`);
                     } else if (opt === "Martial Weapon" || opt === "Martial Melee") {
                          let martial = ALL_ACTIONS.filter(i => i.category === "Martial Melee" || i.category === "Martial Ranged");
                          martial.forEach(w => selectHTML += `<option value="${w.name}">${w.name}</option>`);
                     } else if (opt === "Musical Instrument") {
-                         selectHTML += `<option value="Lute">Lute</option><option value="Flute">Flute</option><option value="Drum">Drum</option>`;
+                         let instruments = ALL_ACTIONS.filter(i => i.category === "Tool" && i.desc.includes("Instrument"));
+                         instruments.forEach(i => selectHTML += `<option value="${i.name}">${i.name}</option>`);
                     } else if (opt === "Arcane Focus") {
-                         selectHTML += `<option value="Orb">Orb</option><option value="Staff">Staff</option><option value="Wand">Wand</option>`;
+                         selectHTML += `<option value="Arcane Focus (Staff)">Staff</option><option value="Arcane Focus (Wand)">Wand</option><option value="Arcane Focus (Orb)">Orb</option>`;
                     } else {
                          selectHTML += `<option value="${opt}">${opt}</option>`;
                     }
                 });
-                
                 selectHTML += `</select>`;
                 div.innerHTML = `<label>Choice ${idx+1}</label>` + selectHTML;
                 container.appendChild(div);
@@ -267,39 +279,74 @@
         window.updateClassInventory();
     };
 
-    // 2. Capture Selections from Dropdowns
+    // 2. Capture Selections
     window.updateClassInventory = function() {
         const rows = document.querySelectorAll('.class-row');
         if(rows.length === 0) return;
         const clsName = rows[0].querySelector('.cls-select').value;
         const loadout = CLASS_LOADOUTS[clsName];
         
-        classInventory = []; // Reset
+        classInventory = [];
 
-        // Add Fixed
         if(loadout && loadout.fixed) {
-            loadout.fixed.forEach(i => addItemToClassList(i, "Class (Fixed)"));
+            loadout.fixed.forEach(i => addItemToInventory(i, "Class (Fixed)", classInventory));
         }
 
-        // Add Selected
         const selects = document.querySelectorAll('#classGearArea select');
         selects.forEach(sel => {
-            // Handle complex strings like "Leather Armor, Longbow, 20 Arrows"
             let items = sel.value.split(',');
-            items.forEach(i => addItemToClassList(i.trim(), "Class (Choice)"));
+            items.forEach(i => addItemToInventory(i.trim(), "Class (Choice)", classInventory));
         });
 
         window.renderInventory();
     };
 
-    function addItemToClassList(name, source) {
-        // Find stats
+    // 3. Update Background Inventory (Auto)
+    window.updateBackgroundInfo = function() {
+        const bg = BACKGROUNDS[bgSel.value];
+        if(!bg) { document.getElementById('bgSummary').innerText = ""; return; }
+        document.getElementById('bgSummary').innerText = `Skills: ${bg.skills.join(', ')}`;
+        window.renderSkills();
+        
+        backgroundInventory = [];
+        if(bg.items) {
+            bg.items.forEach(itemName => addItemToInventory(itemName, "Background", backgroundInventory));
+        }
+        window.renderInventory();
+    };
+
+    // Helper to Add Item Objects
+    function addItemToInventory(name, source, targetArray) {
         const found = ALL_ACTIONS.find(i => i.name.toLowerCase() === name.toLowerCase());
-        if(found) classInventory.push({ ...found, source: source, equip: false });
-        else classInventory.push({ name: name, category: "Item", source: source, equip: false });
+        if(found) targetArray.push({ ...found, source: source, equip: false });
+        else targetArray.push({ name: name, category: "Item", source: source, equip: false });
     }
 
-    // --- EXISTING STAT LOGIC ---
+    // --- INVENTORY RENDERER ---
+    window.renderInventory = function() {
+        const list = document.getElementById('inventoryList');
+        list.innerHTML = "";
+        const combined = [...classInventory, ...backgroundInventory, ...selectedInventory];
+        
+        combined.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'inv-item';
+            div.innerHTML = `<div><strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong> <small>(${item.source})</small></div>`;
+            if(item.source === "Custom") {
+                // Must adjust index to match selectedInventory index
+                const realIdx = idx - (classInventory.length + backgroundInventory.length);
+                div.innerHTML += `<button class="btn-small btn-remove" onclick="removeCustomItem(${realIdx})">x</button>`;
+            }
+            list.appendChild(div);
+        });
+    };
+
+    window.removeCustomItem = function(idx) {
+        selectedInventory.splice(idx, 1);
+        window.renderInventory();
+    };
+
+    // --- OTHER UI LOGIC (Stats, Classes, etc.) ---
     window.setStatMode = function(mode) {
         statMode = mode;
         document.getElementById('btnStatArray').className = mode==='array' ? 'stat-btn active' : 'stat-btn';
@@ -318,7 +365,6 @@
             let inputHtml = statMode === 'array' 
                 ? `<select id="base_${stat}" onchange="updateArrayOptions(); recalcStats()"><option value="">--</option>${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}</select>`
                 : `<input type="number" id="base_${stat}" value="${currentVals[stat]||10}" onchange="recalcStats()" style="width:100%;">`;
-            
             container.innerHTML += `<div class="stat-box"><label>${stat}</label>${inputHtml}<span id="bon_${stat}" class="bonus-badge"></span></div>`;
         });
         if(statMode === 'array') window.updateArrayOptions();
@@ -328,11 +374,9 @@
         if(statMode !== 'array') return;
         const currentSelections = {};
         STAT_KEYS.forEach(s => { const el = document.getElementById(`base_${s}`); if(el.value) currentSelections[s] = parseInt(el.value); });
-
         STAT_KEYS.forEach(s => {
             const el = document.getElementById(`base_${s}`);
             const myValue = currentSelections[s];
-            const savedValue = el.value;
             el.innerHTML = '<option value="">--</option>';
             STANDARD_ARRAY.forEach(num => {
                 if (!Object.values(currentSelections).includes(num) || num === myValue) {
@@ -344,32 +388,12 @@
         });
     };
 
-    // --- STANDARD FUNCTIONS ---
     window.updateRaceInfo = function() {
         const r = RACES[raceSel.value];
         if (!r) return;
         let txt = "Bonuses: "; for(let s in r.bonuses) txt+=`${s} +${r.bonuses[s]} `;
         document.getElementById('raceSummary').innerText = txt;
         window.recalcStats();
-    };
-
-    window.updateBackgroundInfo = function(overwriteInventory = true) {
-        const bg = BACKGROUNDS[bgSel.value];
-        if(!bg) { document.getElementById('bgSummary').innerText = ""; return; }
-        document.getElementById('bgSummary').innerText = `Skills: ${bg.skills.join(', ')}`;
-        window.renderSkills();
-        // NOTE: We don't auto-add background gear to inventory array anymore, 
-        // we will handle it in the save function to keep list clean, or add to 'classInventory'
-        // For simplicity, let's treat Background gear as "Automatic" and Class gear as "Choice".
-        if(overwriteInventory && !EDIT_ID) {
-            selectedInventory = []; // clear manual items
-            bg.items.forEach(i => {
-                let found = ALL_ACTIONS.find(a=>a.name.toLowerCase()===i.toLowerCase());
-                let obj = found ? {...found, source:"Background", equip:false} : {name:i, category:"Item", source:"Background", equip:false};
-                selectedInventory.push(obj);
-            });
-            window.renderInventory();
-        }
     };
 
     window.addClassRow = function(name = null, level = 1, subclass = null) {
@@ -385,14 +409,13 @@
         let selectEl = div.querySelector('.cls-select');
         window.updateSubclassOptions(selectEl, subclass);
         window.recalcClassDetails();
-        window.renderClassGearOptions(); // Update gear choices when class changes
+        window.renderClassGearOptions();
     };
 
     window.updateSubclassOptions = function(selectElement, selectedSub = null) {
         const row = selectElement.parentElement;
         const subSelect = row.querySelector('.sub-select');
-        const className = selectElement.value;
-        const cData = CLASSES[className];
+        const cData = CLASSES[selectElement.value];
         subSelect.innerHTML = '<option value="">Subclass...</option>';
         if (cData && cData.subclasses) {
             Object.keys(cData.subclasses).sort().forEach(sub => {
@@ -420,9 +443,7 @@
             totalLvl += lvl;
             if(index === 0) hpBase += cData.hit_die + (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
             else hpBase += (Math.ceil(cData.hit_die / 2) + 1) * lvl;
-            let txt = `${clsName} ${lvl}`;
-            if(subSelect.value) txt += ` (${subSelect.value})`;
-            summary.push(txt);
+            summary.push(`${clsName} ${lvl}`);
         });
         totalLevels = totalLvl;
         document.getElementById('totalLevelDisplay').innerText = totalLevels;
@@ -497,34 +518,6 @@
         }
     };
 
-    window.renderInventory = function() {
-        const list = document.getElementById('inventoryList');
-        list.innerHTML = "";
-        // Merge Manual items + Class choices for display
-        const combined = [...classInventory, ...selectedInventory];
-        
-        combined.forEach((item, idx) => {
-            const div = document.createElement('div');
-            div.className = 'inv-item';
-            div.innerHTML = `<div><strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong> <small>(${item.source})</small></div>`;
-            // Only allow delete for Custom items
-            if(item.source === "Custom") {
-                div.innerHTML += `<button class="btn-small btn-remove" onclick="removeCustomItem(${idx})">x</button>`;
-            }
-            list.appendChild(div);
-        });
-    };
-
-    window.removeCustomItem = function(indexInCombined) {
-        // Need to map combined index back to selectedInventory index
-        // Since classInventory comes first, we subtract its length
-        const adjIndex = indexInCombined - classInventory.length;
-        if(adjIndex >= 0) {
-            selectedInventory.splice(adjIndex, 1);
-            window.renderInventory();
-        }
-    };
-
     window.changeStep = function(dir) {
         if(currentStep === 1 && dir === 1) {
             if(!document.getElementById('charName').value) return alert("Name required.");
@@ -563,7 +556,8 @@
         const rData = RACES[raceSel.value];
         let baseStats = {}; let finalStats = {};
         STAT_KEYS.forEach(s => {
-            let b = parseInt(document.getElementById(`base_${s}`).value) || 10;
+            let el = document.getElementById(`base_${s}`);
+            let b = el ? (parseInt(el.value) || 10) : 10;
             let bon = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             baseStats[s] = b; finalStats[s] = b + bon;
         });
@@ -574,6 +568,9 @@
 
         let knownSpells = [...(rData.auto_spells || [])];
         classesArr.forEach(c => { if(CLASSES[c.name].auto_spells) knownSpells.push(...CLASSES[c.name].auto_spells); });
+
+        // Merge Inventory
+        const finalInv = [...classInventory, ...backgroundInventory, ...selectedInventory];
 
         const charData = cleanData({
             name: document.getElementById('charName').value,
@@ -586,7 +583,7 @@
             hp_curr: parseInt(document.getElementById('calcHP').innerText) || 10,
             alignment: document.getElementById('charAlign').value,
             backstory: document.getElementById('charBack').value,
-            inventory: [...classInventory, ...selectedInventory], // MERGE HERE
+            inventory: finalInv,
             coins: { gp: parseInt(document.getElementById('charGold').value) || 0 },
             skills: Array.from(skills),
             spells_known: knownSpells,
@@ -625,7 +622,8 @@
             const container = document.getElementById('classContainer'); container.innerHTML = ""; 
             if (c.classes && Array.isArray(c.classes)) c.classes.forEach(cls => window.addClassRow(cls.name, cls.level, cls.subclass));
             
-            // For editing, we load manual inventory only, and let Class/Bg regenerate their parts to avoid duplication or stale data
+            // For editing, we allow class/bg logic to regenerate based on saved selections to keep data fresh, 
+            // but we must preserve Custom items.
             if(c.inventory) {
                 selectedInventory = c.inventory.filter(i => i.source === "Custom");
             }
