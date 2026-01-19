@@ -1,4 +1,6 @@
-// game_rules.js
+// ==========================================
+// GAME DATA & RULES
+// ==========================================
 
 export const SKILLS_LIST = {
     "Acrobatics": "DEX", "Animal Handling": "WIS", "Arcana": "INT", "Athletics": "STR", 
@@ -32,15 +34,12 @@ export const RACES = {
     "Genasi (Fire)": { bonuses: {CON: 2, INT: 1}, hp_bonus: 0, auto_spells: ["Produce Flame"] },
     "Genasi (Water)": { bonuses: {CON: 2, WIS: 1}, hp_bonus: 0, auto_spells: ["Shape Water"] }
 };
+
+// FULL LEVEL 1-20 FEATURES
 export const CLASSES = {
     "Artificer": { 
         hit_die: 8, saves: ["CON", "INT"], items: ["Light Crossbow", "Scale Mail", "Thieves' Tools"], 
-        features: [
-            [1, "Magical Tinkering"], [2, "Infuse Item"], [3, "The Right Tool for the Job"], 
-            [6, "Tool Expertise"], [7, "Flash of Genius"], [10, "Magic Item Adept"], 
-            [11, "Spell-Storing Item"], [14, "Magic Item Savant"], [18, "Magic Item Master"], 
-            [20, "Soul of Artifice"]
-        ],
+        features: [[1, "Magical Tinkering"], [2, "Infuse Item"], [3, "The Right Tool for the Job"], [6, "Tool Expertise"], [7, "Flash of Genius"], [10, "Magic Item Adept"], [11, "Spell-Storing Item"], [14, "Magic Item Savant"], [18, "Magic Item Master"], [20, "Soul of Artifice"]],
         subclasses: {
             "Alchemist": { features: [[3, "Experimental Elixir"], [5, "Alchemical Savant"], [9, "Restorative Reagents"], [15, "Chemical Mastery"]] },
             "Armorer": { features: [[3, "Arcane Armor"], [3, "Armor Model"], [5, "Extra Attack"], [9, "Armor Modifications"], [15, "Perfected Armor"]] },
@@ -50,13 +49,7 @@ export const CLASSES = {
     },
     "Barbarian": { 
         hit_die: 12, saves: ["STR", "CON"], items: ["Greataxe", "Handaxe", "Javelin"],
-        features: [
-            [1, "Rage"], [1, "Unarmored Defense"], [2, "Reckless Attack"], [2, "Danger Sense"], 
-            [5, "Extra Attack"], [5, "Fast Movement"], [7, "Feral Instinct"], 
-            [9, "Brutal Critical (1 die)"], [11, "Relentless Rage"], [13, "Brutal Critical (2 dice)"], 
-            [15, "Persistent Rage"], [17, "Brutal Critical (3 dice)"], [18, "Indomitable Might"], 
-            [20, "Primal Champion"]
-        ],
+        features: [[1, "Rage"], [1, "Unarmored Defense"], [2, "Reckless Attack"], [2, "Danger Sense"], [5, "Extra Attack"], [5, "Fast Movement"], [7, "Feral Instinct"], [9, "Brutal Critical"], [11, "Relentless Rage"], [15, "Persistent Rage"], [18, "Indomitable Might"], [20, "Primal Champion"]],
         subclasses: {
             "Ancestral Guardian": { features: [[3, "Ancestral Protectors"], [6, "Spirit Shield"], [10, "Consult the Spirits"], [14, "Vengeful Ancestors"]] },
             "Battlerager": { features: [[3, "Battlerager Armor"], [6, "Reckless Abandon"], [10, "Battlerager Charge"], [14, "Spiked Retribution"]] },
@@ -70,12 +63,7 @@ export const CLASSES = {
     },
     "Bard": { 
         hit_die: 8, saves: ["DEX", "CHA"], items: ["Rapier", "Leather Armor", "Dagger"], num_skills: 3,
-        features: [
-            [1, "Bardic Inspiration"], [2, "Jack of All Trades"], [2, "Song of Rest"], 
-            [3, "Expertise"], [5, "Font of Inspiration"], [6, "Countercharm"], 
-            [10, "Magical Secrets"], [14, "Magical Secrets"], [18, "Magical Secrets"], 
-            [20, "Superior Inspiration"]
-        ],
+        features: [[1, "Bardic Inspiration"], [2, "Jack of All Trades"], [2, "Song of Rest"], [3, "Expertise"], [5, "Font of Inspiration"], [6, "Countercharm"], [10, "Magical Secrets"], [14, "Magical Secrets"], [18, "Magical Secrets"], [20, "Superior Inspiration"]],
         subclasses: {
             "Creation": { features: [[3, "Mote of Potential"], [3, "Performance of Creation"], [6, "Animating Performance"], [14, "Creative Crescendo"]] },
             "Eloquence": { features: [[3, "Silver Tongue"], [3, "Unsettling Words"], [6, "Unfailing Inspiration"], [14, "Infectious Inspiration"]] },
@@ -89,13 +77,7 @@ export const CLASSES = {
     },
     "Cleric": { 
         hit_die: 8, saves: ["WIS", "CHA"], items: ["Mace", "Scale Mail", "Shield"],
-        features: [
-            [2, "Channel Divinity (1/rest)"], [5, "Destroy Undead (CR 1/2)"], 
-            [6, "Channel Divinity (2/rest)"], [8, "Destroy Undead (CR 1)"], 
-            [10, "Divine Intervention"], [11, "Destroy Undead (CR 2)"], 
-            [14, "Destroy Undead (CR 3)"], [17, "Destroy Undead (CR 4)"], 
-            [18, "Channel Divinity (3/rest)"], [20, "Divine Intervention (Auto)"]
-        ],
+        features: [[2, "Channel Divinity"], [5, "Destroy Undead"], [10, "Divine Intervention"], [20, "Divine Intervention (Auto)"]],
         subclasses: {
             "Arcana": { features: [[1, "Arcane Initiate"], [2, "Arcane Abjuration"], [6, "Spell Breaker"], [8, "Potent Spellcasting"], [17, "Arcane Mastery"]] },
             "Death": { features: [[1, "Reaper"], [2, "Touch of Death"], [6, "Inescapable Destruction"], [8, "Divine Strike"], [17, "Improved Reaper"]] },
@@ -115,11 +97,7 @@ export const CLASSES = {
     },
     "Druid": { 
         hit_die: 8, saves: ["INT", "WIS"], items: ["Scimitar", "Leather Armor", "Shield"],
-        features: [
-            [1, "Druidic"], [2, "Wild Shape"], [4, "Wild Shape Improvement (Swim)"], 
-            [8, "Wild Shape Improvement (Fly)"], [18, "Timeless Body"], 
-            [18, "Beast Spells"], [20, "Archdruid"]
-        ],
+        features: [[1, "Druidic"], [2, "Wild Shape"], [18, "Timeless Body"], [18, "Beast Spells"], [20, "Archdruid"]],
         subclasses: {
             "Dreams": { features: [[2, "Balm of the Summer Court"], [6, "Hearth of Moonlight and Shadow"], [10, "Hidden Paths"], [14, "Walker in Dreams"]] },
             "Land": { features: [[2, "Natural Recovery"], [6, "Land's Stride"], [10, "Nature's Ward"], [14, "Nature's Sanctuary"]] },
@@ -132,14 +110,9 @@ export const CLASSES = {
     },
     "Fighter": { 
         hit_die: 10, saves: ["STR", "CON"], items: ["Chain Mail", "Longsword", "Shield"],
-        features: [
-            [1, "Fighting Style"], [1, "Second Wind"], [2, "Action Surge"], 
-            [5, "Extra Attack"], [9, "Indomitable (1 use)"], [11, "Extra Attack (2)"], 
-            [13, "Indomitable (2 uses)"], [17, "Action Surge (2 uses)"], 
-            [17, "Indomitable (3 uses)"], [20, "Extra Attack (3)"]
-        ],
+        features: [[1, "Fighting Style"], [1, "Second Wind"], [2, "Action Surge"], [5, "Extra Attack"], [9, "Indomitable"], [11, "Extra Attack (2)"], [17, "Action Surge (2)"], [20, "Extra Attack (3)"]],
         subclasses: {
-            "Arcane Archer": { features: [[3, "Arcane Shot"], [7, "Magic Arrow"], [7, "Curving Shot"], [10, "Rapid Shot"], [15, "Ever-Ready Shot"], [18, "Improved Arcane Shot"]] },
+            "Arcane Archer": { features: [[3, "Arcane Shot"], [7, "Magic Arrow"], [10, "Rapid Shot"], [15, "Ever-Ready Shot"], [18, "Improved Arcane Shot"]] },
             "Banneret": { features: [[3, "Rallying Cry"], [7, "Royal Envoy"], [10, "Inspiring Surge"], [15, "Bulwark"]] },
             "Battle Master": { features: [[3, "Combat Superiority"], [7, "Know Your Enemy"], [10, "Improved Combat Superiority"], [15, "Relentless"]] },
             "Cavalier": { features: [[3, "Unwavering Mark"], [7, "Warding Maneuver"], [10, "Hold the Line"], [15, "Ferocious Charger"], [18, "Vigilant Defender"]] },
@@ -153,13 +126,7 @@ export const CLASSES = {
     },
     "Monk": { 
         hit_die: 8, saves: ["STR", "DEX"], items: ["Shortsword", "Dart"],
-        features: [
-            [1, "Unarmored Defense"], [1, "Martial Arts"], [2, "Ki"], [2, "Unarmored Movement"], 
-            [3, "Deflect Missiles"], [4, "Slow Fall"], [5, "Extra Attack"], 
-            [5, "Stunning Strike"], [6, "Ki-Empowered Strikes"], [7, "Evasion"], 
-            [7, "Stillness of Mind"], [10, "Purity of Body"], [13, "Tongue of the Sun and Moon"], 
-            [14, "Diamond Soul"], [15, "Timeless Body"], [18, "Empty Body"], [20, "Perfect Self"]
-        ],
+        features: [[1, "Unarmored Defense"], [1, "Martial Arts"], [2, "Ki"], [2, "Unarmored Movement"], [3, "Deflect Missiles"], [4, "Slow Fall"], [5, "Extra Attack"], [5, "Stunning Strike"], [6, "Ki-Empowered Strikes"], [7, "Evasion"], [7, "Stillness of Mind"], [10, "Purity of Body"], [13, "Tongue of the Sun and Moon"], [14, "Diamond Soul"], [15, "Timeless Body"], [18, "Empty Body"], [20, "Perfect Self"]],
         subclasses: {
             "Ascendant Dragon": { features: [[3, "Draconic Disciple"], [6, "Wings Unfurled"], [11, "Aspect of the Wyrm"], [17, "Ascendant Aspect"]] },
             "Astral Self": { features: [[3, "Arms of the Astral Self"], [6, "Visage of the Astral Self"], [11, "Body of the Astral Self"], [17, "Awakened Astral Self"]] },
@@ -175,12 +142,7 @@ export const CLASSES = {
     },
     "Paladin": { 
         hit_die: 10, saves: ["WIS", "CHA"], items: ["Longsword", "Shield", "Chain Mail"],
-        features: [
-            [1, "Divine Sense"], [1, "Lay on Hands"], [2, "Fighting Style"], 
-            [2, "Divine Smite"], [3, "Divine Health"], [5, "Extra Attack"], 
-            [6, "Aura of Protection"], [10, "Aura of Courage"], [11, "Improved Divine Smite"], 
-            [14, "Cleansing Touch"], [18, "Aura Improvements"]
-        ],
+        features: [[1, "Divine Sense"], [1, "Lay on Hands"], [2, "Fighting Style"], [2, "Divine Smite"], [3, "Divine Health"], [5, "Extra Attack"], [6, "Aura of Protection"], [10, "Aura of Courage"], [11, "Improved Divine Smite"], [14, "Cleansing Touch"], [18, "Aura Improvements"]],
         subclasses: {
             "Ancients": { features: [[3, "Nature's Wrath"], [7, "Aura of Warding"], [15, "Undying Sentinel"], [20, "Elder Champion"]] },
             "Conquest": { features: [[3, "Conquering Presence"], [7, "Aura of Conquest"], [15, "Scornful Rebuke"], [20, "Invincible Conqueror"]] },
@@ -195,12 +157,7 @@ export const CLASSES = {
     },
     "Ranger": { 
         hit_die: 10, saves: ["STR", "DEX"], items: ["Scale Mail", "Shortsword", "Longbow"], num_skills: 3,
-        features: [
-            [1, "Favored Enemy"], [1, "Natural Explorer"], [2, "Fighting Style"], 
-            [2, "Spellcasting"], [3, "Primeval Awareness"], [5, "Extra Attack"], 
-            [8, "Land's Stride"], [10, "Hide in Plain Sight"], [14, "Vanish"], 
-            [18, "Feral Senses"], [20, "Foe Slayer"]
-        ],
+        features: [[1, "Favored Enemy"], [1, "Natural Explorer"], [2, "Fighting Style"], [2, "Spellcasting"], [3, "Primeval Awareness"], [5, "Extra Attack"], [8, "Land's Stride"], [10, "Hide in Plain Sight"], [14, "Vanish"], [18, "Feral Senses"], [20, "Foe Slayer"]],
         subclasses: {
             "Beast Master": { features: [[3, "Ranger's Companion"], [7, "Exceptional Training"], [11, "Bestial Fury"], [15, "Share Spells"]] },
             "Drake Warden": { features: [[3, "Drake Companion"], [7, "Bond of Fang and Scale"], [11, "Drake's Breath"], [15, "Perfected Bond"]] },
@@ -214,12 +171,7 @@ export const CLASSES = {
     },
     "Rogue": { 
         hit_die: 8, saves: ["DEX", "INT"], items: ["Rapier", "Shortbow", "Leather Armor"], num_skills: 4,
-        features: [
-            [1, "Sneak Attack"], [1, "Thieves' Cant"], [2, "Cunning Action"], 
-            [5, "Uncanny Dodge"], [7, "Evasion"], [11, "Reliable Talent"], 
-            [14, "Blindsense"], [15, "Slippery Mind"], [18, "Elusive"], 
-            [20, "Stroke of Luck"]
-        ],
+        features: [[1, "Sneak Attack"], [1, "Thieves' Cant"], [2, "Cunning Action"], [5, "Uncanny Dodge"], [7, "Evasion"], [11, "Reliable Talent"], [14, "Blindsense"], [15, "Slippery Mind"], [18, "Elusive"], [20, "Stroke of Luck"]],
         subclasses: {
             "Arcane Trickster": { features: [[3, "Mage Hand Legerdemain"], [9, "Magical Ambush"], [13, "Versatile Trickster"], [17, "Spell Thief"]] },
             "Assassin": { features: [[3, "Assassinate"], [9, "Infiltration Expertise"], [13, "Impostor"], [17, "Death Strike"]] },
@@ -234,11 +186,7 @@ export const CLASSES = {
     },
     "Sorcerer": { 
         hit_die: 6, saves: ["CON", "CHA"], items: ["Light Crossbow", "Dagger"],
-        features: [
-            [1, "Spellcasting"], [2, "Font of Magic"], [3, "Metamagic"], 
-            [10, "Metamagic (3rd option)"], [17, "Metamagic (4th option)"], 
-            [20, "Sorcerous Restoration"]
-        ],
+        features: [[1, "Spellcasting"], [2, "Font of Magic"], [3, "Metamagic"], [10, "Metamagic (3rd)"], [17, "Metamagic (4th)"], [20, "Sorcerous Restoration"]],
         subclasses: {
             "Aberrant Mind": { features: [[1, "Telepathic Speech"], [6, "Psionic Sorcery"], [14, "Revelation in Flesh"], [18, "Warping Implosion"]] },
             "Clockwork Soul": { features: [[1, "Restore Balance"], [6, "Bastion of Law"], [14, "Trance of Order"], [18, "Clockwork Cavalcade"]] },
@@ -251,12 +199,7 @@ export const CLASSES = {
     },
     "Warlock": { 
         hit_die: 8, saves: ["WIS", "CHA"], items: ["Light Crossbow", "Leather Armor"],
-        features: [
-            [1, "Pact Magic"], [2, "Eldritch Invocations"], [3, "Pact Boon"], 
-            [11, "Mystic Arcanum (6th)"], [13, "Mystic Arcanum (7th)"], 
-            [15, "Mystic Arcanum (8th)"], [17, "Mystic Arcanum (9th)"], 
-            [20, "Eldritch Master"]
-        ],
+        features: [[1, "Pact Magic"], [2, "Eldritch Invocations"], [3, "Pact Boon"], [11, "Mystic Arcanum (6th)"], [13, "Mystic Arcanum (7th)"], [15, "Mystic Arcanum (8th)"], [17, "Mystic Arcanum (9th)"], [20, "Eldritch Master"]],
         subclasses: {
             "Archfey": { features: [[1, "Fey Presence"], [6, "Misty Escape"], [10, "Beguiling Defenses"], [14, "Dark Delirium"]] },
             "Celestial": { features: [[1, "Healing Light"], [6, "Radiant Soul"], [10, "Celestial Resilience"], [14, "Searing Vengeance"]] },
@@ -271,10 +214,7 @@ export const CLASSES = {
     },
     "Wizard": { 
         hit_die: 6, saves: ["INT", "WIS"], items: ["Dagger", "Quarterstaff"],
-        features: [
-            [1, "Spellcasting"], [1, "Arcane Recovery"], [18, "Spell Mastery"], 
-            [20, "Signature Spells"]
-        ],
+        features: [[1, "Spellcasting"], [1, "Arcane Recovery"], [18, "Spell Mastery"], [20, "Signature Spells"]],
         subclasses: {
             "Abjuration": { features: [[2, "Arcane Ward"], [6, "Projected Ward"], [10, "Improved Abjuration"], [14, "Spell Resistance"]] },
             "Bladesinging": { features: [[2, "Bladesong"], [6, "Extra Attack"], [10, "Song of Defense"], [14, "Song of Victory"]] },
@@ -294,7 +234,6 @@ export const CLASSES = {
 };
 
 export const ALL_ITEMS = [
-    // --- Original Items ---
     {name: "Potion of Healing", category: "Potion", desc: "Regain 2d4+2 HP (Action)"},
     {name: "Rations", category: "Adventuring Gear", desc: "1 day of food"},
     {name: "Torch", category: "Adventuring Gear", desc: "Burns for 1 hour, 20ft bright light"},
@@ -305,8 +244,6 @@ export const ALL_ITEMS = [
     {name: "Thieves' Tools", category: "Tool", desc: "Add Proficiency to checks to open locks/disarm traps."},
     {name: "Musical Instrument", category: "Tool", desc: "For performance and Bardic spellcasting."},
     {name: "Healer's Kit", category: "Adventuring Gear", desc: "Stabilize without Medicine check (10 uses)."},
-
-    // --- Expanded Potions & Magical Fluids ---
     {name: "Potion of Greater Healing", category: "Potion", desc: "Regain 4d4+4 HP (Action)"},
     {name: "Potion of Superior Healing", category: "Potion", desc: "Regain 8d4+8 HP (Action)"},
     {name: "Potion of Supreme Healing", category: "Potion", desc: "Regain 10d4+20 HP (Action)"},
@@ -319,8 +256,6 @@ export const ALL_ITEMS = [
     {name: "Potion of Mind Reading", category: "Potion", desc: "Gain effect of Detect Thoughts spell (DC 13)."},
     {name: "Oil of Slipperiness", category: "Potion", desc: "Apply to creature (Freedom of Movement) or area (Grease effect)."},
     {name: "Elixir of Health", category: "Potion", desc: "Cures blindness, deafness, paralysis, and poison."},
-
-    // --- Adventuring Gear (Utility & Survival) ---
     {name: "Crowbar", category: "Adventuring Gear", desc: "Advantage on Strength checks to pry open objects."},
     {name: "Grappling Hook", category: "Adventuring Gear", desc: "Secure a rope to a remote anchor point."},
     {name: "Hammer", category: "Adventuring Gear", desc: "For pounding pitons or spikes."},
@@ -345,8 +280,6 @@ export const ALL_ITEMS = [
     {name: "Soap", category: "Adventuring Gear", desc: "For washing."},
     {name: "Signal Whistle", category: "Adventuring Gear", desc: "Audible for a long distance."},
     {name: "Tent, Two-Person", category: "Adventuring Gear", desc: "Shelter for two people."},
-    
-    // --- Tools & Kits ---
     {name: "Disguise Kit", category: "Tool", desc: "Cosmetics and props to create disguises."},
     {name: "Forgery Kit", category: "Tool", desc: "Create fake documents and signatures."},
     {name: "Herbalism Kit", category: "Tool", desc: "Create remedies and potions of healing."},
@@ -356,16 +289,71 @@ export const ALL_ITEMS = [
     {name: "Alchemist's Supplies", category: "Tool", desc: "Craft potions and chemical mixtures."},
     {name: "Tinker's Tools", category: "Tool", desc: "Repair small mechanical devices."},
     {name: "Cartographer's Tools", category: "Tool", desc: "Draw maps and charts."},
-
-    // --- Containers ---
     {name: "Sack", category: "Container", desc: "Holds 30 lbs/1 cubic foot."},
     {name: "Pouch", category: "Container", desc: "Holds 6 lbs/0.2 cubic feet."},
     {name: "Chest", category: "Container", desc: "Holds 300 lbs/12 cubic feet; can be locked."},
     {name: "Vial", category: "Container", desc: "Holds 4 ounces of liquid."},
     {name: "Jug", category: "Container", desc: "Holds 1 gallon of liquid."}
 ];
+
+export const ALL_WEAPONS = [
+    {name: "Unarmed Strike", dice: "1", type: "Bludgeoning", category: "Simple Melee", stat: "STR", desc: "Basic melee strike."},
+    {name: "Dagger", dice: "1d4", type: "Piercing", category: "Simple Melee", stat: "DEX", desc: "Finesse, light, thrown (20/60)."},
+    {name: "Handaxe", dice: "1d6", type: "Slashing", category: "Simple Melee", stat: "STR", desc: "Light, thrown (20/60)."},
+    {name: "Javelin", dice: "1d6", type: "Piercing", category: "Simple Melee", stat: "STR", desc: "Thrown (30/120)."},
+    {name: "Mace", dice: "1d6", type: "Bludgeoning", category: "Simple Melee", stat: "STR", desc: "-"},
+    {name: "Quarterstaff", dice: "1d6", type: "Bludgeoning", category: "Simple Melee", stat: "STR", desc: "Versatile (1d8)."},
+    {name: "Spear", dice: "1d6", type: "Piercing", category: "Simple Melee", stat: "STR", desc: "Thrown (20/60), Versatile (1d8)."},
+    {name: "Light Crossbow", dice: "1d8", type: "Piercing", category: "Simple Ranged", stat: "DEX", desc: "Ammo (80/320), loading, two-handed."},
+    {name: "Dart", dice: "1d4", type: "Piercing", category: "Simple Ranged", stat: "DEX", desc: "Finesse, thrown (20/60)."},
+    {name: "Shortbow", dice: "1d6", type: "Piercing", category: "Simple Ranged", stat: "DEX", desc: "Ammo (80/320), two-handed."},
+    {name: "Battleaxe", dice: "1d8", type: "Slashing", category: "Martial Melee", stat: "STR", desc: "Versatile (1d10)."},
+    {name: "Greataxe", dice: "1d12", type: "Slashing", category: "Martial Melee", stat: "STR", desc: "Heavy, two-handed."},
+    {name: "Greatsword", dice: "2d6", type: "Slashing", category: "Martial Melee", stat: "STR", desc: "Heavy, two-handed."},
+    {name: "Longsword", dice: "1d8", type: "Slashing", category: "Martial Melee", stat: "STR", desc: "Versatile (1d10)."},
+    {name: "Rapier", dice: "1d8", type: "Piercing", category: "Martial Melee", stat: "DEX", desc: "Finesse."},
+    {name: "Scimitar", dice: "1d6", type: "Slashing", category: "Martial Melee", stat: "DEX", desc: "Finesse, light."},
+    {name: "Shortsword", dice: "1d6", type: "Piercing", category: "Martial Melee", stat: "DEX", desc: "Finesse, light."},
+    {name: "Warhammer", dice: "1d8", type: "Bludgeoning", category: "Martial Melee", stat: "STR", desc: "Versatile (1d10)."},
+    {name: "Hand Crossbow", dice: "1d6", type: "Piercing", category: "Martial Ranged", stat: "DEX", desc: "Ammo (30/120), light, loading."},
+    {name: "Longbow", dice: "1d8", type: "Piercing", category: "Martial Ranged", stat: "DEX", desc: "Ammo (150/600), heavy, two-handed."}
+];
+
+export const ALL_ARMOR = [
+    {name: "Padded Armor", dice: "-", type: "-", category: "Armor", ac: 11, armor_type: "Light", desc: "AC 11 + Dex. Disadvantage on Stealth."},
+    {name: "Leather Armor", dice: "-", type: "-", category: "Armor", ac: 11, armor_type: "Light", desc: "AC 11 + Dex."},
+    {name: "Studded Leather", dice: "-", type: "-", category: "Armor", ac: 12, armor_type: "Light", desc: "AC 12 + Dex."},
+    {name: "Hide Armor", dice: "-", type: "-", category: "Armor", ac: 12, armor_type: "Medium", desc: "AC 12 + Dex (Max 2)."},
+    {name: "Chain Shirt", dice: "-", type: "-", category: "Armor", ac: 13, armor_type: "Medium", desc: "AC 13 + Dex (Max 2)."},
+    {name: "Scale Mail", dice: "-", type: "-", category: "Armor", ac: 14, armor_type: "Medium", desc: "AC 14 + Dex (Max 2). Disadvantage on Stealth."},
+    {name: "Breastplate", dice: "-", type: "-", category: "Armor", ac: 14, armor_type: "Medium", desc: "AC 14 + Dex (Max 2)."},
+    {name: "Half Plate", dice: "-", type: "-", category: "Armor", ac: 15, armor_type: "Medium", desc: "AC 15 + Dex (Max 2). Disadvantage on Stealth."},
+    {name: "Ring Mail", dice: "-", type: "-", category: "Armor", ac: 14, armor_type: "Heavy", desc: "AC 14. Disadvantage on Stealth."},
+    {name: "Chain Mail", dice: "-", type: "-", category: "Armor", ac: 16, armor_type: "Heavy", desc: "AC 16. Str 13 Req. Disadvantage on Stealth."},
+    {name: "Splint Armor", dice: "-", type: "-", category: "Armor", ac: 17, armor_type: "Heavy", desc: "AC 17. Str 15 Req. Disadvantage on Stealth."},
+    {name: "Plate Armor", dice: "-", type: "-", category: "Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Str 15 Req. Disadvantage on Stealth."},
+    {name: "Shield", dice: "-", type: "-", category: "Armor", ac: 2, armor_type: "Shield", desc: "+2 AC. Requires one free hand."},
+    {name: "Mithral Chain Shirt", dice: "-", type: "-", category: "Magic Armor", ac: 13, armor_type: "Medium", desc: "AC 13 + Dex (Max 2). No Stealth Disadvantage."},
+    {name: "Mithral Half Plate", dice: "-", type: "-", category: "Magic Armor", ac: 15, armor_type: "Medium", desc: "AC 15 + Dex (Max 2). No Stealth Disadvantage."},
+    {name: "Mithral Plate", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. No Strength Requirement. No Stealth Disadvantage."},
+    {name: "Adamantine Splint", dice: "-", type: "-", category: "Magic Armor", ac: 17, armor_type: "Heavy", desc: "AC 17. Crit immunity."},
+    {name: "Adamantine Plate", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Crit immunity."},
+    {name: "Elven Chain", dice: "-", type: "-", category: "Magic Armor", ac: 14, armor_type: "Medium", desc: "AC 14 + Dex (Max 2). Auto-proficient."},
+    {name: "Glamoured Studded Leather", dice: "-", type: "-", category: "Magic Armor", ac: 13, armor_type: "Light", desc: "AC 13 + Dex. Change appearance."},
+    {name: "Dragon Scale Mail", dice: "-", type: "-", category: "Magic Armor", ac: 15, armor_type: "Medium", desc: "AC 15 + Dex (Max 2). Resistance + Adv vs Breath."},
+    {name: "Dwarven Plate", dice: "-", type: "-", category: "Magic Armor", ac: 20, armor_type: "Heavy", desc: "AC 20. Reduce forced move."},
+    {name: "Demon Armor", dice: "1d8", type: "Slashing", category: "Magic Armor", ac: 19, armor_type: "Heavy", desc: "AC 19. Unarmed magic dmg. Cursed."},
+    {name: "Efreeti Chain", dice: "-", type: "-", category: "Magic Armor", ac: 19, armor_type: "Heavy", desc: "AC 19. Fire Immunity."},
+    {name: "Armor of Invulnerability", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Resistance/Immunity."},
+    {name: "Sentinel Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Adv Init/Perception."},
+    {name: "Spellguard Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Adv saves vs spells."},
+    {name: "Animated Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Hovers hands-free."},
+    {name: "Shield of Missile Attraction", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Resistance Ranged. Cursed."},
+    {name: "Mariner's Armor", dice: "-", type: "-", category: "Magic Armor", ac: "Varies", armor_type: "Medium", desc: "Swim speed + Float."},
+    {name: "Armor of Etherealness", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Ethereal action."}
+];
+
 export const ALL_FEATURES = [
-    // Base Class Features
     {name: "Rage", dice: "2", type: "Bonus Dmg", category: "Feature", action_type: "Bonus Action", stat: "STR", desc: "Adv Strength checks/saves. Resist Bludg/Pierc/Slash. +2 Dmg."},
     {name: "Bardic Inspiration", dice: "1d6", type: "Buff", category: "Feature", action_type: "Bonus Action", stat: "CHA", desc: "Grant ally 1d6 to add to ability check, attack, or save."},
     {name: "Second Wind", dice: "1d10", type: "Healing", category: "Feature", action_type: "Bonus Action", stat: "CON", desc: "Regain 1d10 + Level HP. Once per short rest."},
@@ -381,8 +369,47 @@ export const ALL_FEATURES = [
     {name: "Magical Tinkering", dice: "-", type: "Utility", category: "Feature", action_type: "Action", desc: "Imbue tiny object with light, audio, or message."},
     {name: "Infuse Item", dice: "-", type: "Enhance", category: "Feature", action_type: "Passive", desc: "Turn mundane items into magic items."},
     {name: "Unarmored Defense", dice: "-", type: "AC Calc", category: "Feature", action_type: "Passive", desc: "AC = 10 + Dex + Con (Barb) or Wis (Monk) when unarmored."},
-    
-    // Subclass Specific
+    {name: "Feral Instinct", dice: "-", type: "Initiative", category: "Feature", action_type: "Passive", desc: "Advantage on Initiative rolls."},
+    {name: "Brutal Critical", dice: "1", type: "Bonus Dmg", category: "Feature", action_type: "Passive", desc: "Add one extra weapon damage die on Crits."},
+    {name: "Relentless Rage", dice: "10", type: "Save DC", category: "Feature", action_type: "Reaction", stat: "CON", desc: "If you drop to 0 HP, DC 10 Con save to drop to 1 HP instead."},
+    {name: "Song of Rest", dice: "1d6", type: "Healing", category: "Feature", action_type: "Passive", desc: "Allies regain extra HP during Short Rest."},
+    {name: "Countercharm", dice: "-", type: "Buff", category: "Feature", action_type: "Action", desc: "Advantage on saves vs Frightened/Charmed for allies."},
+    {name: "Magical Secrets", dice: "-", type: "Utility", category: "Feature", action_type: "Passive", desc: "Learn spells from any class list."},
+    {name: "Destroy Undead", dice: "-", type: "Kill", category: "Feature", action_type: "Action", desc: "Undead of specific CR are instantly destroyed on failed save."},
+    {name: "Divine Intervention", dice: "1d100", type: "Miracle", category: "Feature", action_type: "Action", desc: "Roll percentile. If under Level, Deity intervenes."},
+    {name: "Timeless Body", dice: "-", type: "Immunity", category: "Feature", action_type: "Passive", desc: "Age slowly, immune to magical aging."},
+    {name: "Archdruid", dice: "-", type: "Infinite", category: "Feature", action_type: "Passive", desc: "Unlimited Wild Shapes."},
+    {name: "Indomitable", dice: "-", type: "Reroll", category: "Feature", action_type: "Reaction", desc: "Reroll a failed saving throw."},
+    {name: "Deflect Missiles", dice: "1d10", type: "Reduction", category: "Feature", action_type: "Reaction", stat: "DEX", desc: "Reduce ranged dmg by 1d10 + Dex + Level. Throw back if 0."},
+    {name: "Step of the Wind", dice: "-", type: "Dash/Dis", category: "Feature", action_type: "Bonus Action", desc: "Spend 1 Ki to Dash or Disengage + Jump distance doubled."},
+    {name: "Patient Defense", dice: "-", type: "Dodge", category: "Feature", action_type: "Bonus Action", desc: "Spend 1 Ki to take Dodge action."},
+    {name: "Slow Fall", dice: "-", type: "Reduction", category: "Feature", action_type: "Reaction", desc: "Reduce fall damage by 5 x Monk Level."},
+    {name: "Stunning Strike", dice: "-", type: "Stun", category: "Feature", action_type: "Free", stat: "WIS", desc: "Spend 1 Ki on hit. Con save or Stunned until end of your next turn."},
+    {name: "Stillness of Mind", dice: "-", type: "Cure", category: "Feature", action_type: "Action", desc: "End Charmed or Frightened effect on self."},
+    {name: "Diamond Soul", dice: "-", type: "Reroll", category: "Feature", action_type: "Passive", desc: "Proficiency in ALL saves. 1 Ki to reroll fail."},
+    {name: "Empty Body", dice: "-", type: "Invisible", category: "Feature", action_type: "Action", desc: "4 Ki: Invisible + Resist all dmg (except Force) for 1 min."},
+    {name: "Divine Health", dice: "-", type: "Immunity", category: "Feature", action_type: "Passive", desc: "Immune to Disease."},
+    {name: "Aura of Protection", dice: "-", type: "Save Bonus", category: "Feature", action_type: "Passive", stat: "CHA", desc: "Allies within 10ft add your Cha Mod to saves."},
+    {name: "Aura of Courage", dice: "-", type: "Immunity", category: "Feature", action_type: "Passive", desc: "Allies within 10ft can't be frightened."},
+    {name: "Cleansing Touch", dice: "-", type: "Cure", category: "Feature", action_type: "Action", desc: "End one spell on willing creature (Cha Mod/day)."},
+    {name: "Primeval Awareness", dice: "-", type: "Detection", category: "Feature", action_type: "Action", desc: "Burn spell slot to sense aberrations, celestials, dragons, etc."},
+    {name: "Land's Stride", dice: "-", type: "Movement", category: "Feature", action_type: "Passive", desc: "Move through non-magical difficult terrain. Adv vs plants."},
+    {name: "Hide in Plain Sight", dice: "-", type: "Stealth", category: "Feature", action_type: "Action", desc: "+10 Stealth when stationary against wall."},
+    {name: "Vanish", dice: "-", type: "Hide", category: "Feature", action_type: "Bonus Action", desc: "Hide as a Bonus Action. Cannot be tracked."},
+    {name: "Feral Senses", dice: "-", type: "Sense", category: "Feature", action_type: "Passive", desc: "Aware of invisible creatures within 30ft."},
+    {name: "Uncanny Dodge", dice: "-", type: "Half Dmg", category: "Feature", action_type: "Reaction", desc: "Halve damage from an attack you can see."},
+    {name: "Evasion", dice: "-", type: "Save", category: "Feature", action_type: "Passive", desc: "Dex saves: Success = 0 dmg, Fail = half dmg."},
+    {name: "Reliable Talent", dice: "-", type: "Min 10", category: "Feature", action_type: "Passive", desc: "Treat d20 rolls of 9 or lower as 10 for proficient skills."},
+    {name: "Blindsense", dice: "-", type: "Sense", category: "Feature", action_type: "Passive", desc: "Aware of hidden creatures within 10ft."},
+    {name: "Elusive", dice: "-", type: "Defense", category: "Feature", action_type: "Passive", desc: "No attacks have Advantage against you."},
+    {name: "Stroke of Luck", dice: "-", type: "Auto Hit", category: "Feature", action_type: "Free", desc: "Turn a miss into a hit, or check into a 20 (1/rest)."},
+    {name: "Font of Magic", dice: "-", type: "Resource", category: "Feature", action_type: "Bonus Action", desc: "Convert Sorcery Points to Slots or vice versa."},
+    {name: "Sorcerous Restoration", dice: "4", type: "Restore", category: "Feature", action_type: "Short Rest", desc: "Regain 4 Sorcery points on Short Rest."},
+    {name: "Mystic Arcanum", dice: "-", type: "Spell", category: "Feature", action_type: "Action", desc: "Cast your 6th, 7th, 8th, and 9th level spell once per day."},
+    {name: "Eldritch Master", dice: "-", type: "Restore", category: "Feature", action_type: "Action", desc: "Regain all Pact Magic slots (1/day)."},
+    {name: "Arcane Recovery", dice: "-", type: "Restore", category: "Feature", action_type: "Short Rest", desc: "Regain spell slots (Level / 2) on Short Rest."},
+    {name: "Spell Mastery", dice: "-", type: "Infinite", category: "Feature", action_type: "Passive", desc: "Cast chosen 1st & 2nd level spell at will."},
+    {name: "Signature Spells", dice: "-", type: "Restore", category: "Feature", action_type: "Short Rest", desc: "Two 3rd level spells usually prepared, cast free 1/day."},
     {name: "Eldritch Cannon", dice: "-", type: "Action", category: "Feature", action_type: "Bonus Action", desc: "Create a cannon that shoots force/fire or grants THP."},
     {name: "Steel Defender", dice: "-", type: "Pet", category: "Feature", action_type: "Passive", desc: "Construct companion. Attacks on your BA."},
     {name: "Battle Ready", dice: "INT", type: "Int for Atk", category: "Feature", action_type: "Passive", desc: "Use Int for magic weapon attacks."},
@@ -480,72 +507,10 @@ export const ALL_FEATURES = [
     {name: "Colossus Slayer", dice: "1d8", type: "Bonus Dmg", category: "Feature", action_type: "Passive", desc: "Extra 1d8 damage if target is below max HP."},
     {name: "Thunder Gauntlets", dice: "1d8", type: "Thunder", category: "Weapon", action_type: "Action", stat: "INT", desc: "Disadvantage on attacks vs others."},
     {name: "Lightning Launcher", dice: "1d6", type: "Lightning", category: "Weapon", action_type: "Action", stat: "INT", desc: "Range 90/300. Extra 1d6 once per turn."},
-    {name: "Hexblade's Curse", dice: "-", type: "Crit 19", category: "Feature", action_type: "Bonus Action", desc: "Crit on 19-20, +PB damage against target."},
-];
-// --- 2. ARMOR (Base & Mythical) ---
-export const ALL_ARMOR = [
-    // --- BASE LIGHT ARMOR ---
-    {name: "Padded Armor", dice: "-", type: "-", category: "Armor", ac: 11, armor_type: "Light", desc: "AC 11 + Dex. Disadvantage on Stealth."},
-    {name: "Leather Armor", dice: "-", type: "-", category: "Armor", ac: 11, armor_type: "Light", desc: "AC 11 + Dex."},
-    {name: "Studded Leather", dice: "-", type: "-", category: "Armor", ac: 12, armor_type: "Light", desc: "AC 12 + Dex."},
-
-    // --- BASE MEDIUM ARMOR ---
-    {name: "Hide Armor", dice: "-", type: "-", category: "Armor", ac: 12, armor_type: "Medium", desc: "AC 12 + Dex (Max 2)."},
-    {name: "Chain Shirt", dice: "-", type: "-", category: "Armor", ac: 13, armor_type: "Medium", desc: "AC 13 + Dex (Max 2)."},
-    {name: "Scale Mail", dice: "-", type: "-", category: "Armor", ac: 14, armor_type: "Medium", desc: "AC 14 + Dex (Max 2). Disadvantage on Stealth."},
-    {name: "Breastplate", dice: "-", type: "-", category: "Armor", ac: 14, armor_type: "Medium", desc: "AC 14 + Dex (Max 2)."},
-    {name: "Half Plate", dice: "-", type: "-", category: "Armor", ac: 15, armor_type: "Medium", desc: "AC 15 + Dex (Max 2). Disadvantage on Stealth."},
-
-    // --- BASE HEAVY ARMOR ---
-    {name: "Ring Mail", dice: "-", type: "-", category: "Armor", ac: 14, armor_type: "Heavy", desc: "AC 14. Disadvantage on Stealth."},
-    {name: "Chain Mail", dice: "-", type: "-", category: "Armor", ac: 16, armor_type: "Heavy", desc: "AC 16. Str 13 Req. Disadvantage on Stealth."},
-    {name: "Splint Armor", dice: "-", type: "-", category: "Armor", ac: 17, armor_type: "Heavy", desc: "AC 17. Str 15 Req. Disadvantage on Stealth."},
-    {name: "Plate Armor", dice: "-", type: "-", category: "Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Str 15 Req. Disadvantage on Stealth."},
-
-    // --- BASE SHIELDS ---
-    {name: "Shield", dice: "-", type: "-", category: "Armor", ac: 2, armor_type: "Shield", desc: "+2 AC. Requires one free hand."},
-
-    // --- MYTHICAL & MAGIC ARMOR ---
-    {name: "Mithral Chain Shirt", dice: "-", type: "-", category: "Magic Armor", ac: 13, armor_type: "Medium", desc: "AC 13 + Dex (Max 2). No Stealth Disadvantage. Light enough to wear under clothes."},
-    {name: "Mithral Half Plate", dice: "-", type: "-", category: "Magic Armor", ac: 15, armor_type: "Medium", desc: "AC 15 + Dex (Max 2). No Stealth Disadvantage."},
-    {name: "Mithral Plate", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. No Strength Requirement. No Stealth Disadvantage."},
-    
-    {name: "Adamantine Splint", dice: "-", type: "-", category: "Magic Armor", ac: 17, armor_type: "Heavy", desc: "AC 17. Critical Hits against you become normal hits."},
-    {name: "Adamantine Plate", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Critical Hits against you become normal hits."},
-    
-    {name: "Elven Chain", dice: "-", type: "-", category: "Magic Armor", ac: 14, armor_type: "Medium", desc: "AC 14 + Dex (Max 2). You are proficient with this even if you lack proficiency."},
-    {name: "Glamoured Studded Leather", dice: "-", type: "-", category: "Magic Armor", ac: 13, armor_type: "Light", desc: "AC 13 + Dex. +1 Bonus. Can change appearance (Bonus Action)."},
-    
-    {name: "Dragon Scale Mail", dice: "-", type: "-", category: "Magic Armor", ac: 15, armor_type: "Medium", desc: "AC 15 + Dex (Max 2). Advantage vs Dragon Fear & Breath. Resistance to one damage type."},
-    {name: "Dwarven Plate", dice: "-", type: "-", category: "Magic Armor", ac: 20, armor_type: "Heavy", desc: "AC 20. Uses Strength to reduce forced movement by 10ft."},
-    
-    {name: "Demon Armor", dice: "1d8", type: "Slashing", category: "Magic Armor", ac: 19, armor_type: "Heavy", desc: "AC 19. Unarmed strikes deal 1d8 magic damage. Cursed: Can't remove."},
-    {name: "Efreeti Chain", dice: "-", type: "-", category: "Magic Armor", ac: 19, armor_type: "Heavy", desc: "AC 19. Immune to Fire damage. Walk on lava."},
-    {name: "Armor of Invulnerability", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18. Resistance to non-magical damage. Action: Immunity for 10 mins."},
-    
-    {name: "Shield +1", dice: "-", type: "-", category: "Magic Armor", ac: 3, armor_type: "Shield", desc: "+3 AC total. Magical."},
-    {name: "Shield +2", dice: "-", type: "-", category: "Magic Armor", ac: 4, armor_type: "Shield", desc: "+4 AC total. Magical."},
-    {name: "Shield +3", dice: "-", type: "-", category: "Magic Armor", ac: 5, armor_type: "Shield", desc: "+5 AC total. Magical."},
-    {name: "Arrow-Catching Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "+2 AC normally, +2 extra vs Ranged. Can intercept ranged attacks."},
-
-    // --- SPECIAL & UTILITY SHIELDS ---
-    {name: "Sentinel Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Advantage on Initiative and Perception checks. No eyes needed."},
-    {name: "Spellguard Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Advantage on Saves vs Spells/Magical Effects. Disadvantage on spell attacks against you."},
-    {name: "Animated Shield", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Speak command word to make it hover and protect you, leaving hands free."},
-    {name: "Shield of Missile Attraction", dice: "-", type: "-", category: "Magic Armor", ac: 2, armor_type: "Shield", desc: "AC +2. Resistance to Ranged Damage. Cursed: Ranged attacks target you."},
-
-    // --- UTILITY ARMOR ---
-    {name: "Mariner's Armor", dice: "-", type: "-", category: "Magic Armor", ac: "Varies", armor_type: "Medium", desc: "Swim speed equal to walking speed. Float if you fall to 0 HP."},
-    {name: "Armor of Resistance", dice: "-", type: "-", category: "Magic Armor", ac: "Varies", armor_type: "Light/Med/Heavy", desc: "Resistance to one damage type (Acid, Cold, Fire, Force, Lightning, etc.)."},
-    {name: "Armor of Etherealness", dice: "-", type: "-", category: "Magic Armor", ac: 18, armor_type: "Heavy", desc: "AC 18 (Plate). Action: Become Ethereal for 10 minutes (1/day)."},
-    
-    // --- COMMON (FLAVOR) ARMOR ---
-    {name: "Cast-Off Armor", dice: "-", type: "-", category: "Magic Armor", ac: "Varies", armor_type: "Light/Med/Heavy", desc: "You can doff (remove) this armor as an Action."},
-    {name: "Smoldering Armor", dice: "-", type: "-", category: "Magic Armor", ac: "Varies", armor_type: "Light/Med/Heavy", desc: "Wisps of harmless smoke rise from this armor."}
+    {name: "Hexblade's Curse", dice: "-", type: "Crit 19", category: "Feature", action_type: "Bonus Action", desc: "Crit on 19-20, +PB damage against target."}
 ];
 
 export const ALL_SPELLS = [
-    // --- CANTRIPS (LEVEL 0) ---
     {name: "Acid Splash", dice: "1d6", type: "Acid", category: "Spell", level: 0, scale_dice: "1d6", desc: "Dex Save. Two targets within 5ft.", classes: ["Artificer", "Sorcerer", "Wizard"]},
     {name: "Blade Ward", dice: "-", type: "Resist", category: "Spell", level: 0, desc: "Resistance to B/P/S damage until next turn.", classes: ["Bard", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Chill Touch", dice: "1d8", type: "Necrotic", category: "Spell", level: 0, scale_dice: "1d8", desc: "Target can't heal until your next turn.", classes: ["Sorcerer", "Warlock", "Wizard"]},
@@ -575,8 +540,6 @@ export const ALL_SPELLS = [
     {name: "Word of Radiance", dice: "1d6", type: "Radiant", category: "Spell", level: 0, scale_dice: "1d6", desc: "Con save. All enemies within 5ft.", classes: ["Cleric"]},
     {name: "Thunderclap", dice: "1d6", type: "Thunder", category: "Spell", level: 0, scale_dice: "1d6", desc: "Con save. 5ft radius.", classes: ["Artificer", "Bard", "Druid", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Toll the Dead", dice: "1d8", type: "Necrotic", category: "Spell", level: 0, scale_dice: "1d8", desc: "Wis Save. d12 if damaged.", classes: ["Cleric", "Warlock", "Wizard"]},
-
-    // --- LEVEL 1 ---
     {name: "Alarm", dice: "-", type: "Utility", category: "Spell", level: 1, desc: "Alerts when area entered. Ritual.", classes: ["Artificer", "Ranger", "Wizard"]},
     {name: "Animal Friendship", dice: "-", type: "Charm", category: "Spell", level: 1, desc: "Charm beast INT < 4.", classes: ["Bard", "Druid", "Ranger"]},
     {name: "Armor of Agathys", dice: "5", type: "Cold", category: "Spell", level: 1, scale_dice: "5", desc: "Gain 5 THP. Hitters take 5 Cold dmg.", classes: ["Warlock"]},
@@ -630,8 +593,6 @@ export const ALL_SPELLS = [
     {name: "Thunderwave", dice: "2d8", type: "Thunder", category: "Spell", level: 1, scale_dice: "1d8", desc: "15ft cube. Con save push 10ft.", classes: ["Bard", "Druid", "Sorcerer", "Wizard"]},
     {name: "Unseen Servant", dice: "-", type: "Utility", category: "Spell", level: 1, desc: "Invisible force performs tasks.", classes: ["Bard", "Warlock", "Wizard"]},
     {name: "Witch Bolt", dice: "1d12", type: "Lightning", category: "Spell", level: 1, scale_dice: "1d12", desc: "Sustained damage each turn.", classes: ["Sorcerer", "Warlock", "Wizard"]},
-
-    // --- LEVEL 2 ---
     {name: "Acid Arrow", dice: "4d4", type: "Acid", category: "Spell", level: 2, scale_dice: "2d4", desc: "And 2d4 next turn.", classes: ["Wizard"]},
     {name: "Aid", dice: "-", type: "Max HP", category: "Spell", level: 2, desc: "+5 Max HP to 3 targets.", classes: ["Artificer", "Cleric", "Paladin"]},
     {name: "Alter Self", dice: "-", type: "Buff", category: "Spell", level: 2, desc: "Change appearance or natural weapons.", classes: ["Artificer", "Sorcerer", "Wizard"]},
@@ -686,8 +647,6 @@ export const ALL_SPELLS = [
     {name: "Warding Bond", dice: "-", type: "Buff", category: "Spell", level: 2, desc: "+1 AC/Save, split damage.", classes: ["Cleric"]},
     {name: "Web", dice: "-", type: "Restrain", category: "Spell", level: 2, desc: "Dex save restrain.", classes: ["Artificer", "Sorcerer", "Wizard"]},
     {name: "Zone of Truth", dice: "-", type: "Social", category: "Spell", level: 2, desc: "Can't lie.", classes: ["Bard", "Cleric", "Paladin"]},
-
-    // --- LEVEL 3 ---
     {name: "Animate Dead", dice: "-", type: "Summon", category: "Spell", level: 3, desc: "Create zombie/skeleton.", classes: ["Cleric", "Wizard"]},
     {name: "Aura of Vitality", dice: "2d6", type: "Healing", category: "Spell", level: 3, desc: "BA heal 2d6 per turn.", classes: ["Paladin"]},
     {name: "Beacon of Hope", dice: "-", type: "Buff", category: "Spell", level: 3, desc: "Max healing, adv wis saves.", classes: ["Cleric"]},
@@ -732,8 +691,6 @@ export const ALL_SPELLS = [
     {name: "Water Breathing", dice: "-", type: "Utility", category: "Spell", level: 3, desc: "Breathe water 24h.", classes: ["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"]},
     {name: "Water Walk", dice: "-", type: "Utility", category: "Spell", level: 3, desc: "Walk on liquid.", classes: ["Artificer", "Cleric", "Druid", "Ranger", "Sorcerer"]},
     {name: "Wind Wall", dice: "3d8", type: "Bludgeoning", category: "Spell", level: 3, desc: "Block arrows.", classes: ["Druid", "Ranger"]},
-
-    // --- LEVEL 4 ---
     {name: "Arcane Eye", dice: "-", type: "Divination", category: "Spell", level: 4, desc: "Invisible eye scout.", classes: ["Artificer", "Cleric", "Wizard"]},
     {name: "Banishment", dice: "-", type: "Control", category: "Spell", level: 4, desc: "Cha save. Banish.", classes: ["Cleric", "Paladin", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Blight", dice: "8d8", type: "Necrotic", category: "Spell", level: 4, scale_dice: "1d8", desc: "Con save.", classes: ["Druid", "Sorcerer", "Warlock", "Wizard"]},
@@ -762,8 +719,6 @@ export const ALL_SPELLS = [
     {name: "Stone Shape", dice: "-", type: "Utility", category: "Spell", level: 4, desc: "Reshape stone.", classes: ["Artificer", "Cleric", "Druid", "Wizard"]},
     {name: "Stoneskin", dice: "-", type: "Resist", category: "Spell", level: 4, desc: "Resist non-magic physical.", classes: ["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"]},
     {name: "Wall of Fire", dice: "5d8", type: "Fire", category: "Spell", level: 4, scale_dice: "1d8", desc: "Line or ring.", classes: ["Druid", "Sorcerer", "Wizard"]},
-
-    // --- LEVEL 5 ---
     {name: "Animate Objects", dice: "1d4+4", type: "Bludgeoning", category: "Spell", level: 5, desc: "Animated swarm.", classes: ["Artificer", "Bard", "Sorcerer", "Wizard"]},
     {name: "Antilife Shell", dice: "-", type: "Protection", category: "Spell", level: 5, desc: "Living can't pass.", classes: ["Druid"]},
     {name: "Awaken", dice: "-", type: "Charm", category: "Spell", level: 5, desc: "Sentient plant/beast.", classes: ["Bard", "Druid"]},
@@ -800,8 +755,6 @@ export const ALL_SPELLS = [
     {name: "Tree Stride", dice: "-", type: "Transport", category: "Spell", level: 5, desc: "Step between trees.", classes: ["Druid", "Ranger"]},
     {name: "Wall of Force", dice: "-", type: "Barrier", category: "Spell", level: 5, desc: "Indestructible wall.", classes: ["Wizard"]},
     {name: "Wall of Stone", dice: "-", type: "Barrier", category: "Spell", level: 5, desc: "Solid wall.", classes: ["Artificer", "Druid", "Sorcerer", "Wizard"]},
-
-    // --- LEVEL 6 ---
     {name: "Arcane Gate", dice: "-", type: "Transport", category: "Spell", level: 6, desc: "Two portals.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Blade Barrier", dice: "6d10", type: "Slashing", category: "Spell", level: 6, desc: "Wall of blades.", classes: ["Cleric"]},
     {name: "Chain Lightning", dice: "10d8", type: "Lightning", category: "Spell", level: 6, scale_dice: "1d8", desc: "Jumps to 3 targets.", classes: ["Sorcerer", "Wizard"]},
@@ -828,8 +781,6 @@ export const ALL_SPELLS = [
     {name: "Wall of Thorns", dice: "7d8", type: "Piercing", category: "Spell", level: 6, desc: "Thorn wall.", classes: ["Druid"]},
     {name: "Wind Walk", dice: "-", type: "Transport", category: "Spell", level: 6, desc: "Turn into clouds.", classes: ["Druid"]},
     {name: "Word of Recall", dice: "-", type: "Transport", category: "Spell", level: 6, desc: "Teleport to sanctuary.", classes: ["Cleric"]},
-
-    // --- LEVEL 7 ---
     {name: "Arcane Sword", dice: "3d10", type: "Force", category: "Spell", level: 7, desc: "Floating sword.", classes: ["Bard", "Wizard"]},
     {name: "Conjure Celestial", dice: "-", type: "Summon", category: "Spell", level: 7, desc: "Summon celestial.", classes: ["Cleric"]},
     {name: "Delayed Blast Fireball", dice: "12d6", type: "Fire", category: "Spell", level: 7, desc: "Explodes later.", classes: ["Sorcerer", "Wizard"]},
@@ -850,8 +801,6 @@ export const ALL_SPELLS = [
     {name: "Simulacrum", dice: "-", type: "Duplicate", category: "Spell", level: 7, desc: "Snow duplicate.", classes: ["Wizard"]},
     {name: "Symbol", dice: "-", type: "Trap", category: "Spell", level: 7, desc: "Rune trap.", classes: ["Bard", "Cleric", "Druid", "Wizard"]},
     {name: "Teleport", dice: "-", type: "Transport", category: "Spell", level: 7, desc: "Teleport anywhere.", classes: ["Bard", "Sorcerer", "Wizard"]},
-
-    // --- LEVEL 8 ---
     {name: "Animal Shapes", dice: "-", type: "Transform", category: "Spell", level: 8, desc: "Mass polymorph.", classes: ["Druid"]},
     {name: "Antimagic Field", dice: "-", type: "Protection", category: "Spell", level: 8, desc: "No magic zone.", classes: ["Cleric", "Wizard"]},
     {name: "Antipathy/Sympathy", dice: "-", type: "Control", category: "Spell", level: 8, desc: "Attract/Repel.", classes: ["Bard", "Druid", "Wizard"]},
@@ -870,8 +819,6 @@ export const ALL_SPELLS = [
     {name: "Sunburst", dice: "12d6", type: "Radiant", category: "Spell", level: 8, desc: "Huge radiant area.", classes: ["Druid", "Sorcerer", "Wizard"]},
     {name: "Telepathy", dice: "-", type: "Comm", category: "Spell", level: 8, desc: "Unlimited range.", classes: ["Wizard"]},
     {name: "Tsunami", dice: "6d10", type: "Bludgeoning", category: "Spell", level: 8, desc: "Wall of water.", classes: ["Druid"]},
-
-    // --- LEVEL 9 ---
     {name: "Astral Projection", dice: "-", type: "Transport", category: "Spell", level: 9, desc: "Travel astrally.", classes: ["Cleric", "Warlock", "Wizard"]},
     {name: "Foresight", dice: "-", type: "Buff", category: "Spell", level: 9, desc: "Advantage on everything.", classes: ["Bard", "Druid", "Warlock", "Wizard"]},
     {name: "Gate", dice: "-", type: "Transport", category: "Spell", level: 9, desc: "Portal to plane.", classes: ["Cleric", "Sorcerer", "Wizard"]},
@@ -887,52 +834,34 @@ export const ALL_SPELLS = [
     {name: "True Polymorph", dice: "-", type: "Transform", category: "Spell", level: 9, desc: "Permanent change.", classes: ["Bard", "Warlock", "Wizard"]},
     {name: "True Resurrection", dice: "-", type: "Resurrect", category: "Spell", level: 9, desc: "Revive anyone.", classes: ["Cleric", "Druid"]},
     {name: "Weird", dice: "4d10", type: "Psychic", category: "Spell", level: 9, desc: "Mass fear/damage.", classes: ["Warlock", "Wizard"]},
-    {name: "Wish", dice: "-", type: "Unlimited", category: "Spell", level: 9, desc: "Alter reality.", classes: ["Sorcerer", "Wizard"]}
-];
-
-export const MISSING_SPELLS = [
-    // --- CANTRIPS ---
+    {name: "Wish", dice: "-", type: "Unlimited", category: "Spell", level: 9, desc: "Alter reality.", classes: ["Sorcerer", "Wizard"]},
     {name: "Booming Blade", dice: "1d8", type: "Thunder", category: "Spell", level: 0, scale_dice: "1d8", desc: "Melee hit + energy. Target takes dmg if they move.", classes: ["Artificer", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Green-Flame Blade", dice: "1d8", type: "Fire", category: "Spell", level: 0, scale_dice: "1d8", desc: "Melee hit + fire jumps to adjacent enemy.", classes: ["Artificer", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Mind Sliver", dice: "1d6", type: "Psychic", category: "Spell", level: 0, scale_dice: "1d6", desc: "Int Save. Dmg + subtract 1d4 from next save.", classes: ["Sorcerer", "Warlock", "Wizard"]},
-    {name: "Word of Radiance", dice: "1d6", type: "Radiant", category: "Spell", level: 0, scale_dice: "1d6", desc: "Con save. Dmg to all enemies within 5ft.", classes: ["Cleric"]},
-    {name: "Toll the Dead", dice: "1d8", type: "Necrotic", category: "Spell", level: 0, scale_dice: "1d12", desc: "Wis Save. d12 dmg if target is injured.", classes: ["Cleric", "Warlock", "Wizard"]},
-
-    // --- LEVEL 1 ---
     {name: "Absorb Elements", dice: "1d6", type: "Variable", category: "Spell", level: 1, action_type: "Reaction", desc: "Resist Acid/Cold/Fire/Lightning/Thunder. Next hit deals extra dmg.", classes: ["Artificer", "Druid", "Ranger", "Sorcerer", "Wizard"]},
     {name: "Chaos Bolt", dice: "2d8", type: "Random", category: "Spell", level: 1, scale_dice: "1d6", desc: "Ranged attack. Dmg type changes. Jumps on doubles.", classes: ["Sorcerer"]},
     {name: "Ice Knife", dice: "1d10", type: "Piercing", category: "Spell", level: 1, scale_dice: "1d6", desc: "Hit for piercing, then explodes for 2d6 Cold (Dex save).", classes: ["Druid", "Sorcerer", "Wizard"]},
     {name: "Silvery Barbs", dice: "-", type: "Reroll", category: "Spell", level: 1, action_type: "Reaction", desc: "Force reroll on success. Give Adv to ally.", classes: ["Bard", "Sorcerer", "Wizard"]},
     {name: "Zephyr Strike", dice: "1d8", type: "Force", category: "Spell", level: 1, action_type: "Bonus Action", desc: "No opportunity attacks. Adv + 1d8 dmg on one hit.", classes: ["Ranger"]},
     {name: "Catapult", dice: "3d8", type: "Bludgeoning", category: "Spell", level: 1, scale_dice: "1d8", desc: "Launch object 90ft. Dex save.", classes: ["Artificer", "Sorcerer", "Wizard"]},
-
-    // --- LEVEL 2 ---
     {name: "Dragon's Breath", dice: "3d6", type: "Variable", category: "Spell", level: 2, scale_dice: "1d6", desc: "Touch creature gains 15ft cone breath weapon.", classes: ["Sorcerer", "Wizard"]},
     {name: "Shadow Blade", dice: "2d8", type: "Psychic", category: "Spell", level: 2, scale_dice: "1d8", desc: "Summon finesse weapon. Adv in dim light.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Mind Spike", dice: "3d8", type: "Psychic", category: "Spell", level: 2, scale_dice: "1d8", desc: "Wis save. Dmg + know location.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Wither and Bloom", dice: "2d6", type: "Necrotic", category: "Spell", level: 2, scale_dice: "1d6", desc: "Area dmg + Ally can spend hit die to heal.", classes: ["Druid", "Sorcerer", "Wizard"]},
     {name: "Vortex Warp", dice: "-", type: "Teleport", category: "Spell", level: 2, desc: "Con save. Teleport another creature to spot you see.", classes: ["Artificer", "Sorcerer", "Wizard"]},
-
-    // --- LEVEL 3 ---
     {name: "Thunder Step", dice: "3d10", type: "Thunder", category: "Spell", level: 3, scale_dice: "1d10", desc: "Teleport 90ft. Dmg creatures left behind.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Enemies Abound", dice: "-", type: "Control", category: "Spell", level: 3, desc: "Int save. Target attacks nearest creatures.", classes: ["Bard", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Catnap", dice: "-", type: "Utility", category: "Spell", level: 3, desc: "10 min sleep counts as Short Rest.", classes: ["Artificer", "Bard", "Sorcerer", "Wizard"]},
     {name: "Tidal Wave", dice: "4d8", type: "Bludgeoning", category: "Spell", level: 3, desc: "Dex save. Prone + Dmg.", classes: ["Druid", "Sorcerer", "Wizard"]},
     {name: "Life Transference", dice: "4d8", type: "Necrotic", category: "Spell", level: 3, scale_dice: "1d8", desc: "Take dmg to heal ally 2x amount.", classes: ["Cleric", "Wizard"]},
-
-    // --- LEVEL 4 ---
     {name: "Sickening Radiance", dice: "4d10", type: "Radiant", category: "Spell", level: 4, desc: "Con save. Dmg + Exhaustion level. (The Microwave).", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Shadow of Moil", dice: "2d8", type: "Necrotic", category: "Spell", level: 4, desc: "Heavy obscurement. Hitters take dmg.", classes: ["Warlock"]},
     {name: "Vitriolic Sphere", dice: "10d4", type: "Acid", category: "Spell", level: 4, scale_dice: "2d4", desc: "Dex save. High initial dmg + acid next turn.", classes: ["Sorcerer", "Wizard"]},
     {name: "Summon Construct", dice: "-", type: "Summon", category: "Spell", level: 4, desc: "Summon metal/stone construct.", classes: ["Artificer", "Wizard"]},
-
-    // --- LEVEL 5 ---
     {name: "Steel Wind Strike", dice: "6d10", type: "Force", category: "Spell", level: 5, desc: "Melee spell atk on 5 targets. Teleport to one.", classes: ["Ranger", "Wizard"]},
     {name: "Synaptic Static", dice: "8d6", type: "Psychic", category: "Spell", level: 5, desc: "Int save. Fireball size + subtract d6 from atks/checks.", classes: ["Bard", "Sorcerer", "Warlock", "Wizard"]},
     {name: "Far Step", dice: "-", type: "Teleport", category: "Spell", level: 5, action_type: "Bonus Action", desc: "Teleport 60ft every turn for 1 min.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Holy Weapon", dice: "2d8", type: "Radiant", category: "Spell", level: 5, desc: "Weapon deals extra 2d8 radiant.", classes: ["Cleric", "Paladin"]},
-
-    // --- LEVEL 6+ ---
     {name: "Mental Prison", dice: "5d10", type: "Psychic", category: "Spell", level: 6, desc: "Int Save. Restrained + Dmg if moved.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Scatter", dice: "-", type: "Teleport", category: "Spell", level: 6, desc: "Teleport 5 creatures to points you choose.", classes: ["Sorcerer", "Warlock", "Wizard"]},
     {name: "Crown of Stars", dice: "4d12", type: "Radiant", category: "Spell", level: 7, desc: "Bonus Action atk 4d12 for 1 hour.", classes: ["Sorcerer", "Warlock", "Wizard"]},
@@ -940,73 +869,6 @@ export const MISSING_SPELLS = [
     {name: "Ravenous Void", dice: "5d10", type: "Force", category: "Spell", level: 9, desc: "Gravity well pulls and crushes creatures.", classes: ["Wizard"]}
 ];
 
-// --- MISSING HIGH-LEVEL & REACTION FEATURES ---
-export const MISSING_FEATURES = [
-    // --- BARBARIAN ---
-    {name: "Feral Instinct", dice: "-", type: "Initiative", category: "Feature", action_type: "Passive", desc: "Advantage on Initiative rolls."},
-    {name: "Brutal Critical", dice: "1", type: "Bonus Dmg", category: "Feature", action_type: "Passive", desc: "Add one extra weapon damage die on Crits."},
-    {name: "Relentless Rage", dice: "10", type: "Save DC", category: "Feature", action_type: "Reaction", stat: "CON", desc: "If you drop to 0 HP, DC 10 Con save to drop to 1 HP instead."},
-    
-    // --- BARD ---
-    {name: "Song of Rest", dice: "1d6", type: "Healing", category: "Feature", action_type: "Passive", desc: "Allies regain extra HP during Short Rest."},
-    {name: "Countercharm", dice: "-", type: "Buff", category: "Feature", action_type: "Action", desc: "Advantage on saves vs Frightened/Charmed for allies."},
-    {name: "Magical Secrets", dice: "-", type: "Utility", category: "Feature", action_type: "Passive", desc: "Learn spells from any class list."},
-    
-    // --- CLERIC ---
-    {name: "Destroy Undead", dice: "-", type: "Kill", category: "Feature", action_type: "Action", desc: "Undead of specific CR are instantly destroyed on failed save."},
-    {name: "Divine Intervention", dice: "1d100", type: "Miracle", category: "Feature", action_type: "Action", desc: "Roll percentile. If under Level, Deity intervenes."},
-    
-    // --- DRUID ---
-    {name: "Timeless Body", dice: "-", type: "Immunity", category: "Feature", action_type: "Passive", desc: "Age slowly, immune to magical aging."},
-    {name: "Archdruid", dice: "-", type: "Infinite", category: "Feature", action_type: "Passive", desc: "Unlimited Wild Shapes."},
-    
-    // --- FIGHTER ---
-    {name: "Indomitable", dice: "-", type: "Reroll", category: "Feature", action_type: "Reaction", desc: "Reroll a failed saving throw (1-3 uses/day)."},
-    
-    // --- MONK (Essential Missing Actions) ---
-    {name: "Deflect Missiles", dice: "1d10", type: "Reduction", category: "Feature", action_type: "Reaction", stat: "DEX", desc: "Reduce ranged dmg by 1d10 + Dex + Level. Throw back if 0."},
-    {name: "Step of the Wind", dice: "-", type: "Dash/Dis", category: "Feature", action_type: "Bonus Action", desc: "Spend 1 Ki to Dash or Disengage + Jump distance doubled."},
-    {name: "Patient Defense", dice: "-", type: "Dodge", category: "Feature", action_type: "Bonus Action", desc: "Spend 1 Ki to take Dodge action."},
-    {name: "Slow Fall", dice: "-", type: "Reduction", category: "Feature", action_type: "Reaction", desc: "Reduce fall damage by 5 x Monk Level."},
-    {name: "Stunning Strike", dice: "-", type: "Stun", category: "Feature", action_type: "Free", stat: "WIS", desc: "Spend 1 Ki on hit. Con save or Stunned until end of your next turn."},
-    {name: "Stillness of Mind", dice: "-", type: "Cure", category: "Feature", action_type: "Action", desc: "End Charmed or Frightened effect on self."},
-    {name: "Diamond Soul", dice: "-", type: "Reroll", category: "Feature", action_type: "Passive", desc: "Proficiency in ALL saves. 1 Ki to reroll fail."},
-    {name: "Empty Body", dice: "-", type: "Invisible", category: "Feature", action_type: "Action", desc: "4 Ki: Invisible + Resist all dmg (except Force) for 1 min."},
-    
-    // --- PALADIN ---
-    {name: "Divine Health", dice: "-", type: "Immunity", category: "Feature", action_type: "Passive", desc: "Immune to Disease."},
-    {name: "Aura of Protection", dice: "-", type: "Save Bonus", category: "Feature", action_type: "Passive", stat: "CHA", desc: "Allies within 10ft add your Cha Mod to saves."},
-    {name: "Aura of Courage", dice: "-", type: "Immunity", category: "Feature", action_type: "Passive", desc: "Allies within 10ft can't be frightened."},
-    {name: "Cleansing Touch", dice: "-", type: "Cure", category: "Feature", action_type: "Action", desc: "End one spell on willing creature (Cha Mod/day)."},
-    
-    // --- RANGER ---
-    {name: "Primeval Awareness", dice: "-", type: "Detection", category: "Feature", action_type: "Action", desc: "Burn spell slot to sense aberrations, celestials, dragons, etc."},
-    {name: "Land's Stride", dice: "-", type: "Movement", category: "Feature", action_type: "Passive", desc: "Move through non-magical difficult terrain. Adv vs plants."},
-    {name: "Hide in Plain Sight", dice: "-", type: "Stealth", category: "Feature", action_type: "Action", desc: "+10 Stealth when stationary against wall."},
-    {name: "Vanish", dice: "-", type: "Hide", category: "Feature", action_type: "Bonus Action", desc: "Hide as a Bonus Action. Cannot be tracked."},
-    {name: "Feral Senses", dice: "-", type: "Sense", category: "Feature", action_type: "Passive", desc: "Aware of invisible creatures within 30ft."},
-    
-    // --- ROGUE ---
-    {name: "Uncanny Dodge", dice: "-", type: "Half Dmg", category: "Feature", action_type: "Reaction", desc: "Halve damage from an attack you can see."},
-    {name: "Evasion", dice: "-", type: "Save", category: "Feature", action_type: "Passive", desc: "Dex saves: Success = 0 dmg, Fail = half dmg."},
-    {name: "Reliable Talent", dice: "-", type: "Min 10", category: "Feature", action_type: "Passive", desc: "Treat d20 rolls of 9 or lower as 10 for proficient skills."},
-    {name: "Blindsense", dice: "-", type: "Sense", category: "Feature", action_type: "Passive", desc: "Aware of hidden creatures within 10ft."},
-    {name: "Elusive", dice: "-", type: "Defense", category: "Feature", action_type: "Passive", desc: "No attacks have Advantage against you."},
-    {name: "Stroke of Luck", dice: "-", type: "Auto Hit", category: "Feature", action_type: "Free", desc: "Turn a miss into a hit, or check into a 20 (1/rest)."},
-    
-    // --- SORCERER ---
-    {name: "Font of Magic", dice: "-", type: "Resource", category: "Feature", action_type: "Bonus Action", desc: "Convert Sorcery Points to Slots or vice versa."},
-    {name: "Sorcerous Restoration", dice: "4", type: "Restore", category: "Feature", action_type: "Short Rest", desc: "Regain 4 Sorcery points on Short Rest."},
-    
-    // --- WARLOCK ---
-    {name: "Mystic Arcanum", dice: "-", type: "Spell", category: "Feature", action_type: "Action", desc: "Cast your 6th, 7th, 8th, and 9th level spell once per day."},
-    {name: "Eldritch Master", dice: "-", type: "Restore", category: "Feature", action_type: "Action", desc: "Regain all Pact Magic slots (1/day)."},
-    
-    // --- WIZARD ---
-    {name: "Arcane Recovery", dice: "-", type: "Restore", category: "Feature", action_type: "Short Rest", desc: "Regain spell slots (Level / 2) on Short Rest."},
-    {name: "Spell Mastery", dice: "-", type: "Infinite", category: "Feature", action_type: "Passive", desc: "Cast chosen 1st & 2nd level spell at will."},
-    {name: "Signature Spells", dice: "-", type: "Restore", category: "Feature", action_type: "Short Rest", desc: "Two 3rd level spells usually prepared, cast free 1/day."}
-];
 // Generator: Creates +1, +2, +3 variants of ALL armor types
 function generateMagicArmor(baseArmorList) {
     let magicArmor = [];
@@ -1051,13 +913,10 @@ function generateMagicWeapons(weapons) {
 // Combine into your main list
 export const ALL_ACTIONS = [
     ...ALL_WEAPONS,
-    ...generateMagicWeapons(BASE_WEAPONS), // Your existing weapon generator
+    ...generateMagicWeapons(ALL_WEAPONS), // Fixed Reference
     ...ALL_ARMOR, 
     ...generateMagicArmor(ALL_ARMOR),      // The new armor generator
     ...ALL_ITEMS, 
     ...ALL_SPELLS, 
-     ...MISSING_SPELLS,
-    ...ALL_FEATURES, 
-    ...MISSING_FEATURES
+    ...ALL_FEATURES
 ];
-
