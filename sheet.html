@@ -18,8 +18,6 @@
         .stat-label { font-size:0.65em; color:#aaa; text-transform: uppercase; letter-spacing: 1px; }
         .hp-input { background:transparent; border:none; color:#4f4; font-size:1em; font-weight:bold; width:100%; text-align:center; cursor:pointer; }
         
-        .level-badge { position:absolute; top:-10px; right:-10px; background:#e51e25; color:white; border-radius:50%; width:25px; height:25px; font-size:0.8em; font-weight:bold; line-height:25px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.5); }
-        
         .tab-nav { display: flex; background: #1f1f1f; border-bottom: 1px solid #444; flex-shrink: 0; }
         .tab-btn { flex: 1; background: transparent; border: none; color: #888; padding: 15px; font-size: 1em; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; transition: 0.2s; }
         .tab-btn.active { color: #e51e25; border-bottom-color: #e51e25; background: #252525; }
@@ -57,6 +55,27 @@
         
         #chat { height: 150px; background: #111; border-top: 2px solid #e51e25; padding: 10px; overflow-y: scroll; font-family: monospace; font-size: 0.9em; flex-shrink: 0; }
         .msg { margin-bottom: 4px; padding: 4px 8px; border-left: 3px solid #555; }
+
+        /* SPELL SEARCH & SLOTS */
+        .spell-header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #222; border-radius: 4px; margin-bottom: 10px; font-size: 0.9em; color:#aaa; }
+        .spell-counter { color: #8af; font-weight: bold; }
+        
+        .slots-container { margin-bottom: 15px; background: #222; padding: 10px; border-radius: 4px; border: 1px solid #444; }
+        .slot-row { display: flex; align-items: center; margin-bottom: 5px; }
+        .slot-label { width: 60px; font-weight: bold; font-size: 0.9em; color: #ccc; }
+        .slot-bubbles { display: flex; gap: 5px; flex-wrap: wrap; }
+        .slot-chk { appearance: none; width: 15px; height: 15px; border: 1px solid #666; border-radius: 50%; background: #333; cursor: pointer; }
+        .slot-chk:checked { background: #8af; border-color: #8af; box-shadow: 0 0 5px #8af; }
+        
+        /* Warlock Slots Purple */
+        .slot-chk.pact:checked { background: #b0f; border-color: #b0f; box-shadow: 0 0 5px #b0f; }
+
+        .rest-btn { background: #444; color: #fff; border: 1px solid #555; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-left: 10px; }
+        .rest-btn:hover { background: #555; }
+
+        .search-results { max-height: 200px; overflow-y: auto; background: #252525; border: 1px solid #444; display:none; margin-bottom: 10px; }
+        .search-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; }
+        .search-item:hover { background: #333; }
     </style>
 </head>
 <body>
@@ -97,11 +116,34 @@
 
 <div class="content-area">
     <div id="tab-actions" class="tab-pane active"><div id="attackList"></div></div>
-    <div id="tab-spells" class="tab-pane"><div id="spellList"></div></div>
+    
+    <div id="tab-spells" class="tab-pane">
+        <div class="slots-container">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <strong style="color:#fff;">Spell Slots</strong>
+                <div>
+                    <button class="rest-btn" onclick="longRest()">Long Rest</button>
+                    <button class="rest-btn" onclick="shortRest()">Short Rest</button>
+                </div>
+            </div>
+            <div id="slotDisplay"></div>
+        </div>
+
+        <div class="spell-header">
+            <span>Known: <span id="splCount" class="spell-counter">0</span></span>
+            <span>Cantrips: <span id="cntCount" class="spell-counter">0</span></span>
+        </div>
+        
+        <input type="text" id="spellSearch" placeholder="Add Spell..." style="width:100%; padding:8px; background:#222; border:1px solid #444; color:white; margin-bottom:5px;" onkeyup="searchSpells()">
+        <div id="spellResults" class="search-results"></div>
+        <div id="spellList"></div>
+    </div>
+
     <div id="tab-skills" class="tab-pane">
         <div class="saves-grid" id="savesList"></div>
         <div class="skill-list" id="skillList"></div>
     </div>
+    
     <div id="tab-inv" class="tab-pane">
         <div class="coin-grid">
             <div class="coin-box"><small style="color:#d4af37">CP</small><input type="number" id="coin_cp" onchange="updateCoins()"></div>
@@ -111,7 +153,7 @@
             <div class="coin-box"><small style="color:#d4af37">PP</small><input type="number" id="coin_pp" onchange="updateCoins()"></div>
         </div>
         <input type="text" id="apiSearch" placeholder="Search item..." style="width:100%; padding:8px; background:#222; border:1px solid #444; color:white; margin-bottom:10px;" onkeyup="searchEquipment()">
-        <div id="apiResults" style="background:#111; border:1px solid #444; display:none; max-height:150px; overflow-y:auto; margin-bottom:10px;"></div>
+        <div id="apiResults" class="search-results"></div>
         <div id="invList"></div>
     </div>
 </div>
@@ -119,7 +161,38 @@
 <div id="chat"></div>
 
 <script type="module">
-    import { CLASSES, ALL_ACTIONS, SKILLS_LIST } from './game_rules.js';
+    import { CLASSES, ALL_ACTIONS, SKILLS_LIST, RACES, ALL_SPELLS } from './game_rules.js';
+
+    // SPELL SLOT TABLES (5e Rules)
+    const SPELL_SLOTS = [
+        [0,0,0,0,0,0,0,0,0], // 0
+        [2,0,0,0,0,0,0,0,0], // 1
+        [3,0,0,0,0,0,0,0,0], // 2
+        [4,2,0,0,0,0,0,0,0], // 3
+        [4,3,0,0,0,0,0,0,0], // 4
+        [4,3,2,0,0,0,0,0,0], // 5
+        [4,3,3,0,0,0,0,0,0], // 6
+        [4,3,3,1,0,0,0,0,0], // 7
+        [4,3,3,2,0,0,0,0,0], // 8
+        [4,3,3,3,1,0,0,0,0], // 9
+        [4,3,3,3,2,0,0,0,0], // 10
+        [4,3,3,3,2,1,0,0,0], // 11
+        [4,3,3,3,2,1,0,0,0], // 12
+        [4,3,3,3,2,1,1,0,0], // 13
+        [4,3,3,3,2,1,1,0,0], // 14
+        [4,3,3,3,2,1,1,1,0], // 15
+        [4,3,3,3,2,1,1,1,0], // 16
+        [4,3,3,3,2,1,1,1,1], // 17
+        [4,3,3,3,3,1,1,1,1], // 18
+        [4,3,3,3,3,2,1,1,1], // 19
+        [4,3,3,3,3,2,2,1,1]  // 20
+    ];
+
+    // WARLOCK PACT MAGIC (Slots, Slot Level)
+    const WARLOCK_SLOTS = [
+        [0,0], [1,1], [2,1], [2,2], [2,2], [2,3], [2,3], [2,4], [2,4], [2,5], 
+        [2,5], [3,5], [3,5], [3,5], [3,5], [3,5], [3,5], [4,5], [4,5], [4,5], [4,5]
+    ];
 
     // GLOBAL VARS
     let CHAR={}, STATS={}, PROF=2, INIT_BONUS=0;
@@ -141,17 +214,17 @@
         
         // Data Normalization
         if(!CHAR.inventory) CHAR.inventory=[];
+        if(!CHAR.spells_known) CHAR.spells_known=[]; 
         if(!CHAR.coins) CHAR.coins={cp:0,sp:0,ep:0,gp:0,pp:0};
+        if(!CHAR.slots_used) CHAR.slots_used={}; // {1: 2, 2: 0, p: 1}
         
-        // Handle Multiclassing Data Structure
         if(!CHAR.classes && CHAR.class) {
-            // Convert old single class to new array format
             CHAR.classes = [{name: CHAR.class, level: CHAR.level || 1}];
         }
         
-        // Calc Total Level
         CHAR.totalLevel = CHAR.classes.reduce((acc, c) => acc + c.level, 0);
         
+        checkRacialSpells();
         renderSheet();
     });
 
@@ -161,21 +234,33 @@
         c.innerHTML = `<div class="msg"><strong>${d.user}</strong>: ${d.lbl} -> <b>${d.val}</b> ${d.nat20 ? '<span style="color:gold">NAT 20!</span>' : ''}</div>` + c.innerHTML;
     });
 
-    // RENDER LOGIC
+    // --- LOGIC ---
+
+    function checkRacialSpells() {
+        const race = RACES[CHAR.race];
+        if (race && race.auto_spells) {
+            let changed = false;
+            race.auto_spells.forEach(sName => {
+                if (!CHAR.spells_known.includes(sName)) {
+                    CHAR.spells_known.push(sName);
+                    changed = true;
+                }
+            });
+            if (changed) {
+                window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/spells_known`).set(CHAR.spells_known);
+            }
+        }
+    }
+
     function renderSheet() {
         document.getElementById('charName').innerText = CHAR.name;
-        
-        // Display all classes
         let classTxt = CHAR.race + " " + CHAR.classes.map(c => `${c.name} ${c.level}`).join(" / ");
         document.getElementById('classDisplay').innerText = classTxt;
-        
         document.getElementById('hpInput').value = CHAR.hp_curr;
         document.getElementById('hpMax').innerText = CHAR.hp_max;
         document.getElementById('levelInput').value = CHAR.totalLevel;
 
-        // Calc Prof
         PROF = 2 + Math.floor((CHAR.totalLevel - 1)/4);
-
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => STATS[s] = Math.floor((CHAR.stats[s]-10)/2));
         ['cp','sp','ep','gp','pp'].forEach(c => document.getElementById(`coin_${c}`).value = CHAR.coins[c]||0);
 
@@ -185,7 +270,6 @@
         
         CHAR.inventory.forEach(i => {
             if(i.equip) {
-                // Find details in ALL_ACTIONS
                 let r = ALL_ACTIONS.find(x => x.name === i.name);
                 if(r && r.category && r.category.includes('Armor')) {
                     if(r.armor_type==='Shield') shield += (r.ac || 2);
@@ -199,8 +283,7 @@
             }
         });
 
-        // Unarmored Defense Check
-        let mainClass = CHAR.classes[0].name; // Primary class
+        let mainClass = CHAR.classes[0].name;
         if(!armor && shield===0) {
             if(mainClass==="Monk") ac = 10 + STATS['DEX'] + STATS['WIS'];
             if(mainClass==="Barbarian") ac = 10 + STATS['DEX'] + STATS['CON'];
@@ -213,24 +296,112 @@
         renderActions();
         renderSkills();
         renderInv();
+        renderSpellSlots(); // NEW SLOT RENDERER
+        renderSpellStats();
     }
+
+    // --- SPELL SLOT LOGIC ---
+    function renderSpellSlots() {
+        // 1. Calculate Effective Caster Level
+        let casterLvl = 0;
+        let warlockLvl = 0;
+
+        CHAR.classes.forEach(c => {
+            if(["Bard","Cleric","Druid","Sorcerer","Wizard"].includes(c.name)) casterLvl += c.level;
+            else if(["Paladin","Ranger"].includes(c.name)) casterLvl += Math.floor(c.level/2);
+            else if(["Artificer"].includes(c.name)) casterLvl += Math.ceil(c.level/2);
+            else if(["Warlock"].includes(c.name)) warlockLvl += c.level;
+            // Arcane Trickster / Eldritch Knight handled simply as 1/3 if implemented
+        });
+
+        const slotDiv = document.getElementById('slotDisplay');
+        slotDiv.innerHTML = "";
+        let hasMagic = false;
+
+        // 2. Render Pact Magic (Purple Slots)
+        if(warlockLvl > 0) {
+            hasMagic = true;
+            const wData = WARLOCK_SLOTS[warlockLvl]; // [count, tier]
+            const count = wData[0];
+            const tier = wData[1];
+            
+            let html = `<div class="slot-row"><div class="slot-label" style="color:#b0f">Pact (L${tier})</div><div class="slot-bubbles">`;
+            for(let i=0; i<count; i++) {
+                let used = (CHAR.slots_used['p'] || 0) > i;
+                html += `<input type="checkbox" class="slot-chk pact" ${used?'checked':''} onclick="toggleSlot('p', ${i})">`;
+            }
+            html += `</div></div>`;
+            slotDiv.innerHTML += html;
+        }
+
+        // 3. Render Standard Slots
+        if(casterLvl > 0) {
+            hasMagic = true;
+            const sData = SPELL_SLOTS[casterLvl]; // [2, 0, 0...]
+            
+            sData.forEach((count, idx) => {
+                if(count > 0) {
+                    const lvl = idx + 1;
+                    let html = `<div class="slot-row"><div class="slot-label">Lvl ${lvl}</div><div class="slot-bubbles">`;
+                    for(let i=0; i<count; i++) {
+                        // Check if used in DB. slots_used[1] might be 2 (meaning 2 used)
+                        let usedCount = CHAR.slots_used[lvl] || 0;
+                        let isChecked = usedCount > i;
+                        html += `<input type="checkbox" class="slot-chk" ${isChecked?'checked':''} onclick="toggleSlot('${lvl}', ${i})">`;
+                    }
+                    html += `</div></div>`;
+                    slotDiv.innerHTML += html;
+                }
+            });
+        }
+
+        if(!hasMagic) slotDiv.innerHTML = "<small style='color:#555'>No spell slots available.</small>";
+    }
+
+    // --- SPELL FUNCTIONS ---
+    window.toggleSlot = function(lvl, idx) {
+        // If they click the 3rd box, set usage to 3. If they uncheck, reduce.
+        // Simplified logic: Count how many are checked in UI and save that number.
+        // Actually, safer to just increment/decrement in DB based on click context, 
+        // but since we re-render, let's just calculate next state.
+        
+        let current = CHAR.slots_used[lvl] || 0;
+        
+        // If clicking a box that is OFF (index >= current), we want to turn ON up to that index + 1
+        // If clicking a box that is ON (index < current), we want to turn OFF down to index
+        
+        let newVal;
+        if (idx >= current) newVal = idx + 1; // Mark used
+        else newVal = idx; // Mark unused (set total to the index clicked)
+
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/slots_used/${lvl}`).set(newVal);
+    };
+
+    window.shortRest = function() {
+        // Reset Pact slots ('p')
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/slots_used/p`).set(0);
+        window.pushChat("Rest", "Short Rest", "Pact Magic recovered.");
+    };
+
+    window.longRest = function() {
+        // Reset ALL slots and HP
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/slots_used`).set({});
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(CHAR.hp_max);
+        window.pushChat("Rest", "Long Rest", "HP & Slots recovered.");
+    };
 
     function renderActions() {
         const atkDiv = document.getElementById('attackList');
         const spellDiv = document.getElementById('spellList');
         atkDiv.innerHTML=""; spellDiv.innerHTML="";
 
-        // 1. Unarmed
         renderCard({name:"Unarmed Strike", dice:"1", type:"Bludgeoning", stat:"STR", category:"Simple Melee"}, atkDiv);
 
-        // 2. Class Features
         CHAR.classes.forEach(clsObj => {
             const cData = CLASSES[clsObj.name];
             if(cData && cData.features) {
                 cData.features.forEach(f => {
-                    // f is [Level, "Feature Name"]
                     if(clsObj.level >= f[0]) {
-                        // Find feature details in ALL_ACTIONS
                         let feat = ALL_ACTIONS.find(a => a.name === f[1]);
                         if(feat) renderCard(feat, atkDiv);
                         else renderCard({name: f[1], category:"Feature", desc: "Passive or unconfigured."}, atkDiv);
@@ -239,41 +410,38 @@
             }
         });
 
-        // 3. Inventory & Spells
         CHAR.inventory.forEach(i => {
             let d = ALL_ACTIONS.find(a => a.name === i.name);
-            // Fallback if item exists in char but not rules
             if(!d) d = {name: i.name, category: "Item", desc: "Custom Item"};
-            
-            // Filter Equipping
             if(d.category !== 'Spell' && d.category !== 'Feature' && d.category !== 'Potion' && !i.equip) return;
-            
-            if(d.category === 'Spell') renderCard(d, spellDiv);
-            else renderCard(d, atkDiv);
+            renderCard(d, atkDiv);
         });
         
-        // 4. Known Spells (from array)
         if(CHAR.spells_known) {
-            CHAR.spells_known.forEach(sName => {
-                let s = ALL_ACTIONS.find(a => a.name === sName);
-                if(s) renderCard(s, spellDiv);
+            let spellObjs = CHAR.spells_known.map(sName => ALL_ACTIONS.find(a => a.name === sName)).filter(s => s);
+            spellObjs.sort((a, b) => (a.level || 0) - (b.level || 0));
+
+            spellObjs.forEach(s => {
+                let cardHtml = createCardHtml(s);
+                cardHtml = cardHtml.replace('</div>', `<button class="btn-del" onclick="removeSpell('${s.name}')" style="position:absolute; top:5px; right:5px;">x</button></div>`);
+                spellDiv.innerHTML += cardHtml;
             });
         }
     }
 
-    function renderCard(data, container) {
+    function createCardHtml(data) {
         let useStat = data.stat || "STR";
-        // Finesse Logic (Uses Dex if higher)
         if(data.desc && data.desc.includes("Finesse") && STATS['DEX'] > STATS['STR']) useStat = "DEX";
-        if(data.category==="Spell") useStat = "INT"; // Default Int, normally depends on class
+        if(data.category==="Spell") {
+            useStat = "CHA"; 
+            if (CHAR.classes.some(c => ["Wizard", "Artificer", "Fighter", "Rogue"].includes(c.name))) useStat = "INT";
+            if (CHAR.classes.some(c => ["Cleric", "Druid", "Ranger", "Monk"].includes(c.name))) useStat = "WIS";
+        }
         
         let mod = STATS[useStat] || 0;
-        let hit = mod + PROF;
-        let bonus = data.attack_bonus || 0; // Magic items +1
-        hit += bonus;
-
-        // Damage Calc
+        let hit = mod + PROF + (data.attack_bonus || 0);
         let dmg = data.dice;
+        
         if(data.dice && data.dice.includes('d')) {
             dmg = `${data.dice} ${mod >= 0 ? '+' : ''}${mod + (data.damage_bonus||0)}`;
         }
@@ -287,20 +455,76 @@
             </div>`;
         }
 
-        container.innerHTML += `
-            <div class="card ${data.category==='Feature'?'card-feature':''} ${data.category==='Spell'?'card-spell':''}">
-                <div class="card-header"><span>${data.name}</span><small>${data.category}</small></div>
+        return `
+            <div class="card ${data.category==='Feature'?'card-feature':''} ${data.category==='Spell'?'card-spell':''}" style="position:relative;">
+                <div class="card-header"><span>${data.name}</span><small>${data.category} ${data.level!==undefined ? (data.level===0?'(Cantrip)':`Lvl ${data.level}`) : ''}</small></div>
                 <div class="card-desc">${data.desc||''}</div>
                 ${btns}
             </div>`;
     }
 
-    function renderSkills() {
-        // Saves
-        const sv = document.getElementById('savesList'); sv.innerHTML="";
-        // Primary class saves
-        let saves = CLASSES[CHAR.classes[0].name].saves || [];
+    function renderCard(data, container) {
+        container.innerHTML += createCardHtml(data);
+    }
+
+    function renderSpellStats() {
+        let totalCantrips = 0;
+        let totalKnown = 0; 
         
+        if (CHAR.spells_known) {
+            CHAR.spells_known.forEach(sName => {
+                let s = ALL_ACTIONS.find(a => a.name === sName);
+                if (s) {
+                    if (s.level === 0) totalCantrips++;
+                    else totalKnown++;
+                }
+            });
+        }
+        document.getElementById('cntCount').innerText = totalCantrips;
+        document.getElementById('splCount').innerText = totalKnown;
+    }
+
+    // --- SPELL SEARCH & ADD ---
+    let spellSearchTimer;
+    window.searchSpells = function() {
+        clearTimeout(spellSearchTimer);
+        const q = document.getElementById('spellSearch').value.toLowerCase();
+        const res = document.getElementById('spellResults');
+        if(q.length<2) { res.style.display='none'; return; }
+        
+        spellSearchTimer = setTimeout(() => {
+            res.innerHTML=""; res.style.display='block';
+            let hits = ALL_SPELLS.filter(a => a.name.toLowerCase().includes(q)).slice(0, 5);
+            hits.forEach(h => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<span>${h.name}</span> <small>Lvl ${h.level}</small>`;
+                div.onclick = () => window.addSpell(h.name);
+                res.appendChild(div);
+            });
+        }, 300);
+    };
+
+    window.addSpell = function(name) {
+        if (!CHAR.spells_known) CHAR.spells_known = [];
+        if (!CHAR.spells_known.includes(name)) {
+            CHAR.spells_known.push(name);
+            window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/spells_known`).set(CHAR.spells_known);
+        }
+        document.getElementById('spellResults').style.display='none';
+        document.getElementById('spellSearch').value='';
+    };
+
+    window.removeSpell = function(name) {
+        if (!confirm(`Remove spell ${name}?`)) return;
+        CHAR.spells_known = CHAR.spells_known.filter(s => s !== name);
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/spells_known`).set(CHAR.spells_known);
+    };
+
+    // --- HELPER FUNCTIONS ---
+    function renderSkills() {
+        const sv = document.getElementById('savesList'); sv.innerHTML="";
+        let saves = CLASSES[CHAR.classes[0].name].saves || [];
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
             let bonus = STATS[s] + (saves.includes(s) ? PROF : 0);
             sv.innerHTML += `<div class="save-box" onclick="rollCheck('${s} Save', ${bonus})">
@@ -308,14 +532,11 @@
                 <div class="save-label">${s}</div>
             </div>`;
         });
-
-        // Skills
         const sl = document.getElementById('skillList'); sl.innerHTML="";
         Object.keys(SKILLS_LIST).forEach(sk => {
             let stat = SKILLS_LIST[sk];
             let isProf = (CHAR.skills || []).includes(sk);
             let bonus = STATS[stat] + (isProf ? PROF : 0);
-            
             sl.innerHTML += `
             <div class="skill-btn" onclick="rollCheck('${sk}', ${bonus})">
                 <span>${sk} <small style="color:#666">(${stat})</small> ${isProf?'<span style="color:#d4af37">★</span>':''}</span>
@@ -338,27 +559,22 @@
         });
     }
 
-    // --- ATTACH TO WINDOW (Global Scope for HTML Buttons) ---
+    // --- ATTACH TO WINDOW ---
     window.updateHP = function() { window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(parseInt(document.getElementById('hpInput').value)); };
-    
     window.updateCoins = function() {
         let c = {};
         ['cp','sp','ep','gp','pp'].forEach(k => c[k] = parseInt(document.getElementById(`coin_${k}`).value));
         window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/coins`).set(c);
     };
-
     window.rollInit = function() { 
         const r=Math.floor(Math.random()*20)+1; 
         window.pushChat('Initiative', r+INIT_BONUS, `${r}+${INIT_BONUS}`); 
-        // Optional: Update Encounter Tracker in DB here
         window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', s=>{
             s.forEach(c=>{ c.ref.update({init: r+INIT_BONUS}); });
         });
     };
-
     window.rollAtk = function(n,m) { const r=Math.floor(Math.random()*20)+1; window.pushChat(`Atk ${n}`, r+m, `${r}+${m}`, r===20); };
     window.rollDmg = function(n,d,m) { 
-        // Simple parser for 1d8
         let pts = d.split('d');
         let count = parseInt(pts[0])||1;
         let sides = parseInt(pts[1])||6;
@@ -372,34 +588,29 @@
         total += m;
         window.pushChat(`Dmg ${n}`, total, `[${formula.join(',')}] + ${m}`); 
     };
-    
     window.rollCheck = function(l,m) { const r=Math.floor(Math.random()*20)+1; window.pushChat(l, r+m, `${r}+${m}`); };
-
     window.pushChat = function(l,v,f,c=false) { window.db.ref(`campaigns/${ROOM_ID}/chat`).push({user:CHAR.name, lbl:l, val:v, formula:f, nat20:c}); };
-
     window.togEq = function(i) { let n=[...CHAR.inventory]; n[i].equip=!n[i].equip; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); };
     window.delItem = function(i) { let n=[...CHAR.inventory]; n.splice(i,1); window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); };
 
-    let st;
+    let itemSt;
     window.searchEquipment = function() {
-        clearTimeout(st);
+        clearTimeout(itemSt);
         const q = document.getElementById('apiSearch').value.toLowerCase();
         const res = document.getElementById('apiResults');
         if(q.length<2) { res.style.display='none'; return; }
-        
-        st = setTimeout(() => {
+        itemSt = setTimeout(() => {
             res.innerHTML=""; res.style.display='block';
-            let hits = ALL_ACTIONS.filter(a=>a.name.toLowerCase().includes(q));
-            hits.slice(0,5).forEach(h => {
+            let hits = ALL_ACTIONS.filter(a => a.category !== "Spell" && a.category !== "Feature" && a.name.toLowerCase().includes(q)).slice(0,5);
+            hits.forEach(h => {
                 const div = document.createElement('div');
-                div.style.cssText = "padding:5px; cursor:pointer; border-bottom:1px solid #333;";
+                div.className = 'search-item';
                 div.innerText = h.name;
                 div.onclick = () => window.addItem(h.name);
                 res.appendChild(div);
             });
         }, 300);
     };
-
     window.addItem = function(n) {
         let inv = CHAR.inventory||[]; 
         inv.push({name:n, equip:false});
@@ -407,7 +618,6 @@
         document.getElementById('apiResults').style.display='none';
         document.getElementById('apiSearch').value='';
     };
-
     window.openTab = function(id) { 
         document.querySelectorAll('.tab-pane').forEach(e=>e.style.display='none'); 
         document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
