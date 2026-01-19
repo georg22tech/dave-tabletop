@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>fCharacter Builder</title>
+    <title>Advanced Character Builder</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -22,7 +22,10 @@
         input, select, textarea { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
         input:focus, select:focus { border-color: #e51e25; outline: none; }
         
-        /* CLASS ROW (Multiclassing) */
+        /* RP GRID */
+        .rp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+        /* CLASS ROW */
         .class-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #252525; padding: 10px; border-radius: 4px;}
         .class-row select { flex: 2; }
         .class-row input { flex: 1; text-align: center; }
@@ -68,7 +71,7 @@
         <label>Background (Required)</label>
         <select id="charBackground" onchange="updateBackgroundInfo()">
             <option value="">Select Background...</option>
-            </select>
+        </select>
         <div id="bgSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
 
         <label>Classes & Levels</label>
@@ -113,9 +116,23 @@
         <label>Gold Pieces (GP)</label>
         <input type="number" id="charGold" value="15">
 
-        <label>Roleplay Details</label>
+        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+        <label>Appearance & Identity</label>
+        <div class="rp-grid">
+            <input type="text" id="rpAge" placeholder="Age">
+            <input type="text" id="rpHeight" placeholder="Height">
+            <input type="text" id="rpWeight" placeholder="Weight">
+        </div>
+        <div class="rp-grid">
+            <input type="text" id="rpEyes" placeholder="Eyes (e.g. Blue)">
+            <input type="text" id="rpHair" placeholder="Hair (e.g. Blonde)">
+            <input type="text" id="rpSkin" placeholder="Skin (e.g. Tan)">
+        </div>
+
+        <label>Alignment</label>
         <select id="charAlign">
-            <option value="True Neutral">Alignment...</option>
+            <option value="True Neutral">Select Alignment...</option>
             <option value="Lawful Good">Lawful Good</option>
             <option value="Neutral Good">Neutral Good</option>
             <option value="Chaotic Good">Chaotic Good</option>
@@ -126,7 +143,9 @@
             <option value="Neutral Evil">Neutral Evil</option>
             <option value="Chaotic Evil">Chaotic Evil</option>
         </select>
-        <textarea id="charBack" rows="3" placeholder="Backstory / Notes" style="margin-top:10px;"></textarea>
+
+        <label>Backstory / Notes</label>
+        <textarea id="charBack" rows="3" placeholder="Character history, personality traits, etc..."></textarea>
     </div>
 
     <div class="nav-btns">
@@ -136,68 +155,35 @@
 </div>
 
 <script type="module">
-    // 1. IMPORT DATA
     import { RACES, CLASSES, SKILLS_LIST, ALL_ACTIONS, ALL_ITEMS, ALL_WEAPONS, ALL_ARMOR } from './game_rules.js';
 
-    // 2. DEFINE BACKGROUNDS (Now included!)
+    // BACKGROUND DATA
     const BACKGROUNDS = {
-        "Acolyte": { 
-            skills: ["Insight", "Religion"], 
-            items: ["Holy Symbol", "Prayer Book", "Stick of Incense", "Vestments", "Rations"] 
-        },
-        "Criminal": { 
-            skills: ["Deception", "Stealth"], 
-            items: ["Crowbar", "Dark Clothes", "Rations"] 
-        },
-        "Folk Hero": { 
-            skills: ["Animal Handling", "Survival"], 
-            items: ["Shovel", "Pot", "Civilian Clothes", "Rations"] 
-        },
-        "Noble": { 
-            skills: ["History", "Persuasion"], 
-            items: ["Fine Clothes", "Signet Ring", "Scroll of Pedigree"] 
-        },
-        "Sage": { 
-            skills: ["Arcana", "History"], 
-            items: ["Ink Pen", "Small Knife", "Letter from Colleague", "Common Clothes"] 
-        },
-        "Soldier": { 
-            skills: ["Athletics", "Intimidation"], 
-            items: ["Rank Insignia", "Trophy", "Bone Dice", "Common Clothes", "Rations"] 
-        },
-        "Charlatan": { 
-            skills: ["Deception", "Sleight of Hand"], 
-            items: ["Disguise Kit", "Fine Clothes", "Tools of the Con"] 
-        },
-        "Entertainer": { 
-            skills: ["Acrobatics", "Performance"], 
-            items: ["Musical Instrument", "Costume", "Rations"] 
-        },
-        "Outlander": { 
-            skills: ["Athletics", "Survival"], 
-            items: ["Staff", "Hunting Trap", "Traveler's Clothes", "Rations"] 
-        },
-        "Urchin": { 
-            skills: ["Sleight of Hand", "Stealth"], 
-            items: ["Small Knife", "Map of the City", "Pet Mouse", "Token", "Common Clothes"] 
-        }
+        "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol", "Prayer Book", "Stick of Incense", "Vestments", "Rations"] },
+        "Criminal": { skills: ["Deception", "Stealth"], items: ["Crowbar", "Dark Clothes", "Rations"] },
+        "Folk Hero": { skills: ["Animal Handling", "Survival"], items: ["Shovel", "Pot", "Civilian Clothes", "Rations"] },
+        "Noble": { skills: ["History", "Persuasion"], items: ["Fine Clothes", "Signet Ring", "Scroll of Pedigree"] },
+        "Sage": { skills: ["Arcana", "History"], items: ["Ink Pen", "Small Knife", "Letter from Colleague", "Common Clothes"] },
+        "Soldier": { skills: ["Athletics", "Intimidation"], items: ["Rank Insignia", "Trophy", "Bone Dice", "Common Clothes", "Rations"] },
+        "Charlatan": { skills: ["Deception", "Sleight of Hand"], items: ["Disguise Kit", "Fine Clothes", "Tools of the Con"] },
+        "Entertainer": { skills: ["Acrobatics", "Performance"], items: ["Musical Instrument", "Costume", "Rations"] },
+        "Outlander": { skills: ["Athletics", "Survival"], items: ["Staff", "Hunting Trap", "Traveler's Clothes", "Rations"] },
+        "Urchin": { skills: ["Sleight of Hand", "Stealth"], items: ["Small Knife", "Map of the City", "Pet Mouse", "Token", "Common Clothes"] }
     };
 
-    // 3. GLOBAL VARIABLES
+    // VARIABLES
     const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
     const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
     let selectedInventory = []; 
     let currentStep = 1;
     let totalLevels = 1;
 
-    // 4. INITIALIZATION
+    // INIT
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     const EDIT_ID = params.get('id');
     
-    // Safety check for DB
     if (!window.db) {
-        console.warn("Database not found in window scope. Checking firebase...");
         if(typeof firebase !== 'undefined') window.db = firebase.database();
     }
 
@@ -205,17 +191,14 @@
     const raceSel = document.getElementById('charRace');
     const bgSel = document.getElementById('charBackground');
     
-    // Clear and Populate Race
     raceSel.innerHTML = "";
     Object.keys(RACES).sort().forEach(r => raceSel.add(new Option(r,r)));
 
-    // Clear and Populate Backgrounds
     bgSel.innerHTML = '<option value="">Select Background...</option>';
     Object.keys(BACKGROUNDS).sort().forEach(b => bgSel.add(new Option(b,b)));
 
-    // Initialize Stat Grid
     const statGrid = document.querySelector('.stat-grid');
-    statGrid.innerHTML = ""; // Clear existing to prevent duplicates
+    statGrid.innerHTML = ""; 
     STAT_KEYS.forEach(stat => {
         statGrid.innerHTML += `
             <div class="stat-box">
@@ -229,7 +212,7 @@
         `;
     });
 
-    // 5. ATTACH FUNCTIONS TO WINDOW (Fixes ReferenceErrors)
+    // ATTACH FUNCTIONS TO GLOBAL SCOPE
     
     window.updateRaceInfo = function() {
         const r = RACES[raceSel.value];
@@ -248,7 +231,7 @@
         }
         document.getElementById('bgSummary').innerText = `Skills: ${bg.skills.join(', ')}`;
         window.renderSkills();
-        window.autoPopulateGear(); // Update gear when background changes
+        window.autoPopulateGear(); 
     };
 
     window.addClassRow = function() {
@@ -272,11 +255,7 @@
         let summary = [];
         
         const rows = document.querySelectorAll('.class-row');
-        if (rows.length === 0) {
-            // Safety: Ensure at least one class exists if user deleted all
-            // window.addClassRow(); // Optional: force add row back
-            return;
-        }
+        if (rows.length === 0) return;
 
         rows.forEach((row, index) => {
             const clsName = row.querySelector('.cls-select').value;
@@ -285,7 +264,6 @@
             
             totalLvl += lvl;
             
-            // HP Calc: Max at lvl 1, Average for subsequent
             if(index === 0) {
                 hpBase += cData.hit_die;
                 hpBase += (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
@@ -299,7 +277,6 @@
         document.getElementById('totalLevelDisplay').innerText = totalLevels;
         document.getElementById('classSummary').innerText = summary.join(" / ");
         
-        // Store base HP for final calc (needs CON mod)
         document.getElementById('calcHP').dataset.base = hpBase;
         window.recalcStats();
         window.renderSkills();
@@ -321,7 +298,6 @@
             if(s === 'CON') conMod = Math.floor(((base + bonus) - 10) / 2);
         });
 
-        // Final HP Calc
         let hpBase = parseInt(document.getElementById('calcHP').dataset.base) || 0;
         let totalHP = hpBase + (conMod * totalLevels) + (rData.hp_bonus || 0) * totalLevels; 
         document.getElementById('calcHP').innerText = totalHP > 0 ? totalHP : 0;
@@ -331,13 +307,11 @@
         const race = RACES[raceSel.value];
         const bg = BACKGROUNDS[bgSel.value] || {skills:[]};
         
-        // 1. Fixed Skills
         const fixed = new Set([...(race.skills || []), ...bg.skills]);
         const fixedArea = document.getElementById('fixedSkillsArea');
         fixedArea.innerHTML = "";
         fixed.forEach(s => fixedArea.innerHTML += `<span class="pill">${s}</span>`);
 
-        // 2. Class Skills (Only from primary class)
         const rows = document.querySelectorAll('.class-row');
         const classArea = document.getElementById('classSkillArea');
         classArea.innerHTML = "";
@@ -365,17 +339,15 @@
     };
 
     window.autoPopulateGear = function() {
-        selectedInventory = []; // Reset
+        selectedInventory = []; 
         const invList = document.getElementById('inventoryList');
         invList.innerHTML = "";
 
-        // 1. Background Gear
         const bg = BACKGROUNDS[bgSel.value];
         if(bg && bg.items) {
             bg.items.forEach(itemName => addItemByName(itemName, "Background"));
         }
 
-        // 2. Class Gear (Primary Class Only)
         const rows = document.querySelectorAll('.class-row');
         if(rows.length > 0) {
             const clsName = rows[0].querySelector('.cls-select').value;
@@ -388,7 +360,6 @@
     };
 
     function addItemByName(name, source) {
-        // Helper to find object in ALL_ACTIONS
         const found = ALL_ACTIONS.find(i => i.name.toLowerCase() === name.toLowerCase());
         if(found) {
             selectedInventory.push({ ...found, source: source, equip: false });
@@ -463,7 +434,7 @@
         document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
         document.getElementById('btnNext').innerText = currentStep === 4 ? "Finish" : "Next";
         
-        const titles = ["", "Identity", "Stats", "Skills", "Gear"];
+        const titles = ["", "Identity", "Stats", "Skills", "Finalize"];
         document.getElementById('headerTitle').innerText = titles[currentStep];
     };
 
@@ -513,7 +484,14 @@
             inventory: finalItems,
             coins: { gp: parseInt(document.getElementById('charGold').value) || 0 },
             skills: Array.from(skills),
-            spells_known: knownSpells
+            spells_known: knownSpells,
+            // RP FIELDS
+            age: document.getElementById('rpAge').value,
+            height: document.getElementById('rpHeight').value,
+            weight: document.getElementById('rpWeight').value,
+            eyes: document.getElementById('rpEyes').value,
+            hair: document.getElementById('rpHair').value,
+            skin: document.getElementById('rpSkin').value
         };
 
         const ref = EDIT_ID ? window.db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`) : window.db.ref(`campaigns/${ROOM_ID}/characters`).push();
@@ -528,8 +506,7 @@
         });
     };
 
-    // 6. STARTUP CALLS
-    // Wait a brief moment to ensure DOM is ready and globals are set
+    // STARTUP CALLS
     setTimeout(() => {
         window.addClassRow(); 
         window.updateRaceInfo();
@@ -538,4 +515,3 @@
 </script>
 </body>
 </html>
-
