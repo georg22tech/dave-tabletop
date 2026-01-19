@@ -294,6 +294,7 @@ export const ALL_ITEMS = [
     {name: "Chest", category: "Container", desc: "Holds 300 lbs/12 cubic feet; can be locked."},
     {name: "Vial", category: "Container", desc: "Holds 4 ounces of liquid."},
     {name: "Jug", category: "Container", desc: "Holds 1 gallon of liquid."},
+    
     // --- Musical Instruments ---
     {name: "Bagpipes", category: "Tool", desc: "Musical Instrument."},
     {name: "Drum", category: "Tool", desc: "Musical Instrument."},
@@ -990,5 +991,6 @@ export const ALL_ACTIONS = [
     ...ALL_SPELLS, 
     ...ALL_FEATURES
 ];
+
 
 
