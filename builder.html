@@ -21,16 +21,20 @@
         input, select, textarea { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
         input:focus, select:focus { border-color: #e51e25; outline: none; }
         
-        /* CLASS ROWS (Updated for Subclasses) */
+        /* CLASS ROWS */
         .class-row { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: center; background: #252525; padding: 10px; border-radius: 4px;}
         .class-row input { text-align: center; }
         .btn-small { padding: 8px 12px; background: #444; color: #fff; border: none; cursor: pointer; border-radius: 4px;}
         .btn-remove { background: #a33; }
 
         /* STATS */
+        .stat-toggle { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        .stat-btn { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; font-weight: bold; text-align: center; }
+        .stat-btn.active { background: #e51e25; color: white; border-color: #e51e25; }
+
         .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
         .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
-        .stat-box select { padding: 5px; text-align: center; }
+        .stat-box select, .stat-box input { padding: 5px; text-align: center; font-weight: bold; font-size: 1.1em; }
         .bonus-badge { color: #4f4; font-size: 0.8em; display: block; margin-top: 5px; }
 
         /* RP GRID */
@@ -42,6 +46,7 @@
         .search-item:hover { background: #333; }
         .inv-item { background: #222; padding: 8px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #555; }
 
+        /* NAV */
         .nav-btns { margin-top: 30px; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
         .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em; }
         .btn-next { background: #e51e25; color: white; }
@@ -76,10 +81,15 @@
     </div>
 
     <div id="step2" class="step">
-        <div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9em;">
-            Standard Array: 15, 14, 13, 12, 10, 8
+        <label style="text-align:center; margin-bottom:10px;">Generation Method</label>
+        <div class="stat-toggle">
+            <div id="btnStatArray" class="stat-btn active" onclick="setStatMode('array')">Standard Array</div>
+            <div id="btnStatManual" class="stat-btn" onclick="setStatMode('manual')">Manual / Rolled</div>
         </div>
-        <div class="stat-grid"></div>
+
+        <div id="statContainer" class="stat-grid">
+            </div>
+
         <div style="margin-top:20px; text-align:center; background:#222; padding:10px;">
             <strong>Total Level:</strong> <span id="totalLevelDisplay">1</span> | 
             <strong>Max HP:</strong> <span id="calcHP" style="color:#4f4;">0</span>
@@ -146,6 +156,8 @@
 <script type="module">
     import { RACES, CLASSES, SKILLS_LIST, ALL_ACTIONS } from './game_rules.js';
 
+    // --- CONFIG ---
+    const SUBCLASS_UNLOCK_LEVELS = { "Artificer": 3, "Barbarian": 3, "Bard": 3, "Cleric": 1, "Druid": 2, "Fighter": 3, "Monk": 3, "Paladin": 3, "Ranger": 3, "Rogue": 3, "Sorcerer": 1, "Warlock": 1, "Wizard": 2 };
     const BACKGROUNDS = {
         "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol", "Prayer Book", "Vestments", "Rations"] },
         "Criminal": { skills: ["Deception", "Stealth"], items: ["Crowbar", "Dark Clothes", "Rations"] },
@@ -158,30 +170,14 @@
         "Outlander": { skills: ["Athletics", "Survival"], items: ["Staff", "Hunting Trap", "Traveler's Clothes"] },
         "Urchin": { skills: ["Sleight of Hand", "Stealth"], items: ["Small Knife", "Map of the City", "Common Clothes"] }
     };
-    // D&D 5e Subclass Unlock Levels
-    const SUBCLASS_UNLOCK_LEVELS = {
-        "Artificer": 3,
-        "Barbarian": 3,
-        "Bard": 3,
-        "Cleric": 1,
-        "Druid": 2,
-        "Fighter": 3,
-        "Monk": 3,
-        "Paladin": 3,
-        "Ranger": 3,
-        "Rogue": 3,
-        "Sorcerer": 1,
-        "Warlock": 1,
-        "Wizard": 2
-    };
 
     const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
     const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+    let statMode = 'array'; // 'array' or 'manual'
     let selectedInventory = []; 
     let currentStep = 1;
     let totalLevels = 1;
 
-    // --- INIT ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     const EDIT_ID = params.get('id');
@@ -197,22 +193,96 @@
     bgSel.innerHTML = '<option value="">Select Background...</option>';
     Object.keys(BACKGROUNDS).sort().forEach(b => bgSel.add(new Option(b,b)));
 
-    const statGrid = document.querySelector('.stat-grid');
-    statGrid.innerHTML = ""; 
-    STAT_KEYS.forEach(stat => {
-        statGrid.innerHTML += `
-            <div class="stat-box">
-                <label>${stat}</label>
-                <select id="base_${stat}" onchange="recalcStats()">
-                    <option value="">-</option>
-                    ${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}
-                </select>
-                <span id="bon_${stat}" class="bonus-badge"></span>
-            </div>
-        `;
-    });
+    // --- STAT GENERATION LOGIC ---
+    
+    window.setStatMode = function(mode) {
+        statMode = mode;
+        document.getElementById('btnStatArray').className = mode==='array' ? 'stat-btn active' : 'stat-btn';
+        document.getElementById('btnStatManual').className = mode==='manual' ? 'stat-btn active' : 'stat-btn';
+        renderStatInputs();
+        window.recalcStats();
+    };
 
-    // --- GLOBAL FUNCTIONS ---
+    function renderStatInputs() {
+        const container = document.getElementById('statContainer');
+        // Preserve values if possible when switching
+        const currentVals = {};
+        STAT_KEYS.forEach(s => {
+            let el = document.getElementById(`base_${s}`);
+            if(el) currentVals[s] = el.value;
+        });
+
+        container.innerHTML = "";
+        
+        STAT_KEYS.forEach(stat => {
+            let inputHtml = "";
+            if(statMode === 'array') {
+                inputHtml = `<select id="base_${stat}" onchange="updateArrayOptions(); recalcStats()">
+                    <option value="">--</option>
+                    ${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}
+                </select>`;
+            } else {
+                inputHtml = `<input type="number" id="base_${stat}" value="${currentVals[stat]||10}" onchange="recalcStats()" style="width:100%;">`;
+            }
+
+            container.innerHTML += `
+                <div class="stat-box">
+                    <label>${stat}</label>
+                    ${inputHtml}
+                    <span id="bon_${stat}" class="bonus-badge"></span>
+                </div>
+            `;
+        });
+
+        if(statMode === 'array') {
+            // Restore array values if they match standard numbers
+            STAT_KEYS.forEach(s => {
+                let el = document.getElementById(`base_${s}`);
+                if(currentVals[s] && STANDARD_ARRAY.includes(parseInt(currentVals[s]))) {
+                    el.value = currentVals[s];
+                }
+            });
+            window.updateArrayOptions();
+        }
+    }
+
+    // Enforce Standard Array Uniqueness
+    window.updateArrayOptions = function() {
+        if(statMode !== 'array') return;
+
+        // 1. Collect all currently selected values
+        const currentSelections = {};
+        STAT_KEYS.forEach(s => {
+            const el = document.getElementById(`base_${s}`);
+            if(el.value) currentSelections[s] = parseInt(el.value);
+        });
+
+        // 2. Rebuild options for each dropdown
+        STAT_KEYS.forEach(s => {
+            const el = document.getElementById(`base_${s}`);
+            const myValue = currentSelections[s];
+
+            // Save selection
+            const savedValue = el.value;
+
+            // Clear
+            el.innerHTML = '<option value="">--</option>';
+
+            STANDARD_ARRAY.forEach(num => {
+                // Number is available if: nobody took it OR I took it
+                const isTaken = Object.values(currentSelections).includes(num);
+                const isMine = (num === myValue);
+
+                if (!isTaken || isMine) {
+                    const opt = new Option(num, num);
+                    if(isMine) opt.selected = true;
+                    el.add(opt);
+                }
+            });
+        });
+    };
+
+    // --- EXISTING FUNCTIONS (WITH MINOR UPDATES) ---
 
     window.updateRaceInfo = function() {
         const r = RACES[raceSel.value];
@@ -234,8 +304,6 @@
         if(overwriteInventory && !EDIT_ID) window.autoPopulateGear(); 
     };
 
-    // --- CLASS & SUBCLASS LOGIC ---
-    // This function creates the DOM row. It now includes a Subclass Select.
     window.addClassRow = function(name = null, level = 1, subclass = null) {
         const container = document.getElementById('classContainer');
         const div = document.createElement('div');
@@ -257,13 +325,11 @@
         `;
         container.appendChild(div);
         
-        // Init Subclasses for this new row
         let selectEl = div.querySelector('.cls-select');
         window.updateSubclassOptions(selectEl, subclass);
         window.recalcClassDetails();
     };
 
-    // Populates the Subclass dropdown based on the chosen Class
     window.updateSubclassOptions = function(selectElement, selectedSub = null) {
         const row = selectElement.parentElement;
         const subSelect = row.querySelector('.sub-select');
@@ -271,7 +337,6 @@
         const cData = CLASSES[className];
 
         subSelect.innerHTML = '<option value="">Subclass...</option>';
-        
         if (cData && cData.subclasses) {
             Object.keys(cData.subclasses).sort().forEach(sub => {
                 let opt = new Option(sub, sub);
@@ -292,51 +357,29 @@
         rows.forEach((row, index) => {
             const clsName = row.querySelector('.cls-select').value;
             const subSelect = row.querySelector('.sub-select');
-            const levelInput = row.querySelector('.cls-level');
-            const lvl = parseInt(levelInput.value) || 1;
+            const lvl = parseInt(row.querySelector('.cls-level').value) || 1;
             
-            // --- NEW SUBCLASS LOCK LOGIC ---
             const unlockLevel = SUBCLASS_UNLOCK_LEVELS[clsName] || 3;
-            
             if (lvl < unlockLevel) {
-                // Lock it
-                subSelect.value = ""; 
-                subSelect.disabled = true;
-                subSelect.title = `Unlocks at Level ${unlockLevel}`;
-                // Optional: Visually grey it out
-                subSelect.style.opacity = "0.5";
-                subSelect.style.cursor = "not-allowed";
+                subSelect.value = ""; subSelect.disabled = true; subSelect.style.opacity = "0.5";
             } else {
-                // Unlock it
-                subSelect.disabled = false;
-                subSelect.title = "";
-                subSelect.style.opacity = "1";
-                subSelect.style.cursor = "pointer";
+                subSelect.disabled = false; subSelect.style.opacity = "1";
             }
-            // -------------------------------
 
-            const subName = subSelect.value;
             const cData = CLASSES[clsName];
-            
             totalLvl += lvl;
             
-            // HP Calc
-            if(index === 0) {
-                hpBase += cData.hit_die;
-                hpBase += (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
-            } else {
-                hpBase += (Math.ceil(cData.hit_die / 2) + 1) * lvl;
-            }
+            if(index === 0) hpBase += cData.hit_die + (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
+            else hpBase += (Math.ceil(cData.hit_die / 2) + 1) * lvl;
             
             let txt = `${clsName} ${lvl}`;
-            if(subName) txt += ` (${subName})`;
+            if(subSelect.value) txt += ` (${subSelect.value})`;
             summary.push(txt);
         });
 
         totalLevels = totalLvl;
         document.getElementById('totalLevelDisplay').innerText = totalLevels;
         document.getElementById('classSummary').innerText = summary.join(" / ");
-        
         document.getElementById('calcHP').dataset.base = hpBase;
         window.recalcStats();
         window.renderSkills();
@@ -347,10 +390,9 @@
         if (!rData) return;
         
         let conMod = 0;
-
         STAT_KEYS.forEach(s => {
-            let baseElement = document.getElementById(`base_${s}`);
-            let base = parseInt(baseElement.value) || 0;
+            let el = document.getElementById(`base_${s}`);
+            let base = el ? (parseInt(el.value) || 0) : 0;
             let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             document.getElementById(`bon_${s}`).innerText = bonus > 0 ? `+${bonus}` : "";
             
@@ -365,16 +407,15 @@
     window.renderSkills = function() {
         const race = RACES[raceSel.value];
         const bg = BACKGROUNDS[bgSel.value] || {skills:[]};
-        
         const fixed = new Set([...(race.skills || []), ...bg.skills]);
+        
         const fixedArea = document.getElementById('fixedSkillsArea');
         fixedArea.innerHTML = "";
         fixed.forEach(s => fixedArea.innerHTML += `<span class="pill">${s}</span>`);
 
-        const rows = document.querySelectorAll('.class-row');
         const classArea = document.getElementById('classSkillArea');
         classArea.innerHTML = "";
-
+        const rows = document.querySelectorAll('.class-row');
         if(rows.length > 0) {
             const clsName = rows[0].querySelector('.cls-select').value;
             const cData = CLASSES[clsName];
@@ -386,19 +427,17 @@
                 sel.className = 'skill-choice';
                 sel.style.marginBottom = "5px";
                 sel.add(new Option("- Select Skill -", ""));
-                options.forEach(opt => {
-                    if(!fixed.has(opt)) sel.add(new Option(opt, opt));
-                });
+                options.forEach(opt => { if(!fixed.has(opt)) sel.add(new Option(opt, opt)); });
                 classArea.appendChild(sel);
             }
         }
     };
 
+    // Inventory and Save functions remain mostly same but integrated with new logic
     window.autoPopulateGear = function() {
         selectedInventory = []; 
         const bg = BACKGROUNDS[bgSel.value];
         if(bg && bg.items) bg.items.forEach(itemName => addItemByName(itemName, "Background"));
-
         const rows = document.querySelectorAll('.class-row');
         if(rows.length > 0) {
             const clsName = rows[0].querySelector('.cls-select').value;
@@ -411,22 +450,17 @@
 
     function addItemByName(name, source) {
         const found = ALL_ACTIONS.find(i => i.name.toLowerCase() === name.toLowerCase());
-        if(found) {
-            selectedInventory.push({ ...found, source: source, equip: false });
-        } else {
-            selectedInventory.push({ name: name, category: "Item", source: source, equip: false });
-        }
+        if(found) selectedInventory.push({ ...found, source: source, equip: false });
+        else selectedInventory.push({ name: name, category: "Item", source: source, equip: false });
     }
 
     window.filterItems = function() {
         const q = document.getElementById('itemSearch').value.toLowerCase();
         const resDiv = document.getElementById('searchResults');
         resDiv.innerHTML = "";
-        
         if(q.length < 2) { resDiv.style.display = 'none'; return; }
         
         const hits = ALL_ACTIONS.filter(i => i.name.toLowerCase().includes(q)).slice(0, 10);
-
         if(hits.length > 0) {
             resDiv.style.display = 'block';
             hits.forEach(item => {
@@ -450,42 +484,28 @@
         selectedInventory.forEach((item, idx) => {
             const div = document.createElement('div');
             div.className = 'inv-item';
-            div.innerHTML = `
-                <div>
-                    <strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong>
-                    <div style="font-size:0.8em; color:#aaa;">${item.category || "Item"}</div>
-                </div>
-                <button class="btn-small btn-remove" onclick="removeItem(${idx})">x</button>
-            `;
+            div.innerHTML = `<div><strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong></div><button class="btn-small btn-remove" onclick="removeItem(${idx})">x</button>`;
             list.appendChild(div);
         });
     };
 
-    window.removeItem = function(idx) {
-        selectedInventory.splice(idx, 1);
-        window.renderInventory();
-    };
+    window.removeItem = function(idx) { selectedInventory.splice(idx, 1); window.renderInventory(); };
 
     window.changeStep = function(dir) {
         if(currentStep === 1 && dir === 1) {
             if(!document.getElementById('charName').value) return alert("Name required.");
             if(!bgSel.value) return alert("Background required.");
         }
-        
         document.getElementById(`step${currentStep}`).classList.remove('active');
         currentStep += dir;
-        
         if(currentStep > 4) { window.saveCharacter(); return; }
-        
         document.getElementById(`step${currentStep}`).classList.add('active');
         document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
         document.getElementById('btnNext').innerText = currentStep === 4 ? "Finish" : "Next";
-        
         const titles = ["", "Identity", "Stats", "Skills", "Gear & Details"];
         document.getElementById('headerTitle').innerText = titles[currentStep];
     };
 
-    // --- HELPER: Cleans Data for Firebase (No undefined values) ---
     function cleanData(obj) {
         const newObj = {};
         Object.keys(obj).forEach(key => {
@@ -501,7 +521,6 @@
         const btn = document.getElementById('btnNext');
         btn.innerText = "Saving..."; btn.disabled = true;
 
-        // 1. Gather Classes (Including Subclass)
         let classesArr = [];
         document.querySelectorAll('.class-row').forEach(row => {
             classesArr.push({
@@ -515,7 +534,8 @@
         let baseStats = {};
         let finalStats = {};
         STAT_KEYS.forEach(s => {
-            let b = parseInt(document.getElementById(`base_${s}`).value) || 10;
+            let el = document.getElementById(`base_${s}`);
+            let b = el ? parseInt(el.value) || 10 : 10;
             let bon = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
             baseStats[s] = b;
             finalStats[s] = b + bon;
@@ -553,9 +573,7 @@
             skin: document.getElementById('rpSkin').value
         };
 
-        // Sanitize data before sending
         const charData = cleanData(rawData);
-
         const ref = EDIT_ID ? window.db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`) : window.db.ref(`campaigns/${ROOM_ID}/characters`).push();
         
         (EDIT_ID ? ref.update(charData) : ref.set(charData))
@@ -565,19 +583,18 @@
                     name: charData.name, hp: charData.hp_max, max_hp: charData.hp_max, init: 0, type: 'player'
                 });
             }
-            // Explicit redirect
             window.location.href = `sheet.html?room=${ROOM_ID}&id=${ref.key || EDIT_ID}`;
         })
-        .catch(error => {
-            console.error("Save failed: ", error);
-            alert("Save failed! Check console for details. Error: " + error.message);
+        .catch(err => {
+            console.error(err);
+            alert("Save Failed: " + err.message);
             btn.innerText = "Finish";
             btn.disabled = false;
         });
     };
 
-    // --- LOADING LOGIC ---
     function loadCharacter() {
+        window.setStatMode('array'); // Default mode
         if (!EDIT_ID) {
             window.addClassRow(); 
             window.updateRaceInfo();
@@ -594,7 +611,22 @@
             document.getElementById('charGold').value = (c.coins && c.coins.gp) ? c.coins.gp : 0;
 
             if(c.base_stats) {
-                STAT_KEYS.forEach(s => document.getElementById(`base_${s}`).value = c.base_stats[s]);
+                // Heuristic: If stats don't match standard array, switch to manual
+                let isStandard = true;
+                STAT_KEYS.forEach(s => {
+                    if(!STANDARD_ARRAY.includes(c.base_stats[s])) isStandard = false;
+                });
+                window.setStatMode(isStandard ? 'array' : 'manual');
+                
+                // Set values after mode switch
+                setTimeout(() => {
+                    STAT_KEYS.forEach(s => {
+                        let el = document.getElementById(`base_${s}`);
+                        if(el) el.value = c.base_stats[s];
+                    });
+                    if(isStandard) window.updateArrayOptions();
+                    window.recalcStats();
+                }, 50);
             }
 
             document.getElementById('charAlign').value = c.alignment || "True Neutral";
@@ -604,7 +636,6 @@
                 if(c[lower]) document.getElementById(`rp${f}`).value = c[lower];
             });
 
-            // Classes & Subclasses
             const container = document.getElementById('classContainer');
             container.innerHTML = ""; 
             if (c.classes && Array.isArray(c.classes)) {
@@ -626,7 +657,7 @@
         });
     }
 
-    setTimeout(loadCharacter, 200); // Slight delay for modules to load
+    setTimeout(loadCharacter, 200);
 
 </script>
 </body>
