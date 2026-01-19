@@ -1,6 +1,6 @@
 // game_rules.js
 
-const SKILLS_LIST = {
+export const SKILLS_LIST = {
     "Acrobatics": "DEX", "Animal Handling": "WIS", "Arcana": "INT", "Athletics": "STR", 
     "Deception": "CHA", "History": "INT", "Insight": "WIS", "Intimidation": "CHA", 
     "Investigation": "INT", "Medicine": "WIS", "Nature": "INT", "Perception": "WIS", 
@@ -8,7 +8,7 @@ const SKILLS_LIST = {
     "Stealth": "DEX", "Survival": "WIS"
 };
 
-const RACES = {
+export const RACES = {
     "Human": { bonuses: {STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1}, hp_bonus: 0, skills: [] },
     "High Elf": { bonuses: {DEX: 2, INT: 1}, hp_bonus: 0, skills: ["Perception"], auto_spells: ["Prestidigitation"] },
     "Wood Elf": { bonuses: {DEX: 2, WIS: 1}, hp_bonus: 0, skills: ["Perception", "Stealth"] },
@@ -32,7 +32,7 @@ const RACES = {
     "Genasi (Fire)": { bonuses: {CON: 2, INT: 1}, hp_bonus: 0, auto_spells: ["Produce Flame"] },
     "Genasi (Water)": { bonuses: {CON: 2, WIS: 1}, hp_bonus: 0, auto_spells: ["Shape Water"] }
 };
-const CLASSES = {
+export const CLASSES = {
     "Artificer": { 
         hit_die: 8, saves: ["CON", "INT"], items: ["Light Crossbow", "Scale Mail", "Thieves' Tools"], 
         features: [
@@ -293,7 +293,7 @@ const CLASSES = {
     }
 };
 
-const ALL_ITEMS = [
+export const ALL_ITEMS = [
     // --- Original Items ---
     {name: "Potion of Healing", category: "Potion", desc: "Regain 2d4+2 HP (Action)"},
     {name: "Rations", category: "Adventuring Gear", desc: "1 day of food"},
@@ -544,7 +544,7 @@ export const ALL_ARMOR = [
     {name: "Smoldering Armor", dice: "-", type: "-", category: "Magic Armor", ac: "Varies", armor_type: "Light/Med/Heavy", desc: "Wisps of harmless smoke rise from this armor."}
 ];
 
-const ALL_SPELLS = [
+export const ALL_SPELLS = [
     // --- CANTRIPS (LEVEL 0) ---
     {name: "Acid Splash", dice: "1d6", type: "Acid", category: "Spell", level: 0, scale_dice: "1d6", desc: "Dex Save. Two targets within 5ft.", classes: ["Artificer", "Sorcerer", "Wizard"]},
     {name: "Blade Ward", dice: "-", type: "Resist", category: "Spell", level: 0, desc: "Resistance to B/P/S damage until next turn.", classes: ["Bard", "Sorcerer", "Warlock", "Wizard"]},
@@ -941,7 +941,7 @@ export const MISSING_SPELLS = [
 ];
 
 // --- MISSING HIGH-LEVEL & REACTION FEATURES ---
-const MISSING_FEATURES = [
+export const MISSING_FEATURES = [
     // --- BARBARIAN ---
     {name: "Feral Instinct", dice: "-", type: "Initiative", category: "Feature", action_type: "Passive", desc: "Advantage on Initiative rolls."},
     {name: "Brutal Critical", dice: "1", type: "Bonus Dmg", category: "Feature", action_type: "Passive", desc: "Add one extra weapon damage die on Crits."},
@@ -1060,3 +1060,4 @@ export const ALL_ACTIONS = [
     ...ALL_FEATURES, 
     ...MISSING_FEATURES
 ];
+
