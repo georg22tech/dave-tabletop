@@ -294,6 +294,76 @@ export const ALL_ITEMS = [
     {name: "Chest", category: "Container", desc: "Holds 300 lbs/12 cubic feet; can be locked."},
     {name: "Vial", category: "Container", desc: "Holds 4 ounces of liquid."},
     {name: "Jug", category: "Container", desc: "Holds 1 gallon of liquid."}
+    // --- Musical Instruments ---
+    {name: "Bagpipes", category: "Tool", desc: "Musical Instrument."},
+    {name: "Drum", category: "Tool", desc: "Musical Instrument."},
+    {name: "Dulcimer", category: "Tool", desc: "Musical Instrument."},
+    {name: "Flute", category: "Tool", desc: "Musical Instrument."},
+    {name: "Lute", category: "Tool", desc: "Musical Instrument."},
+    {name: "Lyre", category: "Tool", desc: "Musical Instrument."},
+    {name: "Horn", category: "Tool", desc: "Musical Instrument."},
+    {name: "Pan Flute", category: "Tool", desc: "Musical Instrument."},
+    {name: "Shawm", category: "Tool", desc: "Musical Instrument."},
+    {name: "Viol", category: "Tool", desc: "Musical Instrument."},
+
+    // --- Artisan's Tools ---
+    {name: "Alchemist's Supplies", category: "Tool", desc: "For potion making."},
+    {name: "Brewer's Supplies", category: "Tool", desc: "For brewing ale/beer."},
+    {name: "Calligrapher's Supplies", category: "Tool", desc: "For writing/inscribing."},
+    {name: "Carpenter's Tools", category: "Tool", desc: "For wood construction."},
+    {name: "Cartographer's Tools", category: "Tool", desc: "For map making."},
+    {name: "Cobbler's Tools", category: "Tool", desc: "For shoe repair."},
+    {name: "Cook's Utensils", category: "Tool", desc: "For cooking."},
+    {name: "Glassblower's Tools", category: "Tool", desc: "For glass crafting."},
+    {name: "Jeweler's Tools", category: "Tool", desc: "For gem cutting."},
+    {name: "Leatherworker's Tools", category: "Tool", desc: "For leather working."},
+    {name: "Mason's Tools", category: "Tool", desc: "For stone working."},
+    {name: "Painter's Supplies", category: "Tool", desc: "For painting."},
+    {name: "Potter's Tools", category: "Tool", desc: "For ceramics."},
+    {name: "Smith's Tools", category: "Tool", desc: "For metal working."},
+    {name: "Tinker's Tools", category: "Tool", desc: "For mechanical repair."},
+    {name: "Weaver's Tools", category: "Tool", desc: "For cloth weaving."},
+    {name: "Woodcarver's Tools", category: "Tool", desc: "For detailed wood working."},
+
+    // --- Gaming Sets ---
+    {name: "Dice Set", category: "Tool", desc: "Bone dice for gambling."},
+    {name: "Dragonchess Set", category: "Tool", desc: "Strategy game."},
+    {name: "Playing Card Set", category: "Tool", desc: "Deck of cards."},
+    {name: "Three-Dragon Ante Set", category: "Tool", desc: "Card game."},
+
+    // --- Spellcasting Focuses ---
+    {name: "Arcane Focus (Crystal)", category: "Item", desc: "Focus for Sorcerer/Warlock/Wizard."},
+    {name: "Arcane Focus (Orb)", category: "Item", desc: "Focus for Sorcerer/Warlock/Wizard."},
+    {name: "Arcane Focus (Rod)", category: "Item", desc: "Focus for Sorcerer/Warlock/Wizard."},
+    {name: "Arcane Focus (Staff)", category: "Item", desc: "Focus for Sorcerer/Warlock/Wizard."},
+    {name: "Arcane Focus (Wand)", category: "Item", desc: "Focus for Sorcerer/Warlock/Wizard."},
+    {name: "Druidic Focus (Sprig)", category: "Item", desc: "Focus for Druid."},
+    {name: "Druidic Focus (Totem)", category: "Item", desc: "Focus for Druid."},
+    {name: "Druidic Focus (Wooden Staff)", category: "Item", desc: "Focus for Druid."},
+    {name: "Holy Symbol (Amulet)", category: "Item", desc: "Focus for Cleric/Paladin."},
+    {name: "Holy Symbol (Emblem)", category: "Item", desc: "Focus for Cleric/Paladin."},
+    {name: "Holy Symbol (Reliquary)", category: "Item", desc: "Focus for Cleric/Paladin."},
+    {name: "Component Pouch", category: "Item", desc: "Contains spell components."},
+    {name: "Spellbook", category: "Item", desc: "Essential for Wizards."},
+
+    // --- Equipment Packs ---
+    {name: "Burglar's Pack", category: "Container", desc: "Backpack, ball bearings, string, bell, candles, crowbar, hammer, pitons, lantern, oil, rations, tinderbox, waterskin."},
+    {name: "Diplomat's Pack", category: "Container", desc: "Chest, map/scroll case, fine clothes, ink, pen, lamp, oil, paper, perfume, sealing wax, soap."},
+    {name: "Dungeoneer's Pack", category: "Container", desc: "Backpack, crowbar, hammer, pitons, torches, tinderbox, rations, waterskin, rope."},
+    {name: "Entertainer's Pack", category: "Container", desc: "Backpack, bedroll, costumes, candles, rations, waterskin, disguise kit."},
+    {name: "Explorer's Pack", category: "Container", desc: "Backpack, bedroll, mess kit, tinderbox, torches, rations, waterskin, rope."},
+    {name: "Priest's Pack", category: "Container", desc: "Backpack, blanket, candles, tinderbox, alms box, incense, vestments, rations, waterskin."},
+    {name: "Scholar's Pack", category: "Container", desc: "Backpack, book of lore, ink, pen, parchment, sand, knife."},
+
+    // --- Background Flavor Items ---
+    {name: "Prayer Book", category: "Item", desc: "Contains religious texts."},
+    {name: "Vestments", category: "Item", desc: "Religious clothing."},
+    {name: "Dark Clothes", category: "Item", desc: "Clothes with a hood for stealth."},
+    {name: "Rank Insignia", category: "Item", desc: "A symbol of your military rank."},
+    {name: "Trophy", category: "Item", desc: "A trophy taken from a fallen enemy."},
+    {name: "Map of the City", category: "Item", desc: "A rough map of your home city."},
+    {name: "Pet Mouse", category: "Item", desc: "A small pet mouse."},
+    {name: "Token", category: "Item", desc: "A keepsake from your parents."}
 ];
 
 export const ALL_WEAPONS = [
@@ -920,3 +990,4 @@ export const ALL_ACTIONS = [
     ...ALL_SPELLS, 
     ...ALL_FEATURES
 ];
+
