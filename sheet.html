@@ -12,7 +12,6 @@
         header { background: #252525; padding: 15px 20px; border-bottom: 2px solid #444; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 10; flex-shrink: 0; }
         .char-identity h1 { margin:0; color: #fff; font-size: 1.6em; line-height: 1em; }
         .char-identity .sub { color: #8af; font-size: 0.8em; font-weight: bold; }
-        
         .combat-stats { display: flex; align-items: center; gap: 15px; }
         .stat-badge { text-align:center; border:2px solid #555; border-radius: 8px; width:70px; background:#333; height: 60px; display:flex; flex-direction:column; justify-content:center; position:relative;}
         .stat-val { font-size:1.4em; font-weight:bold; color:#fff; line-height: 1em; }
@@ -26,6 +25,7 @@
         .tab-pane { display: none; max-width: 800px; margin: 0 auto; }
         .tab-pane.active { display: block; }
 
+        /* CARDS */
         .card { background: #252525; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #444; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .card-feature { border-left: 4px solid #fa8; }
         .card-spell { border-left: 4px solid #8af; }
@@ -36,31 +36,31 @@
         .btn-hit { background: #2b5fa3; color:white; }
         .btn-dmg { background: #a33; color:white; }
         
+        /* INVENTORY */
         .inv-item { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #333; }
         .btn-equip { background: #444; border: 1px solid #666; color: #aaa; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-right: 5px; }
         .btn-equip.equipped { background: #2b5fa3; color: white; border-color: #2b5fa3; }
         .btn-del { color: #f44; cursor: pointer; font-weight: bold; padding: 0 5px; }
         
+        /* SKILLS & SAVES */
         .saves-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 20px; }
         .save-box { background: #252525; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #444; cursor: pointer; }
         .save-val { font-size: 1.2em; font-weight: bold; color: #fff; }
         .save-label { font-size: 0.7em; color: #aaa; text-transform:uppercase; }
-        
         .skill-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .skill-btn { background: #252525; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; font-size: 0.9em;}
         .skill-val { font-weight: bold; color: #8af; }
         
+        /* CURRENCY & SEARCH */
         .coin-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #444; }
         .coin-box { text-align: center; background: #222; padding: 5px; border-radius: 4px; }
         .coin-box input { width: 100%; background: transparent; border: none; color: white; text-align: center; font-weight: bold; }
         
+        /* CHAT */
         #chat { height: 150px; background: #111; border-top: 2px solid #e51e25; padding: 10px; overflow-y: scroll; font-family: monospace; font-size: 0.9em; flex-shrink: 0; }
         .msg { margin-bottom: 4px; padding: 4px 8px; border-left: 3px solid #555; }
 
-        /* SPELL & SLOTS UI */
-        .spell-header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #222; border-radius: 4px; margin-bottom: 10px; font-size: 0.9em; color:#aaa; }
-        .spell-counter { color: #8af; font-weight: bold; }
-        
+        /* SPELL SLOTS UI */
         .slots-container { margin-bottom: 15px; background: #222; padding: 10px; border-radius: 4px; border: 1px solid #444; }
         .slot-row { display: flex; align-items: center; margin-bottom: 5px; }
         .slot-label { width: 60px; font-weight: bold; font-size: 0.9em; color: #ccc; }
@@ -68,16 +68,26 @@
         .slot-chk { appearance: none; width: 15px; height: 15px; border: 1px solid #666; border-radius: 50%; background: #333; cursor: pointer; }
         .slot-chk:checked { background: #8af; border-color: #8af; box-shadow: 0 0 5px #8af; }
         .slot-chk.pact:checked { background: #b0f; border-color: #b0f; box-shadow: 0 0 5px #b0f; }
-
         .rest-btn { background: #444; color: #fff; border: 1px solid #555; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-left: 10px; }
-        .rest-btn:hover { background: #555; }
-
-        .search-results { max-height: 250px; overflow-y: auto; background: #1e1e1e; border: 1px solid #444; display:none; margin-bottom: 10px; border-radius: 4px; }
-        .search-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
-        .search-item:hover { background: #333; }
-        .search-meta { font-size: 0.75em; color: #888; background: #111; padding: 2px 5px; border-radius: 4px; margin-left: 5px;}
-        .browse-btn { width: 100%; background: #333; color: #aaa; border: 1px dashed #555; padding: 8px; cursor: pointer; margin-bottom: 10px; border-radius: 4px;}
-        .browse-btn:hover { background: #444; color: white; }
+        
+        /* SPELL MODAL */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: #1e1e1e; margin: 5% auto; padding: 20px; border: 1px solid #444; width: 90%; max-width: 600px; border-radius: 8px; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .modal-body { overflow-y: auto; flex: 1; }
+        
+        .spell-stats-bar { display: flex; gap: 15px; margin-bottom: 15px; background: #222; padding: 10px; border-radius: 4px; font-size: 0.9em; justify-content: center; }
+        .counter-box { text-align: center; }
+        .counter-val { font-weight: bold; color: #fff; font-size: 1.1em; }
+        .counter-lbl { font-size: 0.8em; color: #aaa; }
+        
+        .spell-select-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #252525; margin-bottom: 5px; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: 0.2s; }
+        .spell-select-row:hover { background: #333; }
+        .spell-select-row.learned { border-left: 4px solid #4f4; background: #1a2a1a; }
+        .spell-meta { font-size: 0.8em; color: #888; }
+        
+        .add-spell-btn { width: 100%; padding: 10px; background: #2b5fa3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .close-modal { background: #444; color: white; padding: 5px 15px; border: none; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -120,6 +130,8 @@
     <div id="tab-actions" class="tab-pane active"><div id="attackList"></div></div>
     
     <div id="tab-spells" class="tab-pane">
+        <button class="add-spell-btn" onclick="openSpellModal()">+ Manage Spells</button>
+        
         <div class="slots-container">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                 <strong style="color:#fff;">Spell Slots</strong>
@@ -131,17 +143,6 @@
             <div id="slotDisplay"></div>
         </div>
 
-        <div class="spell-header">
-            <span>Known: <span id="splCount" class="spell-counter">0</span></span>
-            <span>Cantrips: <span id="cntCount" class="spell-counter">0</span></span>
-        </div>
-        
-        <div style="display:flex; gap:5px; margin-bottom:5px;">
-            <input type="text" id="spellSearch" placeholder="Search to add..." style="flex:1; padding:8px; background:#222; border:1px solid #444; color:white;" onkeyup="searchSpells()">
-        </div>
-        <button class="browse-btn" onclick="browseLearnableSpells()">Browse All Learnable Spells</button>
-        
-        <div id="spellResults" class="search-results"></div>
         <div id="spellList"></div>
     </div>
 
@@ -161,6 +162,31 @@
         <input type="text" id="apiSearch" placeholder="Search item..." style="width:100%; padding:8px; background:#222; border:1px solid #444; color:white; margin-bottom:10px;" onkeyup="searchEquipment()">
         <div id="apiResults" class="search-results"></div>
         <div id="invList"></div>
+    </div>
+</div>
+
+<div id="spellModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 style="margin:0; color:#e51e25;">Manage Spells</h2>
+            <button class="close-modal" onclick="closeSpellModal()">Done</button>
+        </div>
+        
+        <div class="spell-stats-bar">
+            <div class="counter-box">
+                <div id="cntCount" class="counter-val">0/0</div>
+                <div class="counter-lbl">Cantrips</div>
+            </div>
+            <div class="counter-box">
+                <div id="splCount" class="counter-val">0/0</div>
+                <div class="counter-lbl">Known/Prep</div>
+            </div>
+        </div>
+
+        <input type="text" id="modalSearch" placeholder="Filter list..." style="width:100%; padding:10px; background:#2a2a2a; border:1px solid #444; color:white; margin-bottom:10px; box-sizing:border-box;" onkeyup="renderSpellModalList()">
+        
+        <div id="modalList" class="modal-body">
+            </div>
     </div>
 </div>
 
@@ -272,7 +298,6 @@
         renderSkills();
         renderInv();
         renderSpellSlots(); 
-        renderSpellStats();
     }
 
     function renderSpellSlots() {
@@ -353,7 +378,7 @@
             spellObjs.sort((a, b) => (a.level || 0) - (b.level || 0));
             spellObjs.forEach(s => {
                 let cardHtml = createCardHtml(s);
-                cardHtml = cardHtml.replace('</div>', `<button class="btn-del" onclick="removeSpell('${s.name}')" style="position:absolute; top:5px; right:5px;">x</button></div>`);
+                // No delete button in main list, manage via modal
                 spellDiv.innerHTML += cardHtml;
             });
         }
@@ -391,20 +416,42 @@
 
     function renderCard(data, container) { container.innerHTML += createCardHtml(data); }
 
-    function renderSpellStats() {
-        let totalCantrips=0, totalKnown=0; 
-        if (CHAR.spells_known) {
-            CHAR.spells_known.forEach(sName => {
-                let s = ALL_ACTIONS.find(a => a.name === sName);
-                if (s) (s.level === 0) ? totalCantrips++ : totalKnown++;
-            });
-        }
-        document.getElementById('cntCount').innerText = totalCantrips;
-        document.getElementById('splCount').innerText = totalKnown;
+    // --- NEW SPELL MODAL LOGIC ---
+    
+    window.openSpellModal = function() {
+        document.getElementById('spellModal').style.display = 'block';
+        window.renderSpellModalList();
+    };
+
+    window.closeSpellModal = function() {
+        document.getElementById('spellModal').style.display = 'none';
+    };
+
+    // Calculate Max Spells based on Class
+    function getSpellLimits() {
+        let maxCantrips = 0;
+        let maxSpells = 0; // Prepared or Known
+
+        CHAR.classes.forEach(c => {
+            const lvl = c.level;
+            const name = c.name;
+            
+            // Cantrips
+            if(["Bard","Druid","Warlock","Wizard","Cleric","Sorcerer"].includes(name)) maxCantrips += (lvl < 4 ? 2 : (lvl < 10 ? 3 : 4)); 
+            if(name === "Artificer") maxCantrips += 2;
+            if(name === "Sorcerer") maxCantrips += 1; // Sorcs get more
+
+            // Leveled Spells (Known or Prepared)
+            if (["Wizard", "Artificer"].includes(name)) maxSpells += Math.max(1, lvl + STATS['INT']);
+            else if (["Cleric", "Druid"].includes(name)) maxSpells += Math.max(1, lvl + STATS['WIS']);
+            else if (name === "Paladin") maxSpells += Math.max(1, Math.floor(lvl/2) + STATS['CHA']);
+            else if (["Bard", "Sorcerer", "Warlock", "Ranger"].includes(name)) maxSpells += Math.min(15, lvl + 1); // Approx table
+        });
+        
+        return { cantrips: maxCantrips, spells: maxSpells };
     }
 
-    // --- SPELL SEARCH LOGIC (FILTERED BY CLASS/LEVEL) ---
-    
+    // Get all spells character is eligible for
     function getLearnableSpells() {
         let validSpells = new Set();
         CHAR.classes.forEach(cls => {
@@ -412,16 +459,13 @@
             let clsLevel = cls.level;
             let maxSpellLevel = 0;
 
-            // Simple Max Spell Level Calculation
             if (["Bard", "Cleric", "Druid", "Sorcerer", "Wizard"].includes(clsName)) maxSpellLevel = Math.ceil(clsLevel / 2);
             else if (["Paladin", "Ranger"].includes(clsName) && clsLevel >= 2) maxSpellLevel = Math.ceil(clsLevel / 2);
             else if (clsName === "Artificer") maxSpellLevel = Math.ceil(clsLevel / 2);
-            else if (clsName === "Warlock") maxSpellLevel = Math.min(5, Math.ceil(clsLevel / 2)); // Pact Magic Cap
-            else if (["Fighter", "Rogue"].includes(clsName) && clsLevel >= 3) maxSpellLevel = Math.ceil(clsLevel / 3); // Approx for subclasses
-
+            else if (clsName === "Warlock") maxSpellLevel = Math.min(5, Math.ceil(clsLevel / 2)); 
+            
             ALL_SPELLS.forEach(spell => {
                 if (spell.classes && spell.classes.includes(clsName) && spell.level <= maxSpellLevel) {
-                    // Tag spell with source for UI
                     spell._source = `${clsName} ${spell.level===0?'Cantrip':`Lvl ${spell.level}`}`;
                     validSpells.add(spell);
                 }
@@ -430,64 +474,63 @@
         return Array.from(validSpells).sort((a,b) => a.level - b.level);
     }
 
-    let spellSearchTimer;
-    window.searchSpells = function() {
-        clearTimeout(spellSearchTimer);
-        const q = document.getElementById('spellSearch').value.toLowerCase();
-        const res = document.getElementById('spellResults');
-        if(q.length<2) { res.style.display='none'; return; }
+    window.renderSpellModalList = function() {
+        // Update Counters
+        const limits = getSpellLimits();
+        let curCantrips = 0;
+        let curSpells = 0;
         
-        spellSearchTimer = setTimeout(() => {
-            res.innerHTML=""; res.style.display='block';
-            let validList = getLearnableSpells(); // GET FILTERED LIST
-            
-            // Filter by search query
-            let hits = validList.filter(a => a.name.toLowerCase().includes(q)).slice(0, 10);
-            
-            hits.forEach(h => {
-                const div = document.createElement('div');
-                div.className = 'search-item';
-                div.innerHTML = `<div>${h.name}</div><div class="search-meta">${h._source || `Lvl ${h.level}`}</div>`;
-                div.onclick = () => window.addSpell(h.name);
-                res.appendChild(div);
+        if(CHAR.spells_known) {
+            CHAR.spells_known.forEach(sName => {
+                const s = ALL_ACTIONS.find(a=>a.name===sName);
+                if(s) (s.level === 0) ? curCantrips++ : curSpells++;
             });
-            if(hits.length === 0) res.innerHTML = "<div style='padding:5px; color:#777'>No learnable spells found.</div>";
-        }, 300);
-    };
-
-    window.browseLearnableSpells = function() {
-        const res = document.getElementById('spellResults');
-        res.innerHTML=""; res.style.display='block';
-        let validList = getLearnableSpells();
-        
-        if(validList.length === 0) {
-            res.innerHTML = "<div style='padding:5px; color:#777'>Your class cannot learn spells yet.</div>";
-            return;
         }
 
-        validList.forEach(h => {
+        document.getElementById('cntCount').innerText = `${curCantrips} / ${limits.cantrips}`;
+        document.getElementById('splCount').innerText = `${curSpells} / ${limits.spells}`;
+        document.getElementById('cntCount').style.color = curCantrips > limits.cantrips ? '#f44' : '#fff';
+        document.getElementById('splCount').style.color = curSpells > limits.spells ? '#f44' : '#fff';
+
+        // Render List
+        const listDiv = document.getElementById('modalList');
+        listDiv.innerHTML = "";
+        const filter = document.getElementById('modalSearch').value.toLowerCase();
+        
+        let allValid = getLearnableSpells();
+        
+        allValid.forEach(spell => {
+            if(filter && !spell.name.toLowerCase().includes(filter)) return;
+            
+            const isKnown = CHAR.spells_known && CHAR.spells_known.includes(spell.name);
             const div = document.createElement('div');
-            div.className = 'search-item';
-            div.innerHTML = `<div>${h.name}</div><div class="search-meta">${h._source || `Lvl ${h.level}`}</div>`;
-            div.onclick = () => window.addSpell(h.name);
-            res.appendChild(div);
+            div.className = `spell-select-row ${isKnown ? 'learned' : ''}`;
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; color:${isKnown ? '#4f4' : '#ccc'}">${spell.name}</div>
+                    <div class="spell-meta">${spell._source}</div>
+                </div>
+                <div style="font-size:1.2em;">${isKnown ? '✓' : '+'}</div>
+            `;
+            div.onclick = () => window.toggleSpell(spell.name);
+            listDiv.appendChild(div);
         });
     };
 
-    window.addSpell = function(name) {
-        if (!CHAR.spells_known) CHAR.spells_known = [];
-        if (!CHAR.spells_known.includes(name)) {
+    window.toggleSpell = function(name) {
+        if(!CHAR.spells_known) CHAR.spells_known = [];
+        
+        if(CHAR.spells_known.includes(name)) {
+            // Remove
+            CHAR.spells_known = CHAR.spells_known.filter(s => s !== name);
+        } else {
+            // Add
             CHAR.spells_known.push(name);
-            window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/spells_known`).set(CHAR.spells_known);
         }
-        document.getElementById('spellResults').style.display='none';
-        document.getElementById('spellSearch').value='';
-    };
-
-    window.removeSpell = function(name) {
-        if (!confirm(`Remove spell ${name}?`)) return;
-        CHAR.spells_known = CHAR.spells_known.filter(s => s !== name);
+        
         window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/spells_known`).set(CHAR.spells_known);
+        // Don't close modal, just re-render to update counters/checks
+        window.renderSpellModalList(); 
     };
 
     // --- OTHER UI FUNCTIONS ---
