@@ -1,122 +1,117 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Character Builder</title>
+    <title>Advanced Character Builder</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="config.js"></script>
-    <script src="game_rules.js"></script>
+    <script type="module" src="game_rules.js"></script>
+    <script src="config.js"></script> 
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .builder-container { max-width: 650px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
-        
+        .builder-container { max-width: 800px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
         h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; text-align: center; }
         
-        /* STEPS */
+        /* STEPS & UI */
         .step { display: none; animation: fadeIn 0.3s; }
         .step.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* INPUTS */
         label { display: block; color: #8af; font-weight: bold; margin-bottom: 5px; margin-top: 15px; font-size: 0.9em; }
-        input, select, textarea { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        input, select, textarea { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
         input:focus, select:focus { border-color: #e51e25; outline: none; }
         
-        /* STAT GRID */
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        /* CLASS ROW (Multiclassing) */
+        .class-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #252525; padding: 10px; border-radius: 4px;}
+        .class-row select { flex: 2; }
+        .class-row input { flex: 1; text-align: center; }
+        .btn-small { padding: 5px 10px; background: #444; color: #fff; border: none; cursor: pointer; border-radius: 4px;}
+        .btn-small:hover { background: #666; }
+        .btn-remove { background: #a33; } .btn-remove:hover { background: #c44; }
+
+        /* STATS */
+        .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
         .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
-        .stat-box label { margin: 0 0 5px 0; color: #aaa; }
-        .stat-box select { text-align: center; font-weight: bold; font-size: 1.1em; background: #1a1a1a; padding: 5px; cursor:pointer; color: #fff; }
-        .bonus-badge { font-size: 0.8em; color: #4f4; display: block; height: 1.2em; margin-top: 5px; }
+        .stat-box select { padding: 5px; text-align: center; }
+        .bonus-badge { color: #4f4; font-size: 0.8em; display: block; margin-top: 5px; }
+
+        /* INVENTORY SEARCH */
+        .search-results { max-height: 200px; overflow-y: auto; background: #252525; border: 1px solid #444; display:none; position: absolute; width: 90%; z-index: 100; }
+        .search-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; }
+        .search-item:hover { background: #333; }
+        .inv-list { margin-top: 10px; }
+        .inv-item { background: #222; padding: 8px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #555; }
         
-        /* RP GRID */
-        .rp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-
-        /* SKILLS */
-        .auto-skill { background: #2a7a3a; color: white; padding: 5px 10px; border-radius: 4px; margin-bottom: 5px; display: inline-block; font-size: 0.9em; }
-        .skill-select-group { margin-bottom: 10px; }
-
-        /* EQUIPMENT TOGGLE */
-        .equip-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
-        .equip-opt { flex: 1; padding: 10px; border: 1px solid #444; text-align: center; cursor: pointer; background: #222; border-radius: 4px; }
-        .equip-opt.selected { background: #e51e25; color: white; border-color: #e51e25; }
-
         /* NAV */
-        .nav-btns { margin-top: auto; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
-        .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em; transition: 0.2s; }
-        .btn-next { background: #e51e25; color: white; } .btn-next:hover { background: #ff3b3b; }
-        .btn-prev { background: #444; color: white; } .btn-prev:hover { background: #555; }
+        .nav-btns { margin-top: 30px; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
+        .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .btn-next { background: #e51e25; color: white; }
+        .btn-prev { background: #444; color: white; }
         
-        .summary-box { background: #252525; padding: 10px; border-radius: 4px; font-size: 0.9em; color: #ccc; margin-top: 5px; }
+        .pill { background: #2a7a3a; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 5px; display: inline-block; }
     </style>
 </head>
 <body>
 
 <div class="builder-container">
-    <h1 id="headerTitle">Basic Info</h1>
+    <h1 id="headerTitle">Character Builder</h1>
     
     <div id="step1" class="step active">
         <label>Character Name</label>
-        <input type="text" id="charName" placeholder="e.g. Valeros">
-        
+        <input type="text" id="charName" placeholder="Name">
+
         <label>Race</label>
         <select id="charRace" onchange="updateRaceInfo()"></select>
-        <div id="raceSummary" class="summary-box"></div>
+        <div id="raceSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
 
-        <label>Class</label>
-        <select id="charClass" onchange="updateClassInfo()"></select>
-        <div id="classSummary" class="summary-box"></div>
+        <label>Background (Required)</label>
+        <select id="charBackground" onchange="updateBackgroundInfo()">
+            <option value="">Select Background...</option>
+            </select>
+        <div id="bgSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
+
+        <label>Classes & Levels</label>
+        <div id="classContainer"></div>
+        <button class="btn-small" onclick="addClassRow()" style="margin-top:5px;">+ Add Multiclass</button>
+        <div id="classSummary" style="color:#aaa; font-size:0.9em; margin-top:10px;"></div>
     </div>
 
     <div id="step2" class="step">
         <div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9em;">
-            Assign Standard Array: 15, 14, 13, 12, 10, 8
+            Standard Array: 15, 14, 13, 12, 10, 8
         </div>
         <div class="stat-grid">
-            <div class="stat-box"><label>STR</label><select id="base_STR" onchange="updateStatOptions()"></select><span id="bon_STR" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>DEX</label><select id="base_DEX" onchange="updateStatOptions()"></select><span id="bon_DEX" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>CON</label><select id="base_CON" onchange="updateStatOptions()"></select><span id="bon_CON" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>INT</label><select id="base_INT" onchange="updateStatOptions()"></select><span id="bon_INT" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>WIS</label><select id="base_WIS" onchange="updateStatOptions()"></select><span id="bon_WIS" class="bonus-badge"></span></div>
-            <div class="stat-box"><label>CHA</label><select id="base_CHA" onchange="updateStatOptions()"></select><span id="bon_CHA" class="bonus-badge"></span></div>
-        </div>
-        <div class="summary-box" style="margin-top:20px; text-align:center;">
-            <strong>Starting HP:</strong> <span id="calcHP" style="color:#4f4; font-weight:bold;"></span>
+            </div>
+        <div style="margin-top:20px; text-align:center; background:#222; padding:10px;">
+            <strong>Total Level:</strong> <span id="totalLevelDisplay">1</span> | 
+            <strong>Max HP:</strong> <span id="calcHP" style="color:#4f4;">0</span>
         </div>
     </div>
 
     <div id="step3" class="step">
-        <label>Racial Skills (Auto-Added)</label>
-        <div id="racialSkillsArea"></div>
+        <label>Auto-Granted Skills (Race & Background)</label>
+        <div id="fixedSkillsArea" style="margin-bottom:15px; padding:10px; background:#222; border-radius:4px;"></div>
         
-        <label>Class Skills (Choose <span id="skillCount">2</span>)</label>
-        <div id="skillSelectArea"></div>
+        <label>Class Skills</label>
+        <div id="classSkillArea"></div>
     </div>
 
     <div id="step4" class="step">
-        <div id="equipSectionWrapper">
-            <label>Starting Equipment</label>
-            <div class="equip-toggle">
-                <div class="equip-opt selected" id="optLoadout" onclick="setEquipMode('loadout')">Class Loadout</div>
-                <div class="equip-opt" id="optGold" onclick="setEquipMode('gold')">Starting Gold</div>
-            </div>
-
-            <div id="loadoutSection">
-                <div class="summary-box" id="classGearList"></div>
-                <label>Add Tool / Kit</label>
-                <select id="toolSelect"></select>
-            </div>
-
-            <div id="goldSection" style="display:none;">
-                <label>Starting Gold Pieces (GP)</label>
-                <input type="number" id="startGold" value="100">
-                <div style="font-size:0.8em; color:#888; margin-top:5px;">Your inventory will start empty.</div>
-            </div>
+        <label>Starting Equipment</label>
+        <div style="font-size:0.85em; color:#aaa; margin-bottom:10px;">
+            Items from your Class and Background have been pre-selected. Use the search to add more.
         </div>
-        <div id="editModeNotice" style="display:none; color:#d4af37; text-align:center; margin-top:10px;">
-            (Inventory is preserved when editing. To reset gear, delete character and recreate.)
+
+        <div style="position:relative;">
+            <input type="text" id="itemSearch" placeholder="Search Items (Swords, Armor, Potions...)" onkeyup="filterItems()">
+            <div id="searchResults" class="search-results"></div>
         </div>
+
+        <div id="inventoryList" class="inv-list"></div>
+        
+        <label>Gold Pieces (GP)</label>
+        <input type="number" id="charGold" value="15">
 
         <label>Roleplay Details</label>
         <select id="charAlign">
@@ -131,18 +126,6 @@
             <option value="Neutral Evil">Neutral Evil</option>
             <option value="Chaotic Evil">Chaotic Evil</option>
         </select>
-
-        <div class="rp-grid" style="margin-top:10px;">
-            <input type="text" id="rpAge" placeholder="Age">
-            <input type="text" id="rpHeight" placeholder="Height">
-            <input type="text" id="rpWeight" placeholder="Weight">
-        </div>
-        <div class="rp-grid" style="margin-top:10px;">
-            <input type="text" id="rpEyes" placeholder="Eyes">
-            <input type="text" id="rpHair" placeholder="Hair">
-            <input type="text" id="rpSkin" placeholder="Skin">
-        </div>
-        
         <textarea id="charBack" rows="3" placeholder="Backstory / Notes" style="margin-top:10px;"></textarea>
     </div>
 
@@ -152,192 +135,303 @@
     </div>
 </div>
 
-<script>
-    // --- SETUP ---
+<script type="module">
+    // IMPORT DATA FROM YOUR GAME_RULES.JS
+    import { RACES, CLASSES, SKILLS_LIST, ALL_ACTIONS, ALL_ITEMS, ALL_WEAPONS, ALL_ARMOR } from './game_rules.js';
+
+    // --- LOCAL DATA DEFINITIONS ---
+    const BACKGROUNDS = {
+        "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol", "Prayer Book", "Stick of Incense", "Vestments", "Rations"] },
+        "Criminal": { skills: ["Deception", "Stealth"], items: ["Crowbar", "Dark Clothes", "Rations"] },
+        "Folk Hero": { skills: ["Animal Handling", "Survival"], items: ["Shovel", "Pot", "Civilian Clothes", "Rations"] },
+        "Noble": { skills: ["History", "Persuasion"], items: ["Fine Clothes", "Signet Ring", "Scroll of Pedigree"] },
+        "Sage": { skills: ["Arcana", "History"], items: ["Ink Pen", "Small Knife", "Letter from Colleague", "Common Clothes"] },
+        "Soldier": { skills: ["Athletics", "Intimidation"], items: ["Rank Insignia", "Trophy", "Bone Dice", "Common Clothes", "Rations"] }
+    };
+
+    const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
+    const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+    let selectedInventory = []; // Stores actual objects
+    
+    // --- INITIALIZATION ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     const EDIT_ID = params.get('id');
-    if(!ROOM_ID) window.location.href = "index.html";
+    if(!ROOM_ID) alert("No Room ID provided!");
 
     let currentStep = 1;
-    const totalSteps = 4;
-    const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
-    const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
-    const TOOLS_LIST = ["None", "Thieves' Tools", "Smith's Tools", "Brewer's Supplies", "Mason's Tools", "Herbalism Kit", "Navigator's Tools", "Disguise Kit", "Poisoner's Kit", "Musical Instrument"];
-    let equipMode = 'loadout';
+    let totalLevels = 1;
 
-    // --- POPULATION ---
+    // Populate Selects
     const raceSel = document.getElementById('charRace');
     Object.keys(RACES).sort().forEach(r => raceSel.add(new Option(r,r)));
-    const classSel = document.getElementById('charClass');
-    Object.keys(CLASSES).sort().forEach(c => classSel.add(new Option(c,c)));
-    
-    // Tools
-    const toolSel = document.getElementById('toolSelect');
-    TOOLS_LIST.forEach(t => toolSel.add(new Option(t,t)));
+    updateRaceInfo();
 
-    // Stats Init
-    STAT_KEYS.forEach(s => {
-        let sel = document.getElementById(`base_${s}`);
-        sel.add(new Option("--", ""));
-        STANDARD_ARRAY.forEach(n => sel.add(new Option(n, n)));
+    const bgSel = document.getElementById('charBackground');
+    Object.keys(BACKGROUNDS).sort().forEach(b => bgSel.add(new Option(b,b)));
+
+    // Initialize Class Rows
+    addClassRow(); 
+
+    // Initialize Stat Grid
+    const statGrid = document.querySelector('.stat-grid');
+    STAT_KEYS.forEach(stat => {
+        statGrid.innerHTML += `
+            <div class="stat-box">
+                <label>${stat}</label>
+                <select id="base_${stat}" onchange="recalcStats()">
+                    <option value="">-</option>
+                    ${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}
+                </select>
+                <span id="bon_${stat}" class="bonus-badge"></span>
+            </div>
+        `;
     });
 
-    // --- LOAD DATA IF EDITING ---
-    if(EDIT_ID) {
-        document.getElementById('headerTitle').innerText = "Edit Character";
-        document.getElementById('equipSectionWrapper').style.display = 'none';
-        document.getElementById('editModeNotice').style.display = 'block';
-
-        db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`).once('value', snap => {
-            if(snap.exists()) {
-                const c = snap.val();
-                document.getElementById('charName').value = c.name;
-                raceSel.value = c.race;
-                classSel.value = c.class;
-                
-                if(c.base_stats) {
-                    STAT_KEYS.forEach(s => document.getElementById(`base_${s}`).value = c.base_stats[s]);
-                }
-                
-                // RP
-                document.getElementById('charAlign').value = c.alignment || "True Neutral";
-                document.getElementById('charBack').value = c.backstory || "";
-                ['Age','Height','Weight','Eyes','Hair','Skin'].forEach(f => {
-                    document.getElementById(`rp${f}`).value = c[f.toLowerCase()] || "";
-                });
-
-                updateRaceInfo(); updateClassInfo(); updateStatOptions();
-            }
-        });
-    } else {
-        updateRaceInfo(); updateClassInfo(); updateStatOptions();
-    }
-
-    // --- LOGIC ---
-    function updateStatOptions() {
-        STAT_KEYS.forEach(s => {
-            let sel = document.getElementById(`base_${s}`);
-            let val = parseInt(sel.value);
-            sel.innerHTML = "";
-            sel.add(new Option("--", ""));
-            if(!isNaN(val)) sel.add(new Option(val, val, true, true));
-            STANDARD_ARRAY.forEach(num => {
-                let taken = false;
-                STAT_KEYS.forEach(k => { if(k!==s && parseInt(document.getElementById(`base_${k}`).value)===num) taken=true; });
-                if(!taken && num !== val) sel.add(new Option(num, num));
-            });
-        });
-        calcStats();
-    }
-
-    function updateRaceInfo() {
+    // Make global for inline HTML events
+    window.updateRaceInfo = () => {
         const r = RACES[raceSel.value];
-        let txt = "Bonuses: "; for(let s in r.bonuses) txt+=`${s} +${r.bonuses[s]} `;
+        let txt = "Bonuses: "; 
+        for(let s in r.bonuses) txt+=`${s} +${r.bonuses[s]} `;
         document.getElementById('raceSummary').innerText = txt;
-        calcStats();
-    }
+        recalcStats();
+    };
 
-    function updateClassInfo() {
-        const c = CLASSES[classSel.value];
-        document.getElementById('classSummary').innerText = `HP: d${c.hit_die} | Saves: ${c.saves.join(', ')}`;
-        
-        let gear = [...(c.items || c.starting_gear || []), "Rations", "Waterskin"];
-        document.getElementById('classGearList').innerText = gear.join(", ");
-        
-        calcStats();
-        // THIS IS THE FIX:
-        renderSkillSelectors(); 
-    }
+    window.updateBackgroundInfo = () => {
+        const bg = BACKGROUNDS[bgSel.value];
+        if(!bg) return;
+        document.getElementById('bgSummary').innerText = `Skills: ${bg.skills.join(', ')}`;
+        renderSkills();
+    };
 
-    function calcStats() {
-        const rData = RACES[raceSel.value];
-        const cData = CLASSES[classSel.value];
-        let conTotal = 10;
-        STAT_KEYS.forEach(s => {
-            let base = parseInt(document.getElementById(`base_${s}`).value)||0;
-            let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
-            document.getElementById(`bon_${s}`).innerText = bonus>0?`+${bonus}`:"";
-            if(s==='CON') conTotal = base+bonus;
+    window.addClassRow = () => {
+        const container = document.getElementById('classContainer');
+        const div = document.createElement('div');
+        div.className = 'class-row';
+        div.innerHTML = `
+            <select class="cls-select" onchange="recalcClassDetails()">
+                ${Object.keys(CLASSES).sort().map(c => `<option value="${c}">${c}</option>`).join('')}
+            </select>
+            <input type="number" class="cls-level" value="1" min="1" max="20" onchange="recalcClassDetails()">
+            <button class="btn-small btn-remove" onclick="this.parentElement.remove(); recalcClassDetails()">X</button>
+        `;
+        container.appendChild(div);
+        recalcClassDetails();
+    };
+
+    window.recalcClassDetails = () => {
+        let totalLvl = 0;
+        let hpBase = 0;
+        let summary = [];
+        
+        const rows = document.querySelectorAll('.class-row');
+        rows.forEach((row, index) => {
+            const clsName = row.querySelector('.cls-select').value;
+            const lvl = parseInt(row.querySelector('.cls-level').value) || 1;
+            const cData = CLASSES[clsName];
+            
+            totalLvl += lvl;
+            
+            // HP Calc: Max at lvl 1, Average for subsequent
+            if(index === 0) {
+                hpBase += cData.hit_die;
+                hpBase += (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
+            } else {
+                hpBase += (Math.ceil(cData.hit_die / 2) + 1) * lvl;
+            }
+            summary.push(`${clsName} ${lvl}`);
         });
-        let conMod = Math.floor((conTotal-10)/2);
-        document.getElementById('calcHP').innerText = cData.hit_die + conMod + (rData.hp_bonus||0);
-    }
 
-    function renderSkillSelectors() {
-        const cData = CLASSES[classSel.value];
+        totalLevels = totalLvl;
+        document.getElementById('totalLevelDisplay').innerText = totalLevels;
+        document.getElementById('classSummary').innerText = summary.join(" / ");
+        
+        // Store base HP for final calc (needs CON mod)
+        document.getElementById('calcHP').dataset.base = hpBase;
+        recalcStats();
+        renderSkills();
+        autoPopulateGear();
+    };
+
+    window.recalcStats = () => {
         const rData = RACES[raceSel.value];
-        
-        // Race Skills
-        const rArea = document.getElementById('racialSkillsArea');
-        rArea.innerHTML = "";
-        (rData.skills || []).forEach(s => rArea.innerHTML += `<div class="auto-skill">${s}</div>`);
-        if(!(rData.skills || []).length) rArea.innerHTML = "<span style='color:#555;'>None</span>";
+        let conMod = 0;
 
-        // Class Skills
-        const cArea = document.getElementById('skillSelectArea');
-        cArea.innerHTML = "";
-        let count = cData.num_skills || 2;
-        if(classSel.value==="Rogue") count=4; if(classSel.value==="Bard"||classSel.value==="Ranger") count=3;
-        document.getElementById('skillCount').innerText = count;
+        STAT_KEYS.forEach(s => {
+            let base = parseInt(document.getElementById(`base_${s}`).value) || 0;
+            let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
+            document.getElementById(`bon_${s}`).innerText = bonus > 0 ? `+${bonus}` : "";
+            
+            if(s === 'CON') conMod = Math.floor(((base + bonus) - 10) / 2);
+        });
+
+        // Final HP Calc
+        let hpBase = parseInt(document.getElementById('calcHP').dataset.base) || 0;
+        // Rules: HP = Base + (Con Mod * Total Level)
+        let totalHP = hpBase + (conMod * totalLevels) + (rData.hp_bonus || 0) * totalLevels; // Hill dwarf gets bonus per level
+        document.getElementById('calcHP').innerText = totalHP > 0 ? totalHP : 0;
+    };
+
+    window.renderSkills = () => {
+        const race = RACES[raceSel.value];
+        const bg = BACKGROUNDS[bgSel.value] || {skills:[]};
         
-        // Using Game Rules for options
-        let opts = cData.skill_options || Object.keys(SKILLS_LIST);
-        for(let i=0; i<count; i++) {
-            let sel = document.createElement('select');
-            sel.className = "skill-select";
-            sel.style.marginBottom = "10px";
-            opts.forEach(sk => {
-                if(!(rData.skills||[]).includes(sk)) sel.add(new Option(sk, sk));
-            });
-            cArea.appendChild(sel);
+        // 1. Fixed Skills
+        const fixed = new Set([...(race.skills || []), ...bg.skills]);
+        const fixedArea = document.getElementById('fixedSkillsArea');
+        fixedArea.innerHTML = "";
+        fixed.forEach(s => fixedArea.innerHTML += `<span class="pill">${s}</span>`);
+
+        // 2. Class Skills (Only from primary class)
+        const rows = document.querySelectorAll('.class-row');
+        const classArea = document.getElementById('classSkillArea');
+        classArea.innerHTML = "";
+
+        if(rows.length > 0) {
+            const clsName = rows[0].querySelector('.cls-select').value;
+            const cData = CLASSES[clsName];
+            const num = (cData.num_skills || 2);
+            
+            classArea.innerHTML = `<p style="font-size:0.9em; color:#aaa;">Select ${num} skills from ${clsName}:</p>`;
+            
+            const options = cData.skill_options || Object.keys(SKILLS_LIST);
+            
+            for(let i=0; i<num; i++) {
+                let sel = document.createElement('select');
+                sel.className = 'skill-choice';
+                sel.style.marginBottom = "5px";
+                sel.add(new Option("- Select Skill -", ""));
+                options.forEach(opt => {
+                    if(!fixed.has(opt)) sel.add(new Option(opt, opt));
+                });
+                classArea.appendChild(sel);
+            }
         }
-    }
+    };
 
-    function setEquipMode(mode) {
-        equipMode = mode;
-        if(mode === 'loadout') {
-            document.getElementById('optLoadout').className = 'equip-opt selected';
-            document.getElementById('optGold').className = 'equip-opt';
-            document.getElementById('loadoutSection').style.display = 'block';
-            document.getElementById('goldSection').style.display = 'none';
+    // --- INVENTORY LOGIC ---
+    
+    // Auto-add items from Class and Background
+    window.autoPopulateGear = () => {
+        selectedInventory = []; // Reset
+        
+        // 1. Background Gear
+        const bg = BACKGROUNDS[bgSel.value];
+        if(bg && bg.items) {
+            bg.items.forEach(itemName => addItemByName(itemName, "Background"));
+        }
+
+        // 2. Class Gear (Primary Class Only usually, but let's be generous)
+        const rows = document.querySelectorAll('.class-row');
+        if(rows.length > 0) {
+            const clsName = rows[0].querySelector('.cls-select').value;
+            const cData = CLASSES[clsName];
+            const gear = cData.items || cData.starting_gear || [];
+            gear.forEach(itemName => addItemByName(itemName, "Class"));
+        }
+        
+        renderInventory();
+    };
+
+    function addItemByName(name, source) {
+        // Find object in ALL_ACTIONS
+        const found = ALL_ACTIONS.find(i => i.name.toLowerCase() === name.toLowerCase());
+        if(found) {
+            // Clone it so we don't mutate reference
+            selectedInventory.push({ ...found, source: source, equip: false });
         } else {
-            document.getElementById('optLoadout').className = 'equip-opt';
-            document.getElementById('optGold').className = 'equip-opt selected';
-            document.getElementById('loadoutSection').style.display = 'none';
-            document.getElementById('goldSection').style.display = 'block';
+            // Fallback for string items not in DB
+            selectedInventory.push({ name: name, category: "Item", source: source, equip: false });
         }
     }
 
-    // --- NAV ---
-    function changeStep(dir) {
-        if(currentStep === 1 && dir === 1 && !document.getElementById('charName').value) return alert("Name required.");
-        if(currentStep === 2 && dir === 1) {
-            let allFilled = true;
-            STAT_KEYS.forEach(s => { if(document.getElementById(`base_${s}`).value === "") allFilled=false; });
-            if(!allFilled) return alert("Select all ability scores.");
-        }
+    window.filterItems = () => {
+        const q = document.getElementById('itemSearch').value.toLowerCase();
+        const resDiv = document.getElementById('searchResults');
+        resDiv.innerHTML = "";
+        
+        if(q.length < 2) { resDiv.style.display = 'none'; return; }
+        
+        const hits = ALL_ACTIONS.filter(i => 
+            (i.category === "Adventuring Gear" || i.category === "Armor" || i.category === "Simple Melee" || i.category === "Martial Melee" || i.category === "Simple Ranged" || i.category === "Martial Ranged" || i.category === "Potion" || i.category === "Tool") 
+            && i.name.toLowerCase().includes(q)
+        ).slice(0, 10);
 
+        if(hits.length > 0) {
+            resDiv.style.display = 'block';
+            hits.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<span>${item.name}</span> <span style="font-size:0.8em; color:#888;">${item.category}</span>`;
+                div.onclick = () => {
+                    selectedInventory.push({ ...item, source: "Custom", equip: false });
+                    renderInventory();
+                    document.getElementById('itemSearch').value = "";
+                    resDiv.style.display = 'none';
+                };
+                resDiv.appendChild(div);
+            });
+        }
+    };
+
+    window.renderInventory = () => {
+        const list = document.getElementById('inventoryList');
+        list.innerHTML = "";
+        selectedInventory.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'inv-item';
+            div.innerHTML = `
+                <div>
+                    <strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong>
+                    <div style="font-size:0.8em; color:#aaa;">${item.category || "Item"}</div>
+                </div>
+                <button class="btn-small btn-remove" onclick="removeItem(${idx})">x</button>
+            `;
+            list.appendChild(div);
+        });
+    };
+
+    window.removeItem = (idx) => {
+        selectedInventory.splice(idx, 1);
+        renderInventory();
+    };
+
+    // --- NAVIGATION & SAVING ---
+    window.changeStep = (dir) => {
+        // Validation Steps
+        if(currentStep === 1 && dir === 1) {
+            if(!document.getElementById('charName').value) return alert("Name required.");
+            if(!bgSel.value) return alert("Background required.");
+        }
+        
         document.getElementById(`step${currentStep}`).classList.remove('active');
         currentStep += dir;
         
-        if(currentStep > totalSteps) { save(); return; }
+        if(currentStep > 4) { saveCharacter(); return; }
         
         document.getElementById(`step${currentStep}`).classList.add('active');
-        document.getElementById('btnPrev').style.visibility = (currentStep === 1) ? 'hidden' : 'visible';
-        document.getElementById('btnNext').innerText = (currentStep === totalSteps) ? (EDIT_ID?'Update':'Create') : 'Next';
+        document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+        document.getElementById('btnNext').innerText = currentStep === 4 ? "Finish" : "Next";
         
-        const titles = ["", "Identity", "Ability Scores", "Skills", "Finalize"];
+        const titles = ["", "Identity", "Stats", "Skills", "Gear"];
         document.getElementById('headerTitle').innerText = titles[currentStep];
-    }
+    };
 
-    function save() {
-        document.getElementById('btnNext').innerText = "Saving...";
-        document.getElementById('btnNext').disabled = true;
+    window.saveCharacter = () => {
+        const btn = document.getElementById('btnNext');
+        btn.innerText = "Saving..."; btn.disabled = true;
 
+        // 1. Gather Classes
+        let classesArr = [];
+        document.querySelectorAll('.class-row').forEach(row => {
+            classesArr.push({
+                name: row.querySelector('.cls-select').value,
+                level: parseInt(row.querySelector('.cls-level').value)
+            });
+        });
+
+        // 2. Gather Stats
         const rData = RACES[raceSel.value];
-        const cData = CLASSES[classSel.value];
-        
         let baseStats = {};
         let finalStats = {};
         STAT_KEYS.forEach(s => {
@@ -347,70 +441,51 @@
             finalStats[s] = b + bon;
         });
 
-        let conMod = Math.floor((finalStats['CON']-10)/2);
-        let hp = cData.hit_die + conMod + (rData.hp_bonus||0);
+        // 3. Gather Skills
+        let skills = new Set();
+        document.querySelectorAll('#fixedSkillsArea .pill').forEach(el => skills.add(el.innerText));
+        document.querySelectorAll('.skill-choice').forEach(sel => { if(sel.value) skills.add(sel.value); });
 
-        let skills = [...(rData.skills||[])];
-        document.querySelectorAll('.skill-select').forEach(s => {
-            if(!skills.includes(s.value)) skills.push(s.value);
+        // 4. Gather Inventory & Spells
+        // Auto-add Class spells to inventory/spellbook logic
+        let finalItems = [...selectedInventory];
+        let knownSpells = [...(rData.auto_spells || [])];
+        classesArr.forEach(c => {
+            if(CLASSES[c.name].auto_spells) knownSpells.push(...CLASSES[c.name].auto_spells);
         });
+        
+        // Add known spells as "items" in inventory for simplicity or separate property
+        // For this builder, we just ensure they are saved.
 
-        let data = {
+        const charData = {
             name: document.getElementById('charName').value,
             race: raceSel.value,
-            class: classSel.value,
+            background: bgSel.value,
+            classes: classesArr, // Now an array!
             base_stats: baseStats,
             stats: finalStats,
-            hp_max: hp,
+            hp_max: parseInt(document.getElementById('calcHP').innerText),
+            hp_curr: parseInt(document.getElementById('calcHP').innerText),
             alignment: document.getElementById('charAlign').value,
             backstory: document.getElementById('charBack').value,
-            age: document.getElementById('rpAge').value,
-            height: document.getElementById('rpHeight').value,
-            weight: document.getElementById('rpWeight').value,
-            eyes: document.getElementById('rpEyes').value,
-            hair: document.getElementById('rpHair').value,
-            skin: document.getElementById('rpSkin').value,
-            skills: skills
+            inventory: finalItems,
+            coins: { gp: parseInt(document.getElementById('charGold').value) || 0 },
+            skills: Array.from(skills),
+            spells_known: knownSpells
         };
-
-        if(!EDIT_ID) {
-            // Inventory Logic (Only on create)
-            data.hp_curr = hp;
-            data.slots_used = {};
-            data.charges = {};
-            
-            let items = [];
-            let coins = {cp:0, sp:0, ep:0, gp:0, pp:0};
-            
-            if(equipMode === 'loadout') {
-                items = [...(cData.items || cData.starting_gear || []), "Rations", "Waterskin"];
-                let tool = document.getElementById('toolSelect').value;
-                if(tool !== "None") items.push(tool);
-                coins.gp = 10; 
-            } else {
-                coins.gp = parseInt(document.getElementById('startGold').value) || 0;
-            }
-            
-            // Auto Spells
-            let spells = [...(rData.auto_spells||[]), ...(cData.auto_spells||[])];
-            spells.forEach(s => items.push(s));
-            
-            data.inventory = items.map(i => ({name: i, equip: false}));
-            data.coins = coins;
-        }
 
         const ref = EDIT_ID ? db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`) : db.ref(`campaigns/${ROOM_ID}/characters`).push();
         
-        (EDIT_ID ? ref.update(data) : ref.set(data)).then(() => {
+        (EDIT_ID ? ref.update(charData) : ref.set(charData)).then(() => {
             if(!EDIT_ID) {
-                // Add to tracker
+                // Add to Combat Tracker
                 db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-                    name: data.name, hp: hp, max_hp: hp, init: 0, type: 'player'
+                    name: charData.name, hp: charData.hp_max, max_hp: charData.hp_max, init: 0, type: 'player'
                 });
             }
             window.location.href = `sheet.html?room=${ROOM_ID}&id=${ref.key || EDIT_ID}`;
         });
-    }
+    };
 </script>
 </body>
 </html>
