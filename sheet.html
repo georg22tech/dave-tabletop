@@ -1,557 +1,419 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Character Builder</title>
+    <title>Character Sheet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="config.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .builder-container { max-width: 800px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
-        h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; display:flex; flex-direction:column; height:100vh; box-sizing:border-box;}
+        header { background: #252525; padding: 15px 20px; border-bottom: 2px solid #444; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 10; flex-shrink: 0; }
+        .char-identity h1 { margin:0; color: #fff; font-size: 1.6em; line-height: 1em; }
+        .char-identity .sub { color: #8af; font-size: 0.8em; font-weight: bold; }
+        .combat-stats { display: flex; align-items: center; gap: 15px; }
+        .stat-badge { text-align:center; border:2px solid #555; border-radius: 8px; width:70px; background:#333; height: 60px; display:flex; flex-direction:column; justify-content:center; position:relative;}
+        .stat-val { font-size:1.4em; font-weight:bold; color:#fff; line-height: 1em; }
+        .stat-label { font-size:0.65em; color:#aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .hp-input { background:transparent; border:none; color:#4f4; font-size:1em; font-weight:bold; width:100%; text-align:center; cursor:pointer; }
         
-        /* STEPS */
-        .step { display: none; }
-        .step.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* INPUTS */
-        label { display: block; color: #8af; font-weight: bold; margin-bottom: 5px; margin-top: 15px; font-size: 0.9em; }
-        input, select, textarea { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
-        input:focus, select:focus { border-color: #e51e25; outline: none; }
+        .level-badge { position:absolute; top:-10px; right:-10px; background:#e51e25; color:white; border-radius:50%; width:25px; height:25px; font-size:0.8em; font-weight:bold; line-height:25px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.5); }
         
-        /* CLASS ROWS */
-        .class-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #252525; padding: 10px; border-radius: 4px;}
-        .class-row select { flex: 2; }
-        .class-row input { flex: 1; text-align: center; }
-        .btn-small { padding: 5px 10px; background: #444; color: #fff; border: none; cursor: pointer; border-radius: 4px;}
-        .btn-remove { background: #a33; }
+        .tab-nav { display: flex; background: #1f1f1f; border-bottom: 1px solid #444; flex-shrink: 0; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #888; padding: 15px; font-size: 1em; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .tab-btn.active { color: #e51e25; border-bottom-color: #e51e25; background: #252525; }
+        .content-area { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
+        .tab-pane { display: none; max-width: 800px; margin: 0 auto; }
+        .tab-pane.active { display: block; }
 
-        /* STATS */
-        .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-        .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
-        .stat-box select { padding: 5px; text-align: center; }
-        .bonus-badge { color: #4f4; font-size: 0.8em; display: block; margin-top: 5px; }
-
-        /* RP GRID */
-        .rp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-
-        /* INVENTORY */
-        .search-results { max-height: 200px; overflow-y: auto; background: #252525; border: 1px solid #444; display:none; position: absolute; width: 90%; z-index: 100; }
-        .search-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; }
-        .search-item:hover { background: #333; }
-        .inv-item { background: #222; padding: 8px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #555; }
-
-        /* NAV */
-        .nav-btns { margin-top: 30px; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
-        .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em; }
-        .btn-next { background: #e51e25; color: white; }
-        .btn-prev { background: #444; color: white; }
+        .card { background: #252525; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #444; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .card-feature { border-left: 4px solid #fa8; }
+        .card-spell { border-left: 4px solid #8af; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+        .card-desc { font-size: 0.9em; color: #ccc; font-style: italic; margin-bottom: 10px; padding-left: 8px; border-left: 2px solid #444; }
         
-        .pill { background: #2a7a3a; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 5px; display: inline-block; }
+        .roll-btn { width:100%; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; font-size: 0.9em; transition: 0.2s; background: #444; color:#d4af37; }
+        .btn-hit { background: #2b5fa3; color:white; }
+        .btn-dmg { background: #a33; color:white; }
+        
+        .inv-item { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #333; }
+        .btn-equip { background: #444; border: 1px solid #666; color: #aaa; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; margin-right: 5px; }
+        .btn-equip.equipped { background: #2b5fa3; color: white; border-color: #2b5fa3; }
+        .btn-del { color: #f44; cursor: pointer; font-weight: bold; padding: 0 5px; }
+        
+        .saves-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 20px; }
+        .save-box { background: #252525; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #444; cursor: pointer; }
+        .save-val { font-size: 1.2em; font-weight: bold; color: #fff; }
+        .save-label { font-size: 0.7em; color: #aaa; text-transform:uppercase; }
+        
+        .skill-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .skill-btn { background: #252525; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; font-size: 0.9em;}
+        .skill-val { font-weight: bold; color: #8af; }
+        
+        .coin-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #444; }
+        .coin-box { text-align: center; background: #222; padding: 5px; border-radius: 4px; }
+        .coin-box input { width: 100%; background: transparent; border: none; color: white; text-align: center; font-weight: bold; }
+        
+        #chat { height: 150px; background: #111; border-top: 2px solid #e51e25; padding: 10px; overflow-y: scroll; font-family: monospace; font-size: 0.9em; flex-shrink: 0; }
+        .msg { margin-bottom: 4px; padding: 4px 8px; border-left: 3px solid #555; }
     </style>
 </head>
 <body>
 
-<div class="builder-container">
-    <h1 id="headerTitle">Character Builder</h1>
-    
-    <div id="step1" class="step active">
-        <label>Character Name</label>
-        <input type="text" id="charName" placeholder="Name">
-
-        <label>Race</label>
-        <select id="charRace" onchange="updateRaceInfo()"></select>
-        <div id="raceSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
-
-        <label>Background</label>
-        <select id="charBackground" onchange="updateBackgroundInfo()">
-            <option value="">Select Background...</option>
-        </select>
-        <div id="bgSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
-
-        <label>Classes & Levels</label>
-        <div id="classContainer"></div>
-        <button class="btn-small" onclick="addClassRow()">+ Add Multiclass</button>
-        <div id="classSummary" style="color:#aaa; font-size:0.9em; margin-top:10px;"></div>
+<header>
+    <div class="char-identity">
+        <h1 id="charName">...</h1>
+        <div id="classDisplay" class="sub">Loading...</div>
     </div>
-
-    <div id="step2" class="step">
-        <div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9em;">
-            Standard Array: 15, 14, 13, 12, 10, 8
+    <div class="combat-stats">
+        <div class="stat-badge">
+            <div class="stat-val"><input type="number" id="levelInput" class="hp-input" style="color:white;" disabled></div>
+            <div class="stat-label">Level</div>
         </div>
-        <div class="stat-grid"></div>
-        <div style="margin-top:20px; text-align:center; background:#222; padding:10px;">
-            <strong>Total Level:</strong> <span id="totalLevelDisplay">1</span> | 
-            <strong>Max HP:</strong> <span id="calcHP" style="color:#4f4;">0</span>
+        <div class="stat-badge hp-box">
+            <div class="stat-val"><input type="number" id="hpInput" class="hp-input" onchange="updateHP()"></div>
+            <div class="stat-label">/ <span id="hpMax"></span> HP</div>
         </div>
+        <div class="stat-badge">
+            <div class="stat-val" id="dispAC">10</div>
+            <div class="stat-label">AC</div>
+        </div>
+        <div class="stat-badge" onclick="rollInit()" style="cursor:pointer; border-color:#e51e25;">
+            <div class="stat-val" id="dispInit" style="color:#e51e25;">+0</div>
+            <div class="stat-label">Init</div>
+        </div>
+        <a href="#" id="editLink" style="background:#444; color:white; padding:5px 10px; border-radius:4px; text-decoration:none;">Edit</a>
+        <a href="index.html" style="background:#444; color:white; padding:5px 10px; border-radius:4px; text-decoration:none;">Exit</a>
     </div>
+</header>
 
-    <div id="step3" class="step">
-        <label>Auto-Granted Skills</label>
-        <div id="fixedSkillsArea" style="margin-bottom:15px; padding:10px; background:#222; border-radius:4px;"></div>
-        
-        <label>Class Skills</label>
-        <div id="classSkillArea"></div>
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="openTab('tab-actions')">Actions</button>
+    <button class="tab-btn" onclick="openTab('tab-spells')">Spells</button>
+    <button class="tab-btn" onclick="openTab('tab-skills')">Skills</button>
+    <button class="tab-btn" onclick="openTab('tab-inv')">Inventory</button>
+</div>
+
+<div class="content-area">
+    <div id="tab-actions" class="tab-pane active"><div id="attackList"></div></div>
+    <div id="tab-spells" class="tab-pane"><div id="spellList"></div></div>
+    <div id="tab-skills" class="tab-pane">
+        <div class="saves-grid" id="savesList"></div>
+        <div class="skill-list" id="skillList"></div>
     </div>
-
-    <div id="step4" class="step">
-        <label>Equipment</label>
-        <div style="position:relative;">
-            <input type="text" id="itemSearch" placeholder="Search Game Items..." onkeyup="filterItems()">
-            <div id="searchResults" class="search-results"></div>
+    <div id="tab-inv" class="tab-pane">
+        <div class="coin-grid">
+            <div class="coin-box"><small style="color:#d4af37">CP</small><input type="number" id="coin_cp" onchange="updateCoins()"></div>
+            <div class="coin-box"><small style="color:#d4af37">SP</small><input type="number" id="coin_sp" onchange="updateCoins()"></div>
+            <div class="coin-box"><small style="color:#d4af37">EP</small><input type="number" id="coin_ep" onchange="updateCoins()"></div>
+            <div class="coin-box"><small style="color:#d4af37">GP</small><input type="number" id="coin_gp" onchange="updateCoins()"></div>
+            <div class="coin-box"><small style="color:#d4af37">PP</small><input type="number" id="coin_pp" onchange="updateCoins()"></div>
         </div>
-        <div id="inventoryList" style="margin-top:10px;"></div>
-        
-        <label>Gold (GP)</label>
-        <input type="number" id="charGold" value="15">
-
-        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-
-        <label>Appearance</label>
-        <div class="rp-grid">
-            <input type="text" id="rpAge" placeholder="Age">
-            <input type="text" id="rpHeight" placeholder="Height">
-            <input type="text" id="rpWeight" placeholder="Weight">
-        </div>
-        <div class="rp-grid" style="margin-top:10px;">
-            <input type="text" id="rpEyes" placeholder="Eyes">
-            <input type="text" id="rpHair" placeholder="Hair">
-            <input type="text" id="rpSkin" placeholder="Skin">
-        </div>
-
-        <label>Alignment</label>
-        <select id="charAlign">
-            <option value="True Neutral">Select...</option>
-            <option value="Lawful Good">Lawful Good</option>
-            <option value="Neutral Good">Neutral Good</option>
-            <option value="Chaotic Good">Chaotic Good</option>
-            <option value="Lawful Neutral">Lawful Neutral</option>
-            <option value="True Neutral">True Neutral</option>
-            <option value="Chaotic Neutral">Chaotic Neutral</option>
-            <option value="Lawful Evil">Lawful Evil</option>
-            <option value="Neutral Evil">Neutral Evil</option>
-            <option value="Chaotic Evil">Chaotic Evil</option>
-        </select>
-
-        <label>Backstory</label>
-        <textarea id="charBack" rows="3"></textarea>
-    </div>
-
-    <div class="nav-btns">
-        <button class="btn btn-prev" onclick="changeStep(-1)" id="btnPrev" style="visibility:hidden;">Back</button>
-        <button class="btn btn-next" onclick="changeStep(1)" id="btnNext">Next</button>
+        <input type="text" id="apiSearch" placeholder="Search item..." style="width:100%; padding:8px; background:#222; border:1px solid #444; color:white; margin-bottom:10px;" onkeyup="searchEquipment()">
+        <div id="apiResults" style="background:#111; border:1px solid #444; display:none; max-height:150px; overflow-y:auto; margin-bottom:10px;"></div>
+        <div id="invList"></div>
     </div>
 </div>
 
+<div id="chat"></div>
+
 <script type="module">
-    import { RACES, CLASSES, SKILLS_LIST, ALL_ACTIONS } from './game_rules.js';
+    import { CLASSES, ALL_ACTIONS, SKILLS_LIST } from './game_rules.js';
 
-    // --- BACKGROUNDS DATA ---
-    const BACKGROUNDS = {
-        "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol", "Prayer Book", "Vestments", "Rations"] },
-        "Criminal": { skills: ["Deception", "Stealth"], items: ["Crowbar", "Dark Clothes", "Rations"] },
-        "Folk Hero": { skills: ["Animal Handling", "Survival"], items: ["Shovel", "Pot", "Civilian Clothes", "Rations"] },
-        "Noble": { skills: ["History", "Persuasion"], items: ["Fine Clothes", "Signet Ring"] },
-        "Sage": { skills: ["Arcana", "History"], items: ["Ink Pen", "Small Knife", "Common Clothes"] },
-        "Soldier": { skills: ["Athletics", "Intimidation"], items: ["Rank Insignia", "Bone Dice", "Common Clothes"] },
-        "Charlatan": { skills: ["Deception", "Sleight of Hand"], items: ["Disguise Kit", "Fine Clothes"] },
-        "Entertainer": { skills: ["Acrobatics", "Performance"], items: ["Musical Instrument", "Costume"] },
-        "Outlander": { skills: ["Athletics", "Survival"], items: ["Staff", "Hunting Trap", "Traveler's Clothes"] },
-        "Urchin": { skills: ["Sleight of Hand", "Stealth"], items: ["Small Knife", "Map of the City", "Common Clothes"] }
-    };
+    // GLOBAL VARS
+    let CHAR={}, STATS={}, PROF=2, INIT_BONUS=0;
+    
+    // Safety check for DB
+    if (!window.db && typeof firebase !== 'undefined') window.db = firebase.database();
 
-    // --- GLOBAL VARIABLES ---
-    const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
-    const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
-    let selectedInventory = []; 
-    let currentStep = 1;
-    let totalLevels = 1;
-
-    // --- INIT ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
-    const EDIT_ID = params.get('id');
+    const CHAR_ID = params.get('id');
     
-    // DB Check
-    if (!window.db) {
-        if(typeof firebase !== 'undefined') window.db = firebase.database();
-    }
+    if(!ROOM_ID || !CHAR_ID) window.location.href="index.html";
+    document.getElementById('editLink').href=`builder.html?room=${ROOM_ID}&id=${CHAR_ID}`;
 
-    // Populate UI
-    const raceSel = document.getElementById('charRace');
-    raceSel.innerHTML = "";
-    Object.keys(RACES).sort().forEach(r => raceSel.add(new Option(r,r)));
-
-    const bgSel = document.getElementById('charBackground');
-    bgSel.innerHTML = '<option value="">Select Background...</option>';
-    Object.keys(BACKGROUNDS).sort().forEach(b => bgSel.add(new Option(b,b)));
-
-    const statGrid = document.querySelector('.stat-grid');
-    statGrid.innerHTML = ""; 
-    STAT_KEYS.forEach(stat => {
-        statGrid.innerHTML += `
-            <div class="stat-box">
-                <label>${stat}</label>
-                <select id="base_${stat}" onchange="recalcStats()">
-                    <option value="">-</option>
-                    ${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}
-                </select>
-                <span id="bon_${stat}" class="bonus-badge"></span>
-            </div>
-        `;
+    // FIREBASE LISTENER
+    window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).on('value', snap => {
+        if(!snap.exists()) return;
+        CHAR = snap.val();
+        
+        // Data Normalization
+        if(!CHAR.inventory) CHAR.inventory=[];
+        if(!CHAR.coins) CHAR.coins={cp:0,sp:0,ep:0,gp:0,pp:0};
+        
+        // Handle Multiclassing Data Structure
+        if(!CHAR.classes && CHAR.class) {
+            // Convert old single class to new array format
+            CHAR.classes = [{name: CHAR.class, level: CHAR.level || 1}];
+        }
+        
+        // Calc Total Level
+        CHAR.totalLevel = CHAR.classes.reduce((acc, c) => acc + c.level, 0);
+        
+        renderSheet();
     });
 
-    // --- LOADING LOGIC (Fixing the Edit Issues) ---
-    function loadCharacter() {
-        if (!EDIT_ID) {
-            window.addClassRow(); // Default for new char
-            window.updateRaceInfo();
-            return; 
-        }
+    window.db.ref(`campaigns/${ROOM_ID}/chat`).limitToLast(10).on('child_added', snap => {
+        const d = snap.val();
+        const c = document.getElementById('chat');
+        c.innerHTML = `<div class="msg"><strong>${d.user}</strong>: ${d.lbl} -> <b>${d.val}</b> ${d.nat20 ? '<span style="color:gold">NAT 20!</span>' : ''}</div>` + c.innerHTML;
+    });
 
-        window.db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`).once('value', snap => {
-            const c = snap.val();
-            if(!c) return;
+    // RENDER LOGIC
+    function renderSheet() {
+        document.getElementById('charName').innerText = CHAR.name;
+        
+        // Display all classes
+        let classTxt = CHAR.race + " " + CHAR.classes.map(c => `${c.name} ${c.level}`).join(" / ");
+        document.getElementById('classDisplay').innerText = classTxt;
+        
+        document.getElementById('hpInput').value = CHAR.hp_curr;
+        document.getElementById('hpMax').innerText = CHAR.hp_max;
+        document.getElementById('levelInput').value = CHAR.totalLevel;
 
-            // 1. Basic Info
-            document.getElementById('charName').value = c.name;
-            raceSel.value = c.race;
-            bgSel.value = c.background || "";
-            document.getElementById('charGold').value = (c.coins && c.coins.gp) ? c.coins.gp : 0;
+        // Calc Prof
+        PROF = 2 + Math.floor((CHAR.totalLevel - 1)/4);
 
-            // 2. Load Stats
-            if(c.base_stats) {
-                STAT_KEYS.forEach(s => document.getElementById(`base_${s}`).value = c.base_stats[s]);
+        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => STATS[s] = Math.floor((CHAR.stats[s]-10)/2));
+        ['cp','sp','ep','gp','pp'].forEach(c => document.getElementById(`coin_${c}`).value = CHAR.coins[c]||0);
+
+        // Calc AC
+        let ac = 10 + STATS['DEX'];
+        let shield=0, armor=false;
+        
+        CHAR.inventory.forEach(i => {
+            if(i.equip) {
+                // Find details in ALL_ACTIONS
+                let r = ALL_ACTIONS.find(x => x.name === i.name);
+                if(r && r.category && r.category.includes('Armor')) {
+                    if(r.armor_type==='Shield') shield += (r.ac || 2);
+                    else {
+                        armor=true;
+                        if(r.armor_type==='Light') ac = r.ac + STATS['DEX'];
+                        else if(r.armor_type==='Medium') ac = r.ac + Math.min(STATS['DEX'],2);
+                        else if(r.armor_type==='Heavy') ac = r.ac;
+                    }
+                }
             }
-
-            // 3. Load RP
-            document.getElementById('charAlign').value = c.alignment || "True Neutral";
-            document.getElementById('charBack').value = c.backstory || "";
-            ['Age','Height','Weight','Eyes','Hair','Skin'].forEach(f => {
-                let lower = f.toLowerCase();
-                if(c[lower]) document.getElementById(`rp${f}`).value = c[lower];
-            });
-
-            // 4. Load Classes (Fixing the reset issue)
-            const container = document.getElementById('classContainer');
-            container.innerHTML = ""; // Clear default
-            if (c.classes && Array.isArray(c.classes)) {
-                c.classes.forEach(cls => {
-                    window.addClassRow(cls.name, cls.level);
-                });
-            } else if (c.class) {
-                // Legacy support for single class
-                window.addClassRow(c.class, c.level || 1);
-            }
-
-            // 5. Load Inventory
-            if(c.inventory) {
-                selectedInventory = c.inventory;
-                window.renderInventory();
-            } else {
-                // If new/empty, populate defaults based on selections
-                window.autoPopulateGear();
-            }
-
-            // 6. Refresh UI Calculations
-            window.updateRaceInfo();
-            window.updateBackgroundInfo(false); // false = don't overwrite inventory on load
-            window.recalcClassDetails();
         });
+
+        // Unarmored Defense Check
+        let mainClass = CHAR.classes[0].name; // Primary class
+        if(!armor && shield===0) {
+            if(mainClass==="Monk") ac = 10 + STATS['DEX'] + STATS['WIS'];
+            if(mainClass==="Barbarian") ac = 10 + STATS['DEX'] + STATS['CON'];
+        }
+        
+        document.getElementById('dispAC').innerText = ac + shield;
+        INIT_BONUS = STATS['DEX'];
+        document.getElementById('dispInit').innerText = (INIT_BONUS>=0?"+":"") + INIT_BONUS;
+
+        renderActions();
+        renderSkills();
+        renderInv();
     }
 
-    // --- GLOBAL FUNCTIONS ---
+    function renderActions() {
+        const atkDiv = document.getElementById('attackList');
+        const spellDiv = document.getElementById('spellList');
+        atkDiv.innerHTML=""; spellDiv.innerHTML="";
 
-    window.updateRaceInfo = function() {
-        const r = RACES[raceSel.value];
-        if (!r) return;
-        let txt = "Bonuses: "; 
-        for(let s in r.bonuses) txt+=`${s} +${r.bonuses[s]} `;
-        document.getElementById('raceSummary').innerText = txt;
-        window.recalcStats();
-    };
+        // 1. Unarmed
+        renderCard({name:"Unarmed Strike", dice:"1", type:"Bludgeoning", stat:"STR", category:"Simple Melee"}, atkDiv);
 
-    window.updateBackgroundInfo = function(overwriteInventory = true) {
-        const bg = BACKGROUNDS[bgSel.value];
-        if(!bg) {
-            document.getElementById('bgSummary').innerText = "";
-            return;
-        }
-        document.getElementById('bgSummary').innerText = `Skills: ${bg.skills.join(', ')}`;
-        window.renderSkills();
-        if(overwriteInventory && !EDIT_ID) window.autoPopulateGear(); 
-    };
-
-    // Modified to accept parameters for loading
-    window.addClassRow = function(name = null, level = 1) {
-        const container = document.getElementById('classContainer');
-        const div = document.createElement('div');
-        div.className = 'class-row';
-        
-        let options = Object.keys(CLASSES).sort().map(c => 
-            `<option value="${c}" ${name === c ? 'selected' : ''}>${c}</option>`
-        ).join('');
-
-        div.innerHTML = `
-            <select class="cls-select" onchange="recalcClassDetails()">
-                ${options}
-            </select>
-            <input type="number" class="cls-level" value="${level}" min="1" max="20" onchange="recalcClassDetails()">
-            <button class="btn-small btn-remove" onclick="this.parentElement.remove(); recalcClassDetails()">X</button>
-        `;
-        container.appendChild(div);
-        window.recalcClassDetails();
-    };
-
-    window.recalcClassDetails = function() {
-        let totalLvl = 0;
-        let hpBase = 0;
-        let summary = [];
-        
-        const rows = document.querySelectorAll('.class-row');
-        if (rows.length === 0) return;
-
-        rows.forEach((row, index) => {
-            const clsName = row.querySelector('.cls-select').value;
-            const lvl = parseInt(row.querySelector('.cls-level').value) || 1;
-            const cData = CLASSES[clsName];
-            
-            totalLvl += lvl;
-            
-            if(index === 0) {
-                hpBase += cData.hit_die;
-                hpBase += (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
-            } else {
-                hpBase += (Math.ceil(cData.hit_die / 2) + 1) * lvl;
-            }
-            summary.push(`${clsName} ${lvl}`);
-        });
-
-        totalLevels = totalLvl;
-        document.getElementById('totalLevelDisplay').innerText = totalLevels;
-        document.getElementById('classSummary').innerText = summary.join(" / ");
-        
-        document.getElementById('calcHP').dataset.base = hpBase;
-        window.recalcStats();
-        window.renderSkills();
-    };
-
-    window.recalcStats = function() {
-        const rData = RACES[raceSel.value];
-        if (!rData) return;
-        
-        let conMod = 0;
-
-        STAT_KEYS.forEach(s => {
-            let base = parseInt(document.getElementById(`base_${s}`).value) || 0;
-            let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
-            document.getElementById(`bon_${s}`).innerText = bonus > 0 ? `+${bonus}` : "";
-            
-            if(s === 'CON') conMod = Math.floor(((base + bonus) - 10) / 2);
-        });
-
-        let hpBase = parseInt(document.getElementById('calcHP').dataset.base) || 0;
-        let totalHP = hpBase + (conMod * totalLevels) + (rData.hp_bonus || 0) * totalLevels; 
-        document.getElementById('calcHP').innerText = totalHP > 0 ? totalHP : 0;
-    };
-
-    window.renderSkills = function() {
-        const race = RACES[raceSel.value];
-        const bg = BACKGROUNDS[bgSel.value] || {skills:[]};
-        
-        const fixed = new Set([...(race.skills || []), ...bg.skills]);
-        const fixedArea = document.getElementById('fixedSkillsArea');
-        fixedArea.innerHTML = "";
-        fixed.forEach(s => fixedArea.innerHTML += `<span class="pill">${s}</span>`);
-
-        // Class Skills logic
-        const classArea = document.getElementById('classSkillArea');
-        classArea.innerHTML = "";
-        const rows = document.querySelectorAll('.class-row');
-        if(rows.length > 0) {
-            const clsName = rows[0].querySelector('.cls-select').value;
-            const cData = CLASSES[clsName];
-            const num = cData.num_skills || 2;
-            const options = cData.skill_options || Object.keys(SKILLS_LIST);
-            
-            for(let i=0; i<num; i++) {
-                let sel = document.createElement('select');
-                sel.className = 'skill-choice';
-                sel.style.marginBottom = "5px";
-                sel.add(new Option("- Select Skill -", ""));
-                options.forEach(opt => {
-                    if(!fixed.has(opt)) sel.add(new Option(opt, opt));
+        // 2. Class Features
+        CHAR.classes.forEach(clsObj => {
+            const cData = CLASSES[clsObj.name];
+            if(cData && cData.features) {
+                cData.features.forEach(f => {
+                    // f is [Level, "Feature Name"]
+                    if(clsObj.level >= f[0]) {
+                        // Find feature details in ALL_ACTIONS
+                        let feat = ALL_ACTIONS.find(a => a.name === f[1]);
+                        if(feat) renderCard(feat, atkDiv);
+                        else renderCard({name: f[1], category:"Feature", desc: "Passive or unconfigured."}, atkDiv);
+                    }
                 });
-                classArea.appendChild(sel);
             }
-        }
-    };
+        });
 
-    window.autoPopulateGear = function() {
-        selectedInventory = []; 
-        const bg = BACKGROUNDS[bgSel.value];
-        if(bg && bg.items) bg.items.forEach(itemName => addItemByName(itemName, "Background"));
-
-        const rows = document.querySelectorAll('.class-row');
-        if(rows.length > 0) {
-            const clsName = rows[0].querySelector('.cls-select').value;
-            const cData = CLASSES[clsName];
-            const gear = cData.items || [];
-            gear.forEach(itemName => addItemByName(itemName, "Class"));
-        }
-        window.renderInventory();
-    };
-
-    function addItemByName(name, source) {
-        // Strict search against ALL_ACTIONS to ensure we get stats
-        const found = ALL_ACTIONS.find(i => i.name.toLowerCase() === name.toLowerCase());
-        if(found) {
-            selectedInventory.push({ ...found, source: source, equip: false });
-        } else {
-            selectedInventory.push({ name: name, category: "Item", source: source, equip: false });
+        // 3. Inventory & Spells
+        CHAR.inventory.forEach(i => {
+            let d = ALL_ACTIONS.find(a => a.name === i.name);
+            // Fallback if item exists in char but not rules
+            if(!d) d = {name: i.name, category: "Item", desc: "Custom Item"};
+            
+            // Filter Equipping
+            if(d.category !== 'Spell' && d.category !== 'Feature' && d.category !== 'Potion' && !i.equip) return;
+            
+            if(d.category === 'Spell') renderCard(d, spellDiv);
+            else renderCard(d, atkDiv);
+        });
+        
+        // 4. Known Spells (from array)
+        if(CHAR.spells_known) {
+            CHAR.spells_known.forEach(sName => {
+                let s = ALL_ACTIONS.find(a => a.name === sName);
+                if(s) renderCard(s, spellDiv);
+            });
         }
     }
 
-    window.filterItems = function() {
-        const q = document.getElementById('itemSearch').value.toLowerCase();
-        const resDiv = document.getElementById('searchResults');
-        resDiv.innerHTML = "";
+    function renderCard(data, container) {
+        let useStat = data.stat || "STR";
+        // Finesse Logic (Uses Dex if higher)
+        if(data.desc && data.desc.includes("Finesse") && STATS['DEX'] > STATS['STR']) useStat = "DEX";
+        if(data.category==="Spell") useStat = "INT"; // Default Int, normally depends on class
         
-        if(q.length < 2) { resDiv.style.display = 'none'; return; }
-        
-        const hits = ALL_ACTIONS.filter(i => i.name.toLowerCase().includes(q)).slice(0, 10);
+        let mod = STATS[useStat] || 0;
+        let hit = mod + PROF;
+        let bonus = data.attack_bonus || 0; // Magic items +1
+        hit += bonus;
 
-        if(hits.length > 0) {
-            resDiv.style.display = 'block';
-            hits.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'search-item';
-                div.innerHTML = `<span>${item.name}</span> <span style="font-size:0.8em; color:#888;">${item.category}</span>`;
-                div.onclick = () => {
-                    selectedInventory.push({ ...item, source: "Custom", equip: false });
-                    window.renderInventory();
-                    document.getElementById('itemSearch').value = "";
-                    resDiv.style.display = 'none';
-                };
-                resDiv.appendChild(div);
-            });
+        // Damage Calc
+        let dmg = data.dice;
+        if(data.dice && data.dice.includes('d')) {
+            dmg = `${data.dice} ${mod >= 0 ? '+' : ''}${mod + (data.damage_bonus||0)}`;
         }
-    };
 
-    window.renderInventory = function() {
-        const list = document.getElementById('inventoryList');
-        list.innerHTML = "";
-        selectedInventory.forEach((item, idx) => {
-            const div = document.createElement('div');
-            div.className = 'inv-item';
-            div.innerHTML = `
+        let btns = `<button class="roll-btn" onclick="pushChat('${data.name}', 'Used Feature', '-')">Use</button>`;
+        
+        if(data.dice && data.dice !== "-") {
+             btns = `<div style="display:flex; gap:5px;">
+                <button class="roll-btn btn-hit" onclick="rollAtk('${data.name}', ${hit})">Hit +${hit}</button>
+                <button class="roll-btn btn-dmg" onclick="rollDmg('${data.name}', '${data.dice}', ${mod + (data.damage_bonus||0)})">Dmg ${dmg}</button>
+            </div>`;
+        }
+
+        container.innerHTML += `
+            <div class="card ${data.category==='Feature'?'card-feature':''} ${data.category==='Spell'?'card-spell':''}">
+                <div class="card-header"><span>${data.name}</span><small>${data.category}</small></div>
+                <div class="card-desc">${data.desc||''}</div>
+                ${btns}
+            </div>`;
+    }
+
+    function renderSkills() {
+        // Saves
+        const sv = document.getElementById('savesList'); sv.innerHTML="";
+        // Primary class saves
+        let saves = CLASSES[CHAR.classes[0].name].saves || [];
+        
+        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
+            let bonus = STATS[s] + (saves.includes(s) ? PROF : 0);
+            sv.innerHTML += `<div class="save-box" onclick="rollCheck('${s} Save', ${bonus})">
+                <div class="save-val">${bonus>=0?'+':''}${bonus}</div>
+                <div class="save-label">${s}</div>
+            </div>`;
+        });
+
+        // Skills
+        const sl = document.getElementById('skillList'); sl.innerHTML="";
+        Object.keys(SKILLS_LIST).forEach(sk => {
+            let stat = SKILLS_LIST[sk];
+            let isProf = (CHAR.skills || []).includes(sk);
+            let bonus = STATS[stat] + (isProf ? PROF : 0);
+            
+            sl.innerHTML += `
+            <div class="skill-btn" onclick="rollCheck('${sk}', ${bonus})">
+                <span>${sk} <small style="color:#666">(${stat})</small> ${isProf?'<span style="color:#d4af37">★</span>':''}</span>
+                <span class="skill-val">${bonus>=0?'+':''}${bonus}</span>
+            </div>`;
+        });
+    }
+
+    function renderInv() {
+        const div = document.getElementById('invList'); div.innerHTML="";
+        CHAR.inventory.forEach((i, idx) => {
+            let eq = i.equip?"equipped":"";
+            div.innerHTML += `<div class="inv-item">
+                <span>${i.name}</span>
                 <div>
-                    <strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong>
-                    <div style="font-size:0.8em; color:#aaa;">${item.category || "Item"}</div>
+                    <button class="btn-equip ${eq}" onclick="togEq(${idx})">${i.equip?'Un':''}Equip</button>
+                    <button class="btn-del" onclick="delItem(${idx})">x</button>
                 </div>
-                <button class="btn-small btn-remove" onclick="removeItem(${idx})">x</button>
-            `;
-            list.appendChild(div);
+            </div>`;
+        });
+    }
+
+    // --- ATTACH TO WINDOW (Global Scope for HTML Buttons) ---
+    window.updateHP = function() { window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(parseInt(document.getElementById('hpInput').value)); };
+    
+    window.updateCoins = function() {
+        let c = {};
+        ['cp','sp','ep','gp','pp'].forEach(k => c[k] = parseInt(document.getElementById(`coin_${k}`).value));
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/coins`).set(c);
+    };
+
+    window.rollInit = function() { 
+        const r=Math.floor(Math.random()*20)+1; 
+        window.pushChat('Initiative', r+INIT_BONUS, `${r}+${INIT_BONUS}`); 
+        // Optional: Update Encounter Tracker in DB here
+        window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', s=>{
+            s.forEach(c=>{ c.ref.update({init: r+INIT_BONUS}); });
         });
     };
 
-    window.removeItem = function(idx) {
-        selectedInventory.splice(idx, 1);
-        window.renderInventory();
-    };
-
-    window.changeStep = function(dir) {
-        // Validation check for Step 1
-        if(currentStep === 1 && dir === 1) {
-            if(!document.getElementById('charName').value) return alert("Name required.");
-            if(!bgSel.value) return alert("Background required.");
+    window.rollAtk = function(n,m) { const r=Math.floor(Math.random()*20)+1; window.pushChat(`Atk ${n}`, r+m, `${r}+${m}`, r===20); };
+    window.rollDmg = function(n,d,m) { 
+        // Simple parser for 1d8
+        let pts = d.split('d');
+        let count = parseInt(pts[0])||1;
+        let sides = parseInt(pts[1])||6;
+        let total = 0;
+        let formula = [];
+        for(let i=0; i<count; i++) {
+            let roll = Math.floor(Math.random()*sides)+1;
+            total += roll;
+            formula.push(roll);
         }
-        
-        document.getElementById(`step${currentStep}`).classList.remove('active');
-        currentStep += dir;
-        
-        if(currentStep > 4) { window.saveCharacter(); return; }
-        
-        document.getElementById(`step${currentStep}`).classList.add('active');
-        document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
-        document.getElementById('btnNext').innerText = currentStep === 4 ? "Finish" : "Next";
-        
-        const titles = ["", "Identity", "Stats", "Skills", "Gear & Details"];
-        document.getElementById('headerTitle').innerText = titles[currentStep];
+        total += m;
+        window.pushChat(`Dmg ${n}`, total, `[${formula.join(',')}] + ${m}`); 
     };
+    
+    window.rollCheck = function(l,m) { const r=Math.floor(Math.random()*20)+1; window.pushChat(l, r+m, `${r}+${m}`); };
 
-    window.saveCharacter = function() {
-        const btn = document.getElementById('btnNext');
-        btn.innerText = "Saving..."; btn.disabled = true;
+    window.pushChat = function(l,v,f,c=false) { window.db.ref(`campaigns/${ROOM_ID}/chat`).push({user:CHAR.name, lbl:l, val:v, formula:f, nat20:c}); };
 
-        let classesArr = [];
-        document.querySelectorAll('.class-row').forEach(row => {
-            classesArr.push({
-                name: row.querySelector('.cls-select').value,
-                level: parseInt(row.querySelector('.cls-level').value)
+    window.togEq = function(i) { let n=[...CHAR.inventory]; n[i].equip=!n[i].equip; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); };
+    window.delItem = function(i) { let n=[...CHAR.inventory]; n.splice(i,1); window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); };
+
+    let st;
+    window.searchEquipment = function() {
+        clearTimeout(st);
+        const q = document.getElementById('apiSearch').value.toLowerCase();
+        const res = document.getElementById('apiResults');
+        if(q.length<2) { res.style.display='none'; return; }
+        
+        st = setTimeout(() => {
+            res.innerHTML=""; res.style.display='block';
+            let hits = ALL_ACTIONS.filter(a=>a.name.toLowerCase().includes(q));
+            hits.slice(0,5).forEach(h => {
+                const div = document.createElement('div');
+                div.style.cssText = "padding:5px; cursor:pointer; border-bottom:1px solid #333;";
+                div.innerText = h.name;
+                div.onclick = () => window.addItem(h.name);
+                res.appendChild(div);
             });
-        });
-
-        const rData = RACES[raceSel.value];
-        let baseStats = {};
-        let finalStats = {};
-        STAT_KEYS.forEach(s => {
-            let b = parseInt(document.getElementById(`base_${s}`).value) || 10;
-            let bon = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
-            baseStats[s] = b;
-            finalStats[s] = b + bon;
-        });
-
-        let skills = new Set();
-        document.querySelectorAll('#fixedSkillsArea .pill').forEach(el => skills.add(el.innerText));
-        document.querySelectorAll('.skill-choice').forEach(sel => { if(sel.value) skills.add(sel.value); });
-
-        let knownSpells = [...(rData.auto_spells || [])];
-        classesArr.forEach(c => {
-            if(CLASSES[c.name].auto_spells) knownSpells.push(...CLASSES[c.name].auto_spells);
-        });
-
-        const charData = {
-            name: document.getElementById('charName').value,
-            race: raceSel.value,
-            background: bgSel.value,
-            classes: classesArr,
-            base_stats: baseStats,
-            stats: finalStats,
-            hp_max: parseInt(document.getElementById('calcHP').innerText),
-            hp_curr: parseInt(document.getElementById('calcHP').innerText), // Reset HP on edit? Optional.
-            alignment: document.getElementById('charAlign').value,
-            backstory: document.getElementById('charBack').value,
-            inventory: selectedInventory,
-            coins: { gp: parseInt(document.getElementById('charGold').value) || 0 },
-            skills: Array.from(skills),
-            spells_known: knownSpells,
-            // RP
-            age: document.getElementById('rpAge').value,
-            height: document.getElementById('rpHeight').value,
-            weight: document.getElementById('rpWeight').value,
-            eyes: document.getElementById('rpEyes').value,
-            hair: document.getElementById('rpHair').value,
-            skin: document.getElementById('rpSkin').value
-        };
-
-        const ref = EDIT_ID ? window.db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`) : window.db.ref(`campaigns/${ROOM_ID}/characters`).push();
-        
-        (EDIT_ID ? ref.update(charData) : ref.set(charData)).then(() => {
-            if(!EDIT_ID) {
-                window.db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-                    name: charData.name, hp: charData.hp_max, max_hp: charData.hp_max, init: 0, type: 'player'
-                });
-            }
-            window.location.href = `sheet.html?room=${ROOM_ID}&id=${ref.key || EDIT_ID}`;
-        });
+        }, 300);
     };
 
-    // --- TRIGGER LOAD ---
-    setTimeout(loadCharacter, 100);
+    window.addItem = function(n) {
+        let inv = CHAR.inventory||[]; 
+        inv.push({name:n, equip:false});
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(inv);
+        document.getElementById('apiResults').style.display='none';
+        document.getElementById('apiSearch').value='';
+    };
+
+    window.openTab = function(id) { 
+        document.querySelectorAll('.tab-pane').forEach(e=>e.style.display='none'); 
+        document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
+        document.getElementById(id).style.display='block'; 
+        event.currentTarget.classList.add('active');
+    };
 
 </script>
 </body>
