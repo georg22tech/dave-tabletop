@@ -6,7 +6,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="config.js"></script>
-    <script src="game_rules.js"></script>
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; display:flex; flex-direction:column; height:100vh; box-sizing:border-box;}
         header { background: #252525; padding: 15px 20px; border-bottom: 2px solid #444; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 10; flex-shrink: 0; }
@@ -31,8 +31,6 @@
         .card-feature { border-left: 4px solid #fa8; }
         .card-spell { border-left: 4px solid #8af; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
-        .card-title { font-size: 1.1em; font-weight: bold; color: #fff; }
-        .card-meta { font-size: 0.8em; color: #aaa; }
         .card-desc { font-size: 0.9em; color: #ccc; font-style: italic; margin-bottom: 10px; padding-left: 8px; border-left: 2px solid #444; }
         
         .roll-btn { width:100%; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; font-size: 0.9em; transition: 0.2s; background: #444; color:#d4af37; }
@@ -47,9 +45,11 @@
         .saves-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 20px; }
         .save-box { background: #252525; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #444; cursor: pointer; }
         .save-val { font-size: 1.2em; font-weight: bold; color: #fff; }
+        .save-label { font-size: 0.7em; color: #aaa; text-transform:uppercase; }
         
         .skill-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .skill-btn { background: #252525; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; }
+        .skill-btn { background: #252525; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; font-size: 0.9em;}
+        .skill-val { font-weight: bold; color: #8af; }
         
         .coin-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #444; }
         .coin-box { text-align: center; background: #222; padding: 5px; border-radius: 4px; }
@@ -68,7 +68,7 @@
     </div>
     <div class="combat-stats">
         <div class="stat-badge">
-            <div class="stat-val"><input type="number" id="levelInput" class="hp-input" style="color:white;" onchange="updateLevel()"></div>
+            <div class="stat-val"><input type="number" id="levelInput" class="hp-input" style="color:white;" disabled></div>
             <div class="stat-label">Level</div>
         </div>
         <div class="stat-badge hp-box">
@@ -83,7 +83,7 @@
             <div class="stat-val" id="dispInit" style="color:#e51e25;">+0</div>
             <div class="stat-label">Init</div>
         </div>
-        <a href="builder.html" id="editLink" style="background:#444; color:white; padding:5px 10px; border-radius:4px; text-decoration:none;">Edit</a>
+        <a href="#" id="editLink" style="background:#444; color:white; padding:5px 10px; border-radius:4px; text-decoration:none;">Edit</a>
         <a href="index.html" style="background:#444; color:white; padding:5px 10px; border-radius:4px; text-decoration:none;">Exit</a>
     </div>
 </header>
@@ -118,68 +118,97 @@
 
 <div id="chat"></div>
 
-<script>
-    if(typeof ALL_ACTIONS==='undefined') window.ALL_ACTIONS=[];
+<script type="module">
+    import { CLASSES, ALL_ACTIONS, SKILLS_LIST } from './game_rules.js';
+
+    // GLOBAL VARS
+    let CHAR={}, STATS={}, PROF=2, INIT_BONUS=0;
+    
+    // Safety check for DB
+    if (!window.db && typeof firebase !== 'undefined') window.db = firebase.database();
+
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     const CHAR_ID = params.get('id');
+    
     if(!ROOM_ID || !CHAR_ID) window.location.href="index.html";
     document.getElementById('editLink').href=`builder.html?room=${ROOM_ID}&id=${CHAR_ID}`;
 
-    let CHAR={}, STATS={}, PROF=2, INIT_BONUS=0;
-
-    db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).on('value', snap => {
+    // FIREBASE LISTENER
+    window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).on('value', snap => {
         if(!snap.exists()) return;
         CHAR = snap.val();
+        
+        // Data Normalization
         if(!CHAR.inventory) CHAR.inventory=[];
         if(!CHAR.coins) CHAR.coins={cp:0,sp:0,ep:0,gp:0,pp:0};
-        if(!CHAR.level) CHAR.level = 1; // Default to level 1 if new
+        
+        // Handle Multiclassing Data Structure
+        if(!CHAR.classes && CHAR.class) {
+            // Convert old single class to new array format
+            CHAR.classes = [{name: CHAR.class, level: CHAR.level || 1}];
+        }
+        
+        // Calc Total Level
+        CHAR.totalLevel = CHAR.classes.reduce((acc, c) => acc + c.level, 0);
+        
         renderSheet();
     });
 
-    db.ref(`campaigns/${ROOM_ID}/chat`).limitToLast(10).on('child_added', snap => {
+    window.db.ref(`campaigns/${ROOM_ID}/chat`).limitToLast(10).on('child_added', snap => {
         const d = snap.val();
         const c = document.getElementById('chat');
-        c.innerHTML = `<div class="msg"><strong>${d.user}</strong>: ${d.lbl} -> <b>${d.val}</b></div>` + c.innerHTML;
+        c.innerHTML = `<div class="msg"><strong>${d.user}</strong>: ${d.lbl} -> <b>${d.val}</b> ${d.nat20 ? '<span style="color:gold">NAT 20!</span>' : ''}</div>` + c.innerHTML;
     });
 
+    // RENDER LOGIC
     function renderSheet() {
         document.getElementById('charName').innerText = CHAR.name;
-        document.getElementById('classDisplay').innerText = `${CHAR.race} ${CHAR.class}`;
+        
+        // Display all classes
+        let classTxt = CHAR.race + " " + CHAR.classes.map(c => `${c.name} ${c.level}`).join(" / ");
+        document.getElementById('classDisplay').innerText = classTxt;
+        
         document.getElementById('hpInput').value = CHAR.hp_curr;
         document.getElementById('hpMax').innerText = CHAR.hp_max;
-        document.getElementById('levelInput').value = CHAR.level;
+        document.getElementById('levelInput').value = CHAR.totalLevel;
 
         // Calc Prof
-        PROF = 2 + Math.floor((CHAR.level - 1)/4);
+        PROF = 2 + Math.floor((CHAR.totalLevel - 1)/4);
 
         ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => STATS[s] = Math.floor((CHAR.stats[s]-10)/2));
         ['cp','sp','ep','gp','pp'].forEach(c => document.getElementById(`coin_${c}`).value = CHAR.coins[c]||0);
 
-        // AC
+        // Calc AC
         let ac = 10 + STATS['DEX'];
         let shield=0, armor=false;
+        
         CHAR.inventory.forEach(i => {
             if(i.equip) {
-                let r = ALL_ACTIONS.find(x=>x.name===i.name);
-                if(r && r.category==='Armor') {
-                    if(r.armor_type==='Shield') shield+=r.ac;
+                // Find details in ALL_ACTIONS
+                let r = ALL_ACTIONS.find(x => x.name === i.name);
+                if(r && r.category && r.category.includes('Armor')) {
+                    if(r.armor_type==='Shield') shield += (r.ac || 2);
                     else {
                         armor=true;
-                        if(r.armor_type==='Light') ac=r.ac+STATS['DEX'];
-                        else if(r.armor_type==='Medium') ac=r.ac+Math.min(STATS['DEX'],2);
-                        else if(r.armor_type==='Heavy') ac=r.ac;
+                        if(r.armor_type==='Light') ac = r.ac + STATS['DEX'];
+                        else if(r.armor_type==='Medium') ac = r.ac + Math.min(STATS['DEX'],2);
+                        else if(r.armor_type==='Heavy') ac = r.ac;
                     }
                 }
             }
         });
+
+        // Unarmored Defense Check
+        let mainClass = CHAR.classes[0].name; // Primary class
         if(!armor && shield===0) {
-            if(CHAR.class==="Monk") ac=10+STATS['DEX']+STATS['WIS'];
-            if(CHAR.class==="Barbarian") ac=10+STATS['DEX']+STATS['CON'];
+            if(mainClass==="Monk") ac = 10 + STATS['DEX'] + STATS['WIS'];
+            if(mainClass==="Barbarian") ac = 10 + STATS['DEX'] + STATS['CON'];
         }
-        document.getElementById('dispAC').innerText = ac+shield;
-        INIT_BONUS=STATS['DEX'];
-        document.getElementById('dispInit').innerText = (INIT_BONUS>=0?"+":"")+INIT_BONUS;
+        
+        document.getElementById('dispAC').innerText = ac + shield;
+        INIT_BONUS = STATS['DEX'];
+        document.getElementById('dispInit').innerText = (INIT_BONUS>=0?"+":"") + INIT_BONUS;
 
         renderActions();
         renderSkills();
@@ -192,74 +221,107 @@
         atkDiv.innerHTML=""; spellDiv.innerHTML="";
 
         // 1. Unarmed
-        renderCard({name:"Unarmed Strike", dice:"1", type:"Bludgeoning", stat:"STR"}, atkDiv);
+        renderCard({name:"Unarmed Strike", dice:"1", type:"Bludgeoning", stat:"STR", category:"Simple Melee"}, atkDiv);
 
-        // 2. Class Features (Based on Level)
-        const cls = CLASSES[CHAR.class];
-        if(cls && cls.features) {
-            cls.features.forEach(f => {
-                if(CHAR.level >= f[0]) {
-                    let feat = SUBCLASS_FEATURES.find(sf => sf.name === f[1]);
-                    if(feat) renderCard(feat, atkDiv);
-                }
-            });
-        }
-
-        // 3. Subclass Features (Requires subclass to be saved in CHAR)
-        // Note: The builder doesn't save subclass name yet, but if you edit DB manually:
-        // CHAR.subclass = "Drunken Master"
-        // It will work.
-        // For now, let's assume we implement subclass selection later or just render all if not defined?
-        // Let's iterate all known subclasses for this class and check features
-        if(cls && cls.subclasses) {
-            Object.values(cls.subclasses).forEach(sub => {
-                // Ideally check: if (CHAR.subclass === subName)
-                sub.features.forEach(f => {
-                    if(CHAR.level >= f[0]) {
-                        let feat = SUBCLASS_FEATURES.find(sf => sf.name === f[1]);
+        // 2. Class Features
+        CHAR.classes.forEach(clsObj => {
+            const cData = CLASSES[clsObj.name];
+            if(cData && cData.features) {
+                cData.features.forEach(f => {
+                    // f is [Level, "Feature Name"]
+                    if(clsObj.level >= f[0]) {
+                        // Find feature details in ALL_ACTIONS
+                        let feat = ALL_ACTIONS.find(a => a.name === f[1]);
                         if(feat) renderCard(feat, atkDiv);
+                        else renderCard({name: f[1], category:"Feature", desc: "Passive or unconfigured."}, atkDiv);
                     }
                 });
-            });
-        }
+            }
+        });
 
-        // 4. Inventory
+        // 3. Inventory & Spells
         CHAR.inventory.forEach(i => {
-            let d = ALL_ACTIONS.find(a=>a.name===i.name);
-            if(!d) return;
-            if(d.category!=='Spell' && d.category!=='Feature' && !i.equip) return;
-            if(d.category==='Spell') renderCard(d, spellDiv);
+            let d = ALL_ACTIONS.find(a => a.name === i.name);
+            // Fallback if item exists in char but not rules
+            if(!d) d = {name: i.name, category: "Item", desc: "Custom Item"};
+            
+            // Filter Equipping
+            if(d.category !== 'Spell' && d.category !== 'Feature' && d.category !== 'Potion' && !i.equip) return;
+            
+            if(d.category === 'Spell') renderCard(d, spellDiv);
             else renderCard(d, atkDiv);
         });
+        
+        // 4. Known Spells (from array)
+        if(CHAR.spells_known) {
+            CHAR.spells_known.forEach(sName => {
+                let s = ALL_ACTIONS.find(a => a.name === sName);
+                if(s) renderCard(s, spellDiv);
+            });
+        }
     }
 
     function renderCard(data, container) {
         let useStat = data.stat || "STR";
-        if(data.category==="Spell") useStat="INT";
-        let mod = STATS[useStat]||0;
-        let hit = mod + PROF;
-        let dmg = (data.dice && data.dice.includes('d')) ? `${data.dice} ${mod>=0?'+':''}${mod}` : data.dice;
-
-        let btns = `<button class="roll-btn" onclick="pushChat('${data.name}', 'Used Feature', '-')">Use Feature</button>`;
+        // Finesse Logic (Uses Dex if higher)
+        if(data.desc && data.desc.includes("Finesse") && STATS['DEX'] > STATS['STR']) useStat = "DEX";
+        if(data.category==="Spell") useStat = "INT"; // Default Int, normally depends on class
         
-        if(data.dice && data.dice!=="-") {
+        let mod = STATS[useStat] || 0;
+        let hit = mod + PROF;
+        let bonus = data.attack_bonus || 0; // Magic items +1
+        hit += bonus;
+
+        // Damage Calc
+        let dmg = data.dice;
+        if(data.dice && data.dice.includes('d')) {
+            dmg = `${data.dice} ${mod >= 0 ? '+' : ''}${mod + (data.damage_bonus||0)}`;
+        }
+
+        let btns = `<button class="roll-btn" onclick="pushChat('${data.name}', 'Used Feature', '-')">Use</button>`;
+        
+        if(data.dice && data.dice !== "-") {
              btns = `<div style="display:flex; gap:5px;">
                 <button class="roll-btn btn-hit" onclick="rollAtk('${data.name}', ${hit})">Hit +${hit}</button>
-                <button class="roll-btn btn-dmg" onclick="rollDmg('${data.name}', '${data.dice}', ${mod})">Dmg ${dmg}</button>
+                <button class="roll-btn btn-dmg" onclick="rollDmg('${data.name}', '${data.dice}', ${mod + (data.damage_bonus||0)})">Dmg ${dmg}</button>
             </div>`;
         }
 
         container.innerHTML += `
-            <div class="card ${data.category==='Feature'?'card-feature':''}">
+            <div class="card ${data.category==='Feature'?'card-feature':''} ${data.category==='Spell'?'card-spell':''}">
                 <div class="card-header"><span>${data.name}</span><small>${data.category}</small></div>
                 <div class="card-desc">${data.desc||''}</div>
                 ${btns}
             </div>`;
     }
 
-    function updateLevel() {
-        let l = parseInt(document.getElementById('levelInput').value);
-        db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/level`).set(l);
+    function renderSkills() {
+        // Saves
+        const sv = document.getElementById('savesList'); sv.innerHTML="";
+        // Primary class saves
+        let saves = CLASSES[CHAR.classes[0].name].saves || [];
+        
+        ['STR','DEX','CON','INT','WIS','CHA'].forEach(s => {
+            let bonus = STATS[s] + (saves.includes(s) ? PROF : 0);
+            sv.innerHTML += `<div class="save-box" onclick="rollCheck('${s} Save', ${bonus})">
+                <div class="save-val">${bonus>=0?'+':''}${bonus}</div>
+                <div class="save-label">${s}</div>
+            </div>`;
+        });
+
+        // Skills
+        const sl = document.getElementById('skillList'); sl.innerHTML="";
+        Object.keys(SKILLS_LIST).forEach(sk => {
+            let stat = SKILLS_LIST[sk];
+            let isProf = (CHAR.skills || []).includes(sk);
+            let bonus = STATS[stat] + (isProf ? PROF : 0);
+            
+            sl.innerHTML += `
+            <div class="skill-btn" onclick="rollCheck('${sk}', ${bonus})">
+                <span>${sk} <small style="color:#666">(${stat})</small> ${isProf?'<span style="color:#d4af37">★</span>':''}</span>
+                <span class="skill-val">${bonus>=0?'+':''}${bonus}</span>
+            </div>`;
+        });
     }
 
     function renderInv() {
@@ -276,39 +338,83 @@
         });
     }
 
-    // --- UTILS ---
-    function togEq(i) { let n=[...CHAR.inventory]; n[i].equip=!n[i].equip; db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); }
-    function delItem(i) { let n=[...CHAR.inventory]; n.splice(i,1); db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); }
-    function updateHP() { db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(parseInt(document.getElementById('hpInput').value)); }
-    function updateCoins() { /* ... same as before ... */ }
-    function rollAtk(n,m) { const r=Math.floor(Math.random()*20)+1; pushChat(`Atk ${n}`, r+m, `${r}+${m}`, r===20); }
-    function rollDmg(n,d,m) { /* ... same as before ... */ pushChat(`Dmg ${n}`, "Roll", d); }
-    function pushChat(l,v,f,c=false) { db.ref(`campaigns/${ROOM_ID}/chat`).push({user:CHAR.name, lbl:l, val:v, formula:f, nat20:c}); }
+    // --- ATTACH TO WINDOW (Global Scope for HTML Buttons) ---
+    window.updateHP = function() { window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/hp_curr`).set(parseInt(document.getElementById('hpInput').value)); };
     
-    // Search
+    window.updateCoins = function() {
+        let c = {};
+        ['cp','sp','ep','gp','pp'].forEach(k => c[k] = parseInt(document.getElementById(`coin_${k}`).value));
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/coins`).set(c);
+    };
+
+    window.rollInit = function() { 
+        const r=Math.floor(Math.random()*20)+1; 
+        window.pushChat('Initiative', r+INIT_BONUS, `${r}+${INIT_BONUS}`); 
+        // Optional: Update Encounter Tracker in DB here
+        window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', s=>{
+            s.forEach(c=>{ c.ref.update({init: r+INIT_BONUS}); });
+        });
+    };
+
+    window.rollAtk = function(n,m) { const r=Math.floor(Math.random()*20)+1; window.pushChat(`Atk ${n}`, r+m, `${r}+${m}`, r===20); };
+    window.rollDmg = function(n,d,m) { 
+        // Simple parser for 1d8
+        let pts = d.split('d');
+        let count = parseInt(pts[0])||1;
+        let sides = parseInt(pts[1])||6;
+        let total = 0;
+        let formula = [];
+        for(let i=0; i<count; i++) {
+            let roll = Math.floor(Math.random()*sides)+1;
+            total += roll;
+            formula.push(roll);
+        }
+        total += m;
+        window.pushChat(`Dmg ${n}`, total, `[${formula.join(',')}] + ${m}`); 
+    };
+    
+    window.rollCheck = function(l,m) { const r=Math.floor(Math.random()*20)+1; window.pushChat(l, r+m, `${r}+${m}`); };
+
+    window.pushChat = function(l,v,f,c=false) { window.db.ref(`campaigns/${ROOM_ID}/chat`).push({user:CHAR.name, lbl:l, val:v, formula:f, nat20:c}); };
+
+    window.togEq = function(i) { let n=[...CHAR.inventory]; n[i].equip=!n[i].equip; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); };
+    window.delItem = function(i) { let n=[...CHAR.inventory]; n.splice(i,1); window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(n); };
+
     let st;
-    function searchEquipment() {
+    window.searchEquipment = function() {
         clearTimeout(st);
         const q = document.getElementById('apiSearch').value.toLowerCase();
         const res = document.getElementById('apiResults');
         if(q.length<2) { res.style.display='none'; return; }
+        
         st = setTimeout(() => {
             res.innerHTML=""; res.style.display='block';
             let hits = ALL_ACTIONS.filter(a=>a.name.toLowerCase().includes(q));
             hits.slice(0,5).forEach(h => {
-                res.innerHTML += `<div style="padding:5px; cursor:pointer; border-bottom:1px solid #333;" onclick="addItem('${h.name}')">${h.name}</div>`;
+                const div = document.createElement('div');
+                div.style.cssText = "padding:5px; cursor:pointer; border-bottom:1px solid #333;";
+                div.innerText = h.name;
+                div.onclick = () => window.addItem(h.name);
+                res.appendChild(div);
             });
         }, 300);
-    }
-    function addItem(n) {
-        let inv = CHAR.inventory||[]; inv.push({name:n, equip:false});
-        db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(inv);
+    };
+
+    window.addItem = function(n) {
+        let inv = CHAR.inventory||[]; 
+        inv.push({name:n, equip:false});
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/inventory`).set(inv);
         document.getElementById('apiResults').style.display='none';
         document.getElementById('apiSearch').value='';
-    }
-    function renderSkills() { /* ... same as before ... */ }
-    function rollCheck(l,m) { const r=Math.floor(Math.random()*20)+1; pushChat(l, r+m, `${r}+${m}`); }
-    function openTab(id) { document.querySelectorAll('.tab-pane').forEach(e=>e.style.display='none'); document.getElementById(id).style.display='block'; }
+    };
+
+    window.openTab = function(id) { 
+        document.querySelectorAll('.tab-pane').forEach(e=>e.style.display='none'); 
+        document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
+        document.getElementById(id).style.display='block'; 
+        event.currentTarget.classList.add('active');
+    };
+
 </script>
 </body>
 </html>
