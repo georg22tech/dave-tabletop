@@ -68,11 +68,7 @@
         .stat-box { text-align: center; cursor: pointer; padding: 5px; border-radius: 4px; transition: 0.2s; }
         .stat-box:hover { background: rgba(88, 24, 13, 0.1); }
         .stat-val { font-size: 1.2em; }
-        .skill-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-        .skill-tag { background: rgba(88, 24, 13, 0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; cursor: pointer; border: 1px solid #58180d; }
-        .skill-tag:hover { background: #58180d; color: #e0d5b5; }
         .action-item { margin-bottom: 8px; padding: 5px; border-bottom: 1px dotted #58180d; }
-        .action-item strong { font-weight: bold; }
         .atk-btn-row { margin-top: 4px; display: flex; gap: 5px; }
         .atk-btn { background: #58180d; color: #e0d5b5; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
         .atk-btn:hover { background: #802010; } .dmg-btn { background: #802010; }
@@ -81,6 +77,7 @@
         .btn { background: #444; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; flex: 1; }
         .btn:hover { background: #555; }
         .btn-blue { background: #2b5fa3; }
+        .btn-upload { background: #d4af37; color: #111; font-weight: bold; }
         
         #searchResults { position: absolute; top: 120px; left: 365px; width: 300px; background: #111; border: 1px solid #555; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
         .result-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
@@ -91,7 +88,6 @@
 
         #chat { flex: 1; overflow-y: auto; padding: 10px; font-family: monospace; }
         .msg { margin-bottom: 5px; padding: 5px; background: #222; border-left: 3px solid #555; font-size: 0.9em; }
-        .msg strong { color: #8af; }
         .res-hit { color: #8af; font-weight: bold; } .res-dmg { color: #e51e25; font-weight: bold; } 
         .res-custom { color: #d4af37; font-weight: bold; }
         .roll-log-header { display:flex; justify-content:space-between; align-items:center; padding-right:10px; }
@@ -121,7 +117,9 @@
     </div>
     <div class="search-bar">
         <input type="text" id="monsterSearch" placeholder="Search Monsters..." onkeyup="search()">
-        <button class="btn" style="flex:0; width:80px;" onclick="toggleCustomForm()">+ Custom</button>
+        <button class="btn" style="flex:0; width:70px;" onclick="toggleCustomForm()">+ Custom</button>
+        <button class="btn btn-upload" style="flex:0; width:70px;" onclick="document.getElementById('jsonUpload').click()">Upload</button>
+        <input type="file" id="jsonUpload" accept=".json" style="display:none" onchange="handleFileUpload(this)">
     </div>
     <div id="searchResults"></div>
     
@@ -138,13 +136,8 @@
     <div class="dice-bar">
         <input type="number" id="customCount" value="1" min="1" style="width:50px;">
         <select id="customDie">
-            <option value="d4">d4</option>
-            <option value="d6">d6</option>
-            <option value="d8">d8</option>
-            <option value="d10">d10</option>
-            <option value="d12">d12</option>
-            <option value="d20" selected>d20</option>
-            <option value="d100">d100</option>
+            <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
+            <option value="d10">d10</option><option value="d12">d12</option><option value="d20" selected>d20</option><option value="d100">d100</option>
         </select>
         <input type="number" id="customMod" value="0" placeholder="+/-" style="width:60px;">
         <button onclick="rollCustom()">Roll</button>
@@ -171,7 +164,6 @@
     document.getElementById('codeDisplay').innerText = ROOM_ID;
     document.getElementById('inviteLink').value = window.location.origin + window.location.pathname.replace('dm.html', 'index.html'); 
 
-    // Get Campaign Name
     db.ref(`campaigns/${ROOM_ID}/name`).once('value', s => {
         document.getElementById('campNameDisplay').innerText = s.val() || "Campaign";
     });
@@ -196,9 +188,12 @@
             let reroll = (c.type === 'monster') ? 
                 `<span class="btn-reroll" onclick="rerollInit('${c.key}', ${c.init_mod||0})">🎲</span>` : '';
 
-            // Handle Click for Custom vs API
+            // Open Tab Action
             let clickAction = "";
             if (c.index === 'custom') {
+                // For custom, we pass the stored data if we have it, otherwise generated defaults
+                // Note: In a full app, we'd store the full stat block in Firebase. 
+                // Here we reconstruct it or find it in local tabs.
                 clickAction = `openCustomTab('${c.name}', ${c.hp}, ${c.ac||10}, ${c.init_mod||0})`;
             } else {
                 clickAction = `openMonsterTab('${c.index}', '${c.name}')`;
@@ -233,6 +228,57 @@
     function sortTracker() { /* Sorting is automatic */ } 
     function rerollInit(key, mod) { updateMon(key, 'init', Math.floor(Math.random()*20)+1+mod); }
 
+    // --- JSON UPLOAD ---
+    function handleFileUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                const monsters = Array.isArray(json) ? json : [json];
+                monsters.forEach(m => importMonster(m));
+                alert(`Imported ${monsters.length} monster(s)!`);
+            } catch (err) { alert("Invalid JSON: " + err.message); }
+        };
+        reader.readAsText(file);
+        input.value = ''; 
+    }
+
+    function importMonster(m) {
+        const name = m.name || "Unnamed";
+        const hp = parseInt(m.hit_points) || 10;
+        let ac = 10;
+        if (m.armor_class) {
+            if (Array.isArray(m.armor_class) && m.armor_class[0]) ac = m.armor_class[0].value;
+            else if (typeof m.armor_class === 'number') ac = m.armor_class;
+        }
+
+        // Add to Tracker
+        const dexMod = Math.floor(((m.dexterity||10) - 10) / 2);
+        const init = Math.floor(Math.random()*20)+1+dexMod;
+        
+        db.ref(`campaigns/${ROOM_ID}/encounters`).push({
+            name: name, init: init, hp: hp, type: 'monster', init_mod: dexMod, index: 'custom', ac: ac
+        });
+
+        // Register Tab Data
+        const id = "cust_" + name.replace(/\s/g, "") + Date.now(); // Unique ID
+        
+        const cleanData = {
+            name: name, size: m.size || "Medium", type: m.type || "Custom",
+            hit_points: hp, armor_class: [{value: ac}],
+            strength: m.strength||10, dexterity: m.dexterity||10, constitution: m.constitution||10, 
+            intelligence: m.intelligence||10, wisdom: m.wisdom||10, charisma: m.charisma||10,
+            actions: m.actions || [],
+            spells: m.spells || [] 
+        };
+
+        tabs.push({id: id, name: name, data: cleanData, type: 'custom'});
+        renderTabsHeader();
+        setActiveTab(id);
+    }
+
     // --- CUSTOM MONSTER LOGIC ---
     function addCustomMonster() {
         const name = document.getElementById('custName').value || "Unknown";
@@ -250,74 +296,65 @@
     }
 
     function openCustomTab(name, hp, ac, initMod) {
-        // Construct Editable Data Object
-        // If tab exists, bring it up (preserve edits), else create new
-        const id = "cust_" + name.replace(/\s/g, ""); // Simple ID binding
-        
+        const id = "cust_" + name.replace(/\s/g, "");
         const existing = tabs.find(t => t.id === id);
-        if (existing) {
-            setActiveTab(existing.id);
-            return;
-        }
+        if (existing) { setActiveTab(existing.id); return; }
 
         const mockData = {
-            name: name,
-            size: "Medium", type: "Custom", subtype: "monster",
-            hit_points: hp,
-            armor_class: [{value: ac}],
-            // Default stats to 10
+            name: name, size: "Medium", type: "Custom",
+            hit_points: hp, armor_class: [{value: ac}],
+            // Defaults to 10, Init Mod is handled separately in tracker but can guide Dex here
             strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10,
-            actions: [], 
-            spells: [] // Custom field for this app
+            actions: [], spells: [] 
         };
         
-        tabs.push({id: id, name: name, data: mockData, type: 'custom'}); // Type custom handles rendering differently
-        renderTabsHeader(); 
-        setActiveTab(id);
+        tabs.push({id: id, name: name, data: mockData, type: 'custom'});
+        renderTabsHeader(); setActiveTab(id);
     }
 
-    // --- EDITING FUNCTIONS FOR CUSTOM MONSTERS ---
-    
-    // Update Stats (Str/Dex/etc)
+    // --- EDITING FUNCTIONS ---
     window.updateCustomStat = function(tabId, statName, value) {
         const t = tabs.find(t => t.id === tabId);
         if(t) {
             t.data[statName] = parseInt(value);
-            renderStatBlock(t.data, tabId); // Re-render to show new Modifiers
+            // Don't re-render whole block, just update modifier text
+            const mod = Math.floor((parseInt(value)-10)/2);
+            const modSpan = document.getElementById(`mod_${statName}_${tabId}`);
+            if(modSpan) modSpan.innerText = `(${mod>=0?'+':''}${mod})`;
         }
     };
 
-    // Add Weapon/Attack
     window.addCustomAction = function(tabId) {
-        const name = prompt("Attack Name (e.g. Longsword):");
-        if(!name) return;
-        const hit = prompt("Hit Bonus (e.g. 5 for +5):", "0");
+        const name = prompt("Attack Name (e.g. Longsword):"); if(!name) return;
+        const hit = prompt("Hit Bonus (e.g. 5):", "0");
         const dmg = prompt("Damage Dice (e.g. 1d8+3):", "1d6");
-
+        
         const t = tabs.find(t => t.id === tabId);
         if(t) {
             if(!t.data.actions) t.data.actions = [];
-            t.data.actions.push({
-                name: name,
-                desc: "Melee Weapon Attack",
-                attack_bonus: parseInt(hit),
-                damage: [{damage_dice: dmg}]
-            });
-            renderStatBlock(t.data, tabId);
+            t.data.actions.push({ name: name, desc: "Melee Attack", attack_bonus: parseInt(hit), damage: [{damage_dice: dmg}] });
+            // Re-render Actions Section Only to avoid input flicker
+            renderCustomActions(t.data, tabId);
         }
     };
 
-    // Add Spell/Trait
     window.addCustomSpell = function(tabId) {
-        const name = prompt("Spell/Ability Name:");
-        if(!name) return;
+        const name = prompt("Spell/Ability Name:"); if(!name) return;
         const desc = prompt("Description:");
-
         const t = tabs.find(t => t.id === tabId);
         if(t) {
             if(!t.data.spells) t.data.spells = [];
             t.data.spells.push({ name: name, desc: desc });
-            renderStatBlock(t.data, tabId);
+            renderCustomActions(t.data, tabId);
+        }
+    };
+
+    window.removeCustomItem = function(tabId, type, index) {
+        const t = tabs.find(t => t.id === tabId);
+        if(t) {
+            if(type === 'action') t.data.actions.splice(index, 1);
+            if(type === 'spell') t.data.spells.splice(index, 1);
+            renderCustomActions(t.data, tabId);
         }
     };
 
@@ -371,13 +408,13 @@
     }
 
     function renderStatBlock(m, tabId, isCustom = false) {
+        // Render Stats Row
         let statsHtml = "";
         ['strength','dexterity','constitution','intelligence','wisdom','charisma'].forEach(s => {
             const short = s.substring(0,3).toUpperCase();
-            const val = m[s];
+            const val = m[s] || 10;
             const mod = Math.floor((val-10)/2);
             
-            // If Custom, render Input. If Standard, render Text.
             let valDisplay = isCustom 
                 ? `<input type="number" value="${val}" onchange="updateCustomStat('${tabId}', '${s}', this.value)" style="width:35px; background:transparent; border:none; border-bottom:1px dotted #58180d; text-align:center; font-weight:bold; font-size:1em; color:#58180d;">` 
                 : val;
@@ -385,44 +422,14 @@
             statsHtml += `
                 <div class="stat-box" onclick="${!isCustom ? `rollStat('${m.name}', '${short}', ${mod})` : ''}">
                     <div class="stat-val">${short}</div>
-                    <div class="stat-val">${valDisplay} <span style="font-size:0.8em">(${mod>=0?'+':''}${mod})</span></div>
+                    <div class="stat-val">${valDisplay} <span id="mod_${s}_${tabId}" style="font-size:0.8em">(${mod>=0?'+':''}${mod})</span></div>
                     ${isCustom ? `<button style="font-size:0.7em; cursor:pointer; border:none; background:none;" onclick="rollStat('${m.name}', '${short}', ${mod})">🎲</button>` : ''}
                 </div>`;
         });
 
-        let actionsHtml = "";
-        if(m.actions) m.actions.forEach(a => {
-            let btns = "";
-            // Check if it has attack data
-            if(a.attack_bonus !== undefined || (isCustom && a.attack_bonus)) {
-                const dmgDice = (a.damage && a.damage[0]) ? a.damage[0].damage_dice : "";
-                btns = `<div class="atk-btn-row"><button class="atk-btn" onclick="rollAttack('${m.name}', '${a.name}', ${a.attack_bonus})">⚔️ +${a.attack_bonus}</button>${dmgDice ? `<button class="atk-btn dmg-btn" onclick="rollDamage('${m.name}', '${a.name}', '${dmgDice}')">🩸 ${dmgDice}</button>` : ''}</div>`;
-            }
-            actionsHtml += `<div class="action-item"><strong>${a.name}.</strong> ${a.desc} ${btns}</div>`;
-        });
-
-        // Render Custom Spells/Traits
-        if(m.spells && m.spells.length > 0) {
-            actionsHtml += `<div class="red-line"></div><div class="section-header"><strong>Traits & Spells</strong></div>`;
-            m.spells.forEach(s => {
-                actionsHtml += `<div class="action-item"><strong>${s.name}.</strong> ${s.desc}</div>`;
-            });
-        }
-
-        // Add Buttons for Custom
-        let editControls = "";
-        if(isCustom) {
-            editControls = `
-                <div class="red-line"></div>
-                <div style="display:flex; gap:10px; justify-content:center;">
-                    <button class="btn btn-blue" onclick="addCustomAction('${tabId}')">+ Add Attack</button>
-                    <button class="btn" onclick="addCustomSpell('${tabId}')">+ Add Trait/Spell</button>
-                </div>
-            `;
-        }
-
+        // Basic Info
         const acVal = (m.armor_class && m.armor_class[0]) ? m.armor_class[0].value : (m.armor_class || 10);
-
+        
         document.getElementById('tabContent').innerHTML = `
             <div class="stat-block">
                 <h1>${m.name}</h1>
@@ -435,111 +442,89 @@
                 <div class="red-line"></div>
                 <div class="stat-grid">${statsHtml}</div>
                 <div class="red-line"></div>
-                <div class="actions">
-                    ${actionsHtml}
-                </div>
-                ${editControls}
+                <div id="actions_${tabId}" class="actions">
+                    </div>
+                ${isCustom ? `<div class="red-line"></div><div style="display:flex; gap:10px; justify-content:center;"><button class="btn btn-blue" onclick="addCustomAction('${tabId}')">+ Add Attack</button><button class="btn" onclick="addCustomSpell('${tabId}')">+ Add Trait/Spell</button></div>` : ''}
             </div>`;
+
+        // Render Actions immediately
+        renderCustomActions(m, tabId, isCustom);
+    }
+
+    function renderCustomActions(m, tabId, isCustom) {
+        const container = document.getElementById(`actions_${tabId}`);
+        if(!container) return; // Tab closed or switched
+
+        let html = `<div class="section-header">Actions</div>`;
+        
+        // Standard/Custom Actions
+        if(m.actions) {
+            m.actions.forEach((a, idx) => {
+                let btns = "";
+                if(a.attack_bonus !== undefined || (isCustom && a.attack_bonus)) {
+                    const dmgDice = (a.damage && a.damage[0]) ? a.damage[0].damage_dice : "";
+                    btns = `<div class="atk-btn-row">
+                        <button class="atk-btn" onclick="rollAttack('${m.name}', '${a.name}', ${a.attack_bonus})">⚔️ +${a.attack_bonus}</button>
+                        ${dmgDice ? `<button class="atk-btn dmg-btn" onclick="rollDamage('${m.name}', '${a.name}', '${dmgDice}')">🩸 ${dmgDice}</button>` : ''}
+                    </div>`;
+                }
+                let delBtn = isCustom ? `<span style="color:#a33; cursor:pointer; font-size:0.8em; margin-left:5px;" onclick="removeCustomItem('${tabId}', 'action', ${idx})">(x)</span>` : "";
+                html += `<div class="action-item"><strong>${a.name}.</strong> ${a.desc} ${btns} ${delBtn}</div>`;
+            });
+        }
+
+        // Custom Spells/Traits
+        if(m.spells && m.spells.length > 0) {
+            html += `<div class="red-line"></div><div class="section-header"><strong>Traits & Spells</strong></div>`;
+            m.spells.forEach((s, idx) => {
+                let delBtn = isCustom ? `<span style="color:#a33; cursor:pointer; font-size:0.8em; margin-left:5px;" onclick="removeCustomItem('${tabId}', 'spell', ${idx})">(x)</span>` : "";
+                html += `<div class="action-item"><strong>${s.name}.</strong> ${s.desc} ${delBtn}</div>`;
+            });
+        }
+        
+        container.innerHTML = html;
     }
 
     function renderSpellBlock(s) {
-        document.getElementById('tabContent').innerHTML = `
-            <div class="stat-block">
-                <h1>${s.name}</h1>
-                <div class="type">${s.level>0?"Lvl "+s.level:"Cantrip"} ${s.school.name}</div>
-                <div class="red-line"></div>
-                <div><strong>Time:</strong> ${s.casting_time} | <strong>Range:</strong> ${s.range}</div>
-                <div><strong>Duration:</strong> ${s.duration}</div>
-                <div class="red-line"></div>
-                <div>${s.desc.join('<br><br>')}</div>
-            </div>`;
+        document.getElementById('tabContent').innerHTML = `<div class="stat-block"><h1>${s.name}</h1><div class="type">${s.level>0?"Lvl "+s.level:"Cantrip"} ${s.school.name}</div><div class="red-line"></div><div><strong>Time:</strong> ${s.casting_time} | <strong>Range:</strong> ${s.range}</div><div><strong>Duration:</strong> ${s.duration}</div><div class="red-line"></div><div>${s.desc.join('<br><br>')}</div></div>`;
     }
 
-    // --- GENERIC FUNCTIONS ---
-    function rollAttack(user, name, mod) {
-        const d20 = Math.floor(Math.random()*20)+1;
-        pushChat(user, `Atk ${name}`, d20+mod, `${d20} + ${mod}`, 'hit', d20===20);
-    }
+    // --- ROLLING LOGIC ---
+    function rollAttack(user, name, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(user, `Atk ${name}`, d20+mod, `${d20} + ${mod}`, 'hit', d20===20); }
     function rollDamage(user, name, dice) {
         let total = 0; let formula = "";
-        if(dice.includes('+')) {
-            const p = dice.split('+'); const mod = parseInt(p[1]); const d = p[0].split('d');
-            for(let i=0; i<d[0]; i++) total += Math.floor(Math.random()*d[1])+1;
-            total += mod; formula = `[${p[0]}] + ${mod}`;
-        } else {
-            const d = dice.split('d');
-            for(let i=0; i<d[0]; i++) total += Math.floor(Math.random()*d[1])+1;
-            formula = `[${dice}]`;
-        }
+        if(dice.includes('+')) { const p = dice.split('+'); const mod = parseInt(p[1]); const d = p[0].split('d'); for(let i=0; i<d[0]; i++) total += Math.floor(Math.random()*d[1])+1; total += mod; formula = `[${p[0]}] + ${mod}`; } 
+        else { const d = dice.split('d'); for(let i=0; i<d[0]; i++) total += Math.floor(Math.random()*d[1])+1; formula = `[${dice}]`; }
         pushChat(user, `Dmg ${name}`, total, formula, 'dmg');
     }
-    function rollStat(user, stat, mod) {
-        const d20 = Math.floor(Math.random()*20)+1;
-        pushChat(user, `${stat} Check`, d20+mod, `${d20} + ${mod}`, 'skill');
-    }
+    function rollStat(user, stat, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(user, `${stat} Check`, d20+mod, `${d20} + ${mod}`, 'skill'); }
     function rollCustom() {
-        const cnt = document.getElementById('customCount').value;
-        const sides = document.getElementById('customDie').value;
-        const mod = document.getElementById('customMod').value;
-        let total = 0;
-        const n = parseInt(cnt); const s = parseInt(sides.replace('d',''));
-        for(let i=0; i<n; i++) total += Math.floor(Math.random()*s)+1;
-        total += parseInt(mod);
+        const cnt = document.getElementById('customCount').value; const sides = document.getElementById('customDie').value; const mod = document.getElementById('customMod').value;
+        let total = 0; const n = parseInt(cnt); const s = parseInt(sides.replace('d',''));
+        for(let i=0; i<n; i++) total += Math.floor(Math.random()*s)+1; total += parseInt(mod);
         pushChat('DM', 'Custom Roll', total, `${cnt}${sides} + ${mod}`, 'dice_effect');
     }
     function pushChat(user, lbl, val, formula, subType='gen', nat20=false) {
         const private = document.getElementById('privateRolls').checked;
-        if(private) {
-            const c = document.getElementById('chat');
-            c.innerHTML = `<div class="msg" style="border-left-color:#888;"><strong>${user} (Secret)</strong>: ${lbl} -> ${val}</div>` + c.innerHTML;
-        } else {
-            db.ref(`campaigns/${ROOM_ID}/chat`).push({ user: user, lbl: lbl, val: val, formula: formula, sub_type: subType, nat20: nat20 });
-        }
+        if(private) { const c = document.getElementById('chat'); c.innerHTML = `<div class="msg" style="border-left-color:#888;"><strong>${user} (Secret)</strong>: ${lbl} -> ${val}</div>` + c.innerHTML; } 
+        else { db.ref(`campaigns/${ROOM_ID}/chat`).push({ user: user, lbl: lbl, val: val, formula: formula, sub_type: subType, nat20: nat20 }); }
     }
-    function copyLink() {
-        const copyText = document.getElementById("inviteLink");
-        copyText.select(); document.execCommand("copy"); alert("Invite link copied!");
-    }
-    function toggleCustomForm() {
-        const f = document.getElementById('customMonsterForm');
-        f.style.display = (f.style.display === 'block') ? 'none' : 'block';
-    }
-    function setMode(m) {
-        currentMode = m;
-        document.getElementById('modeMonster').className = m==='monster'?'mode-btn active':'mode-btn';
-        document.getElementById('modeSpell').className = m==='spell'?'mode-btn active':'mode-btn';
-        document.getElementById('monsterSearch').placeholder = m==='monster'?'Search Monsters...':'Search Spells...';
-    }
+    function copyLink() { const copyText = document.getElementById("inviteLink"); copyText.select(); document.execCommand("copy"); alert("Invite link copied!"); }
+    function toggleCustomForm() { const f = document.getElementById('customMonsterForm'); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; }
+    function setMode(m) { currentMode = m; document.getElementById('modeMonster').className = m==='monster'?'mode-btn active':'mode-btn'; document.getElementById('modeSpell').className = m==='spell'?'mode-btn active':'mode-btn'; document.getElementById('monsterSearch').placeholder = m==='monster'?'Search Monsters...':'Search Spells...'; }
     function search() {
-        clearTimeout(searchTimeout);
-        const q = document.getElementById('monsterSearch').value;
-        const resDiv = document.getElementById('searchResults');
-        if(q.length<2){resDiv.style.display='none';return;}
+        clearTimeout(searchTimeout); const q = document.getElementById('monsterSearch').value; const resDiv = document.getElementById('searchResults'); if(q.length<2){resDiv.style.display='none';return;}
         searchTimeout = setTimeout(()=>{
             const url = currentMode==='monster' ? `https://www.dnd5eapi.co/api/monsters?name=${q}` : `https://www.dnd5eapi.co/api/spells?name=${q}`;
             fetch(url).then(r=>r.json()).then(data=>{
-                resDiv.innerHTML=""; 
-                if(data.results.length>0){ 
-                    resDiv.style.display='block'; 
-                    data.results.forEach(m=>{ 
-                        const item = document.createElement('div'); item.className='result-item'; item.innerText=m.name; 
-                        item.onclick=()=>{ 
-                            if(currentMode==='monster') addMonsterToTracker(m.index, m.name);
-                            else openTab(m.index, m.name, 'spell');
-                            resDiv.style.display='none'; document.getElementById('monsterSearch').value=''; 
-                        }; 
-                        resDiv.appendChild(item); 
-                    }); 
-                } else { resDiv.style.display='none'; }
+                resDiv.innerHTML=""; if(data.results.length>0){ resDiv.style.display='block'; data.results.forEach(m=>{ const item = document.createElement('div'); item.className='result-item'; item.innerText=m.name; item.onclick=()=>{ if(currentMode==='monster') addMonsterToTracker(m.index, m.name); else openTab(m.index, m.name, 'spell'); resDiv.style.display='none'; document.getElementById('monsterSearch').value=''; }; resDiv.appendChild(item); }); } else { resDiv.style.display='none'; }
             });
         }, 300);
     }
     function addMonsterToTracker(index, name) {
         fetch(`https://www.dnd5eapi.co/api/monsters/${index}`).then(r => r.json()).then(data => {
             const dexMod = Math.floor((data.dexterity - 10) / 2);
-            db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-                name: name, init: Math.floor(Math.random()*20)+1+dexMod, hp: data.hit_points, type: 'monster', index: index, init_mod: dexMod
-            });
+            db.ref(`campaigns/${ROOM_ID}/encounters`).push({ name: name, init: Math.floor(Math.random()*20)+1+dexMod, hp: data.hit_points, type: 'monster', index: index, init_mod: dexMod });
             openTab(index, name, 'monster', data);
         });
     }
