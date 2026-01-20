@@ -41,11 +41,10 @@
         .action-row { display: flex; gap: 8px; margin-top: 5px; }
         .roll-btn { flex: 1; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; font-size: 0.9em; transition: 0.2s; background: #444; color:#d4af37; text-align: center;}
         
-        /* New Button Colors */
         .btn-hit { background: #2b5fa3; color:white; }
         .btn-dmg { background: #a33; color:white; }
         .btn-heal { background: #2a7a3a; color:white; }
-        .btn-save { background: #444; color:#fa8; border: 1px solid #fa8; cursor: default; } /* Static Label */
+        .btn-save { background: #444; color:#fa8; border: 1px solid #fa8; cursor: default; } 
         .btn-use { background: #444; color: #d4af37; }
 
         /* RESOURCE TRACKERS */
@@ -389,37 +388,36 @@
         }
     }
 
-    // --- HTML GENERATOR FOR CARDS ---
+    // --- HTML GENERATOR FOR CARDS (FIXED SAFEGUARDS) ---
     function createCardHtml(data) {
         let useStat = data.stat || "STR";
-        if(data.desc && data.desc.includes("Finesse") && STATS['DEX'] > STATS['STR']) useStat = "DEX";
+        let descSafe = data.desc || ""; // SAFEGURDED DESCRIPTION
+
+        if(descSafe.includes("Finesse") && STATS['DEX'] > STATS['STR']) useStat = "DEX";
         
         let isSpell = data.category === "Spell";
         let lvl = data.level || 0;
         
-        // Determine Casting Stat if Spell
         if(isSpell) {
-            useStat = "CHA"; // Default
+            useStat = "CHA";
             if(CHAR.classes.some(c => ["Wizard", "Artificer", "Fighter", "Rogue"].includes(c.name))) useStat = "INT";
             if(CHAR.classes.some(c => ["Cleric", "Druid", "Ranger", "Monk"].includes(c.name))) useStat = "WIS";
         }
 
-        // Logic Check: Is it a Heal? Is it a Save?
-        let isHeal = (data.type === "Healing" || data.desc.toLowerCase().includes("heal"));
-        let isSave = (data.desc.includes("Save"));
+        // Logic Check
+        let isHeal = (data.type === "Healing" || descSafe.toLowerCase().includes("heal"));
+        let isSave = (descSafe.includes("Save"));
         let saveType = ""; 
         if(isSave) {
-            if(data.desc.includes("Dex")) saveType = "DEX";
-            else if(data.desc.includes("Wis")) saveType = "WIS";
-            else if(data.desc.includes("Con")) saveType = "CON";
-            else if(data.desc.includes("Str")) saveType = "STR";
-            else if(data.desc.includes("Cha")) saveType = "CHA";
-            else if(data.desc.includes("Int")) saveType = "INT";
+            if(descSafe.includes("Dex")) saveType = "DEX";
+            else if(descSafe.includes("Wis")) saveType = "WIS";
+            else if(descSafe.includes("Con")) saveType = "CON";
+            else if(descSafe.includes("Str")) saveType = "STR";
+            else if(descSafe.includes("Cha")) saveType = "CHA";
+            else if(descSafe.includes("Int")) saveType = "INT";
         }
 
-        // Calculate Save DC
         let dc = 8 + PROF + STATS[useStat];
-
         let buttonsHtml = "";
 
         if (data.dice && data.dice !== "-") {
@@ -427,52 +425,24 @@
             let hit = mod + PROF + (data.attack_bonus || 0);
             let dmgMod = data.damage_bonus || 0;
             
-            // Generate Cast Action String
-            let castStr = isSpell 
-                ? `castSpell('${data.name}', ${lvl}, '${data.category}', '', ${data.attack_bonus||0}, '${data.dice}', ${dmgMod})`
-                : `castSpell('${data.name}', 0, '${data.category}', '', ${data.attack_bonus||0}, '${data.dice}', ${dmgMod})`;
-
-            let hitBtn = `<button class="roll-btn btn-hit" onclick="window.rollAtk('${data.name}', ${hit})">Hit +${hit}</button>`;
-            
-            // If Save, replace Hit button with DC Badge
-            if(isSave) {
-                hitBtn = `<button class="roll-btn btn-save">DC ${dc} ${saveType}</button>`;
-                // Auto-cast spell slot on damage click if saving throw spell
-                // Actually, standard practice is cast on use. But here we have split buttons.
-                // We'll attach the slot consumption to the Damage button for save spells.
-            }
-
-            // Damage Button Color
-            let dmgBtnClass = isHeal ? "btn-heal" : "btn-dmg";
-            let dmgBtnText = isHeal ? `Heal ${data.dice}` : `Dmg ${data.dice}`;
-            
-            // Combine
-            // We need to inject the "consume slot" logic. 
-            // Since buttons are split, the Slot should be consumed on "Hit" (for attacks) or "Dmg" (for save/heals).
-            // Simplified: Wrap rolls in a check function.
-            
             let hitAction = `checkAndRoll('${data.name}', ${lvl}, 'hit', ${hit}, 0, 0)`;
             let dmgAction = `checkAndRoll('${data.name}', ${lvl}, 'dmg', 0, '${data.dice}', ${dmgMod})`;
 
-            // If it's a save spell, there is no hit roll, so damage roll triggers the slot usage.
-            // If it's an attack spell, hit roll triggers usage.
+            let hitBtn = `<button class="roll-btn btn-hit" onclick="${hitAction}">Hit +${hit}</button>`;
             
             if(isSave) {
-                buttonsHtml = `
-                <div class="action-row">
-                    ${hitBtn}
-                    <button class="roll-btn ${dmgBtnClass}" onclick="${dmgAction}">${dmgBtnText}</button>
-                </div>`;
-            } else {
-                buttonsHtml = `
-                <div class="action-row">
-                    <button class="roll-btn btn-hit" onclick="${hitAction}">Hit +${hit}</button>
-                    <button class="roll-btn ${dmgBtnClass}" onclick="${dmgAction}">${dmgBtnText}</button>
-                </div>`;
+                hitBtn = `<button class="roll-btn btn-save">DC ${dc} ${saveType}</button>`;
             }
 
+            let dmgBtnClass = isHeal ? "btn-heal" : "btn-dmg";
+            let dmgBtnText = isHeal ? `Heal ${data.dice}` : `Dmg ${data.dice}`;
+            
+            buttonsHtml = `
+            <div class="action-row">
+                ${hitBtn}
+                <button class="roll-btn ${dmgBtnClass}" onclick="${dmgAction}">${dmgBtnText}</button>
+            </div>`;
         } else {
-            // Utility / Feature (No Dice)
             let action = `useFeature('${data.name}')`;
             if(isSpell) action = `checkAndRoll('${data.name}', ${lvl}, 'cast', 0, 0, 0)`;
             buttonsHtml = `<div class="action-row"><button class="roll-btn btn-use" onclick="${action}">Use</button></div>`;
@@ -481,29 +451,17 @@
         return `
             <div class="card ${data.category==='Feature'?'card-feature':''} ${data.category==='Spell'?'card-spell':''}" style="position:relative;">
                 <div class="card-header"><span>${data.name}</span><small>${data.category} ${isSpell ? (lvl===0?'(Cantrip)':`Lvl ${lvl}`) : ''}</small></div>
-                <div class="card-desc">${data.desc||''}</div>
+                <div class="card-desc">${descSafe}</div>
                 ${buttonsHtml}
             </div>`;
     }
 
     // --- CHECK SLOT BEFORE ROLLING ---
     window.checkAndRoll = function(name, level, type, hitMod, dice, dmgMod) {
-        // Logic: 
-        // 1. If it's a Level 1+ Spell, try to consume slot.
-        // 2. But we don't want to consume twice (once for hit, once for dmg).
-        // 3. Simple solution: Only consume if we haven't tracked "active cast". 
-        //    OR Simplified: Just consume every time but ask? No, that's annoying.
-        //    Better: Just consume. Players know not to click both if they miss? 
-        //    ACTUALLY: The prompt requested "Update slot when used". 
-        //    Let's assume "Hit" consumes. For Save spells (no hit button), "Dmg" consumes.
-        
         let proceed = true;
         if (level > 0) {
-            // If type is 'dmg' AND there was a hit button available, assume Hit already consumed it? 
-            // Too complex. Let's just always check.
             proceed = consumeSpellSlot(level);
         }
-
         if(proceed) {
             if(type === 'hit') window.rollAtk(name, hitMod);
             else if(type === 'dmg') window.rollDmg(name, dice, dmgMod);
@@ -532,12 +490,11 @@
     // --- GENERIC UTILS ---
     function renderCard(data, container) { container.innerHTML += createCardHtml(data); }
     window.toggleResource = function(key, idx) { let current = CHAR.resources_used[key] || 0; let newVal = (idx >= current) ? idx + 1 : idx; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${key}`).set(newVal); };
-    window.consumeResource = function(className) { /* Same as before... */ if(!CHAR.resources_used) CHAR.resources_used={}; const clsObj=CHAR.classes.find(c=>c.name===className); if(!clsObj)return false; const def=CLASS_RESOURCES[className]; const max=def.count(clsObj.level, STATS); const used=CHAR.resources_used[className]||0; if(used<max){ window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${className}`).set(used+1); window.pushChat("System", def.name, "Consumed 1"); return true; } alert("No charges!"); return false; };
+    window.consumeResource = function(className) { if(!CHAR.resources_used) CHAR.resources_used={}; const clsObj=CHAR.classes.find(c=>c.name===className); if(!clsObj)return false; const def=CLASS_RESOURCES[className]; const max=def.count(clsObj.level, STATS); const used=CHAR.resources_used[className]||0; if(used<max){ window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${className}`).set(used+1); window.pushChat("System", def.name, "Consumed 1"); return true; } alert("No charges!"); return false; };
     window.useFlurry = function() { if(window.consumeResource("Monk")) { let mod = STATS['DEX']; let monkLvl=CHAR.classes.find(c=>c.name==="Monk").level; let die = monkLvl<5?4:monkLvl<11?6:monkLvl<17?8:10; let r=Math.floor(Math.random()*die)+1; window.pushChat("Flurry Strike", r+mod, `1d${die} + ${mod}`); } };
     window.useFeature = function(name) { if(name==="Rage") window.consumeResource("Barbarian"); else if(name==="Bardic Inspiration") window.consumeResource("Bard"); else if(name==="Wild Shape") window.consumeResource("Druid"); else if(name==="Action Surge") window.consumeResource("Fighter"); window.pushChat(name, "Used Feature", "-"); };
     
     function consumeSpellSlot(reqLevel) {
-        // Reuse previous logic
         let casterLvl = 0, warlockLvl = 0;
         CHAR.classes.forEach(c => {
             if(["Bard","Cleric","Druid","Sorcerer","Wizard"].includes(c.name)) casterLvl += c.level;
