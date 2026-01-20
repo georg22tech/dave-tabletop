@@ -365,9 +365,6 @@
         if (monkClass && monkClass.level >= 2) {
             let dmgMod = STATS['DEX'];
             let flurryAction = `checkAndRoll('Flurry of Blows', 0, 'dmg', 0, '${unarmedDie}', ${dmgMod})`;
-            // We use consumeResource manually in the button onclick, but let's integrate with standard card gen
-            // Actually, Flurry is unique because it costs resource AND rolls damage directly (no hit roll usually implied or same hit roll)
-            // Let's keep manual HTML for this specific feature to be safe
             atkDiv.innerHTML += `
                 <div class="card card-feature">
                     <div class="card-header"><span>Flurry of Blows</span><small>Monk</small></div>
@@ -447,7 +444,11 @@
         if (data.dice && data.dice !== "-") {
             let mod = STATS[useStat] || 0;
             let hit = mod + PROF + (data.attack_bonus || 0);
-            let dmgMod = data.damage_bonus || 0;
+            
+            // --- FIX: ADD ATTRIBUTE MOD TO DAMAGE IF NOT SPELL ---
+            let dmgMod = (data.damage_bonus || 0);
+            if (!isSpell) dmgMod += mod; 
+            // ---------------------------------------------------
             
             let hitAction = `checkAndRoll('${data.name}', ${lvl}, 'hit', ${hit}, 0, 0)`;
             let dmgAction = `checkAndRoll('${data.name}', ${lvl}, 'dmg', 0, '${data.dice}', ${dmgMod})`;
