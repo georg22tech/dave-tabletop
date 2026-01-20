@@ -8,65 +8,129 @@
     <script src="config.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .lobby-box { background: #1e1e1e; padding: 40px; border-radius: 12px; border: 1px solid #333; width: 320px; text-align: center; }
-        input { width: 100%; padding: 12px; background: #252525; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .lobby-box { background: #1e1e1e; padding: 40px; border-radius: 12px; border: 1px solid #333; width: 320px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1 { margin-top: 0; }
+        input { width: 100%; padding: 12px; background: #252525; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; font-size: 1em; }
+        input:focus { border-color: #e51e25; outline: none; }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1em; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        
         .btn-create { background: #e51e25; color: white; margin-bottom: 20px; }
         .btn-join { background: #2b5fa3; color: white; }
-        .char-list { text-align: left; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; display: none; }
-        .char-item { padding: 8px; background: #222; margin-bottom: 5px; cursor: pointer; border: 1px solid #333; }
-        .char-item:hover { border-color: #8af; }
+        .btn-dm { background: #d4af37; color: #111; margin-top: 10px; }
+        
+        /* RESULTS AREA */
+        .game-results { text-align: left; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; display: none; }
+        .camp-title { color: #d4af37; font-size: 1.1em; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        
+        .char-item { padding: 10px; background: #2a2a2a; margin-bottom: 5px; cursor: pointer; border: 1px solid #333; border-radius: 4px; display: flex; justify-content: space-between; }
+        .char-item:hover { border-color: #8af; background: #333; }
+        .char-cls { color: #888; font-size: 0.9em; }
+        
+        .empty-msg { color: #666; font-style: italic; text-align: center; margin-bottom: 10px; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
 <div class="lobby-box">
     <h1 style="color:#e51e25;">DMDave</h1>
-    <input type="text" id="campName" placeholder="Campaign Name">
-    <button class="btn-create" onclick="createGame()">Create Campaign</button>
     
-    <div style="border-top:1px solid #333; margin:20px 0;"></div>
+    <input type="text" id="campName" placeholder="New Campaign Name">
+    <button class="btn-create" onclick="createGame()">Create New Campaign</button>
     
-    <input type="text" id="joinCode" placeholder="Join Code">
-    <button class="btn-join" onclick="loadChars()">Find Game</button>
+    <div style="border-top:1px solid #333; margin:20px 0; position:relative;">
+        <span style="background:#1e1e1e; position:absolute; top:-10px; left:50%; transform:translateX(-50%); padding:0 10px; color:#555; font-size:0.8em;">OR</span>
+    </div>
     
-    <div id="charList" class="char-list">
-        <div style="color:#888; font-size:0.8em; margin-bottom:5px;">Select Character:</div>
-        <div id="chars"></div>
-        <button class="btn-join" style="margin-top:10px;" onclick="newChar()">+ New Character</button>
+    <input type="text" id="joinCode" placeholder="Enter Join Code" style="text-transform: uppercase;">
+    <button class="btn-join" onclick="findGame()">Find Existing Game</button>
+    
+    <div id="gameResults" class="game-results">
+        <div id="foundName" class="camp-title">Campaign Name</div>
+        
+        <div style="color:#8af; font-size:0.8em; margin-bottom:5px; font-weight:bold;">Player Characters</div>
+        <div id="charList"></div>
+        
+        <button class="btn-join" style="margin-top:15px;" onclick="newChar()">+ Create Character</button>
+        <button class="btn-dm" onclick="rejoinDM()">Launch DM Screen</button>
     </div>
 </div>
 
 <script>
+    // --- CREATE CAMPAIGN ---
     function createGame() {
-        const name = document.getElementById('campName').value;
-        if(!name) return;
+        const name = document.getElementById('campName').value.trim();
+        if(!name) return alert("Please enter a campaign name.");
+        
+        // Generate a clean 6-character code
         const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-        db.ref('campaigns/' + roomId).set({ name: name, created: Date.now() }).then(() => {
+        
+        // Save to Firebase immediately
+        db.ref('campaigns/' + roomId).set({
+            name: name,
+            created: Date.now(),
+            joinCode: roomId
+        }).then(() => {
+            // Redirect to DM Screen
             window.location.href = `dm.html?room=${roomId}`;
+        }).catch(err => {
+            alert("Error creating game: " + err.message);
         });
     }
 
-    function loadChars() {
-        const code = document.getElementById('joinCode').value.toUpperCase();
-        if(!code) return;
-        db.ref(`campaigns/${code}/characters`).once('value', snap => {
+    // --- FIND / LOAD CAMPAIGN ---
+    function findGame() {
+        const code = document.getElementById('joinCode').value.trim().toUpperCase();
+        if(!code) return alert("Please enter a join code.");
+        
+        const resDiv = document.getElementById('gameResults');
+        const listDiv = document.getElementById('charList');
+        const titleDiv = document.getElementById('foundName');
+        
+        // Check if campaign exists
+        db.ref(`campaigns/${code}`).once('value', snap => {
             if(!snap.exists()) {
-                if(confirm("Campaign not found or empty. Create new character?")) window.location.href = `builder.html?room=${code}`;
-            } else {
-                document.getElementById('charList').style.display = 'block';
-                const div = document.getElementById('chars');
-                div.innerHTML = "";
-                snap.forEach(c => {
-                    div.innerHTML += `<div class="char-item" onclick="location.href='sheet.html?room=${code}&id=${c.key}'">${c.val().name} (${c.val().class})</div>`;
+                resDiv.style.display = 'none';
+                alert("Campaign not found! Check the code.");
+                return;
+            }
+            
+            const camp = snap.val();
+            resDiv.style.display = 'block';
+            titleDiv.innerText = camp.name || "Untitled Campaign";
+            listDiv.innerHTML = "";
+
+            // List Characters if any
+            if(camp.characters) {
+                Object.keys(camp.characters).forEach(key => {
+                    const c = camp.characters[key];
+                    // Handle old vs new class structure for display
+                    let clsName = "Unknown";
+                    if(Array.isArray(c.classes) && c.classes.length > 0) clsName = c.classes[0].name;
+                    else if(c.class) clsName = c.class;
+
+                    listDiv.innerHTML += `
+                        <div class="char-item" onclick="location.href='sheet.html?room=${code}&id=${key}'">
+                            <span>${c.name}</span>
+                            <span class="char-cls">${clsName}</span>
+                        </div>`;
                 });
+            } else {
+                listDiv.innerHTML = `<div class="empty-msg">No characters yet.</div>`;
             }
         });
     }
     
+    // --- NAVIGATION HELPERS ---
     function newChar() {
-        const code = document.getElementById('joinCode').value.toUpperCase();
+        const code = document.getElementById('joinCode').value.trim().toUpperCase();
         window.location.href = `builder.html?room=${code}`;
+    }
+
+    function rejoinDM() {
+        const code = document.getElementById('joinCode').value.trim().toUpperCase();
+        window.location.href = `dm.html?room=${code}`;
     }
 </script>
 </body>
