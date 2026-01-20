@@ -332,22 +332,47 @@
         renderSpellStats();
     }
 
-    // --- ACTIONS RENDERER (Split Buttons Logic) ---
+    // --- ACTIONS RENDERER (Updated with Monk Logic) ---
     function renderActions() {
         const atkDiv = document.getElementById('attackList');
         const spellDiv = document.getElementById('spellList');
         atkDiv.innerHTML=""; spellDiv.innerHTML="";
 
-        // Unarmed
-        renderCard({name:"Unarmed Strike", dice:"1", type:"Bludgeoning", stat:"STR", category:"Simple Melee"}, atkDiv);
+        // 1. Unarmed Strike (Monk Logic Applied Here)
+        let unarmedDie = "1";
+        let unarmedStat = "STR";
+        const monkClass = CHAR.classes.find(c => c.name === "Monk");
+        
+        if (monkClass) {
+            unarmedStat = "DEX"; // Monks generally use Dex
+            const lvl = monkClass.level;
+            if (lvl >= 17) unarmedDie = "1d10";
+            else if (lvl >= 11) unarmedDie = "1d8";
+            else if (lvl >= 5)  unarmedDie = "1d6";
+            else unarmedDie = "1d4";
+        }
 
-        // Flurry Special
-        if (CHAR.classes.some(c => c.name === "Monk" && c.level >= 2)) {
+        renderCard({
+            name: "Unarmed Strike", 
+            dice: unarmedDie, 
+            type: "Bludgeoning", 
+            stat: unarmedStat, 
+            category: "Simple Melee",
+            desc: monkClass ? "Martial Arts" : "Basic Strike"
+        }, atkDiv);
+
+        // 2. Flurry Special (Lvl 2+ Monk)
+        if (monkClass && monkClass.level >= 2) {
+            let dmgMod = STATS['DEX'];
+            let flurryAction = `checkAndRoll('Flurry of Blows', 0, 'dmg', 0, '${unarmedDie}', ${dmgMod})`;
+            // We use consumeResource manually in the button onclick, but let's integrate with standard card gen
+            // Actually, Flurry is unique because it costs resource AND rolls damage directly (no hit roll usually implied or same hit roll)
+            // Let's keep manual HTML for this specific feature to be safe
             atkDiv.innerHTML += `
                 <div class="card card-feature">
                     <div class="card-header"><span>Flurry of Blows</span><small>Monk</small></div>
                     <div class="card-desc">Spend 1 Ki for two unarmed strikes.</div>
-                    <div class="action-row"><button class="roll-btn btn-dmg" onclick="useFlurry()">Use (Spend 1 Ki)</button></div>
+                    <div class="action-row"><button class="roll-btn btn-dmg" onclick="useFlurry('${unarmedDie}', ${dmgMod})">Use (Spend 1 Ki)</button></div>
                 </div>`;
         }
 
@@ -388,10 +413,10 @@
         }
     }
 
-    // --- HTML GENERATOR FOR CARDS (FIXED SAFEGUARDS) ---
+    // --- HTML GENERATOR FOR CARDS ---
     function createCardHtml(data) {
         let useStat = data.stat || "STR";
-        let descSafe = data.desc || ""; // SAFEGURDED DESCRIPTION
+        let descSafe = data.desc || ""; 
 
         if(descSafe.includes("Finesse") && STATS['DEX'] > STATS['STR']) useStat = "DEX";
         
@@ -404,7 +429,6 @@
             if(CHAR.classes.some(c => ["Cleric", "Druid", "Ranger", "Monk"].includes(c.name))) useStat = "WIS";
         }
 
-        // Logic Check
         let isHeal = (data.type === "Healing" || descSafe.toLowerCase().includes("heal"));
         let isSave = (descSafe.includes("Save"));
         let saveType = ""; 
@@ -429,10 +453,7 @@
             let dmgAction = `checkAndRoll('${data.name}', ${lvl}, 'dmg', 0, '${data.dice}', ${dmgMod})`;
 
             let hitBtn = `<button class="roll-btn btn-hit" onclick="${hitAction}">Hit +${hit}</button>`;
-            
-            if(isSave) {
-                hitBtn = `<button class="roll-btn btn-save">DC ${dc} ${saveType}</button>`;
-            }
+            if(isSave) hitBtn = `<button class="roll-btn btn-save">DC ${dc} ${saveType}</button>`;
 
             let dmgBtnClass = isHeal ? "btn-heal" : "btn-dmg";
             let dmgBtnText = isHeal ? `Heal ${data.dice}` : `Dmg ${data.dice}`;
@@ -459,9 +480,7 @@
     // --- CHECK SLOT BEFORE ROLLING ---
     window.checkAndRoll = function(name, level, type, hitMod, dice, dmgMod) {
         let proceed = true;
-        if (level > 0) {
-            proceed = consumeSpellSlot(level);
-        }
+        if (level > 0) proceed = consumeSpellSlot(level);
         if(proceed) {
             if(type === 'hit') window.rollAtk(name, hitMod);
             else if(type === 'dmg') window.rollDmg(name, dice, dmgMod);
@@ -491,7 +510,15 @@
     function renderCard(data, container) { container.innerHTML += createCardHtml(data); }
     window.toggleResource = function(key, idx) { let current = CHAR.resources_used[key] || 0; let newVal = (idx >= current) ? idx + 1 : idx; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${key}`).set(newVal); };
     window.consumeResource = function(className) { if(!CHAR.resources_used) CHAR.resources_used={}; const clsObj=CHAR.classes.find(c=>c.name===className); if(!clsObj)return false; const def=CLASS_RESOURCES[className]; const max=def.count(clsObj.level, STATS); const used=CHAR.resources_used[className]||0; if(used<max){ window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${className}`).set(used+1); window.pushChat("System", def.name, "Consumed 1"); return true; } alert("No charges!"); return false; };
-    window.useFlurry = function() { if(window.consumeResource("Monk")) { let mod = STATS['DEX']; let monkLvl=CHAR.classes.find(c=>c.name==="Monk").level; let die = monkLvl<5?4:monkLvl<11?6:monkLvl<17?8:10; let r=Math.floor(Math.random()*die)+1; window.pushChat("Flurry Strike", r+mod, `1d${die} + ${mod}`); } };
+    
+    // UPDATED FLURRY FUNCTION with correct Dice
+    window.useFlurry = function(diceStr, mod) { 
+        if(window.consumeResource("Monk")) { 
+            // Roll once (player can click twice)
+            window.rollDmg("Flurry Strike", diceStr, mod);
+        } 
+    };
+
     window.useFeature = function(name) { if(name==="Rage") window.consumeResource("Barbarian"); else if(name==="Bardic Inspiration") window.consumeResource("Bard"); else if(name==="Wild Shape") window.consumeResource("Druid"); else if(name==="Action Surge") window.consumeResource("Fighter"); window.pushChat(name, "Used Feature", "-"); };
     
     function consumeSpellSlot(reqLevel) {
