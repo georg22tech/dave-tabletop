@@ -237,6 +237,7 @@
     if(!ROOM_ID || !CHAR_ID) window.location.href="index.html";
     document.getElementById('editLink').href=`builder.html?room=${ROOM_ID}&id=${CHAR_ID}`;
 
+    // FIREBASE INIT
     window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).on('value', snap => {
         if(!snap.exists()) return;
         CHAR = snap.val();
@@ -258,6 +259,7 @@
         c.innerHTML = `<div class="msg"><strong>${d.user}</strong>: ${d.lbl} -> <b>${d.val}</b> ${d.nat20 ? '<span style="color:gold">NAT 20!</span>' : ''}</div>` + c.innerHTML;
     });
 
+    // --- LOGIC ---
     function checkAutoSpells() {
         const autoSet = getAutoSpells();
         let changed = false;
@@ -330,18 +332,19 @@
         renderSpellStats();
     }
 
+    // --- ACTIONS RENDERER (Updated with Monk Logic) ---
     function renderActions() {
         const atkDiv = document.getElementById('attackList');
         const spellDiv = document.getElementById('spellList');
         atkDiv.innerHTML=""; spellDiv.innerHTML="";
 
-        // 1. Unarmed
+        // 1. Unarmed Strike (Monk Logic Applied Here)
         let unarmedDie = "1";
         let unarmedStat = "STR";
         const monkClass = CHAR.classes.find(c => c.name === "Monk");
         
         if (monkClass) {
-            unarmedStat = "DEX"; 
+            unarmedStat = "DEX"; // Monks generally use Dex
             const lvl = monkClass.level;
             if (lvl >= 17) unarmedDie = "1d10";
             else if (lvl >= 11) unarmedDie = "1d8";
@@ -358,9 +361,10 @@
             desc: monkClass ? "Martial Arts" : "Basic Strike"
         }, atkDiv);
 
-        // 2. Flurry
+        // 2. Flurry Special (Lvl 2+ Monk)
         if (monkClass && monkClass.level >= 2) {
             let dmgMod = STATS['DEX'];
+            let flurryAction = `checkAndRoll('Flurry of Blows', 0, 'dmg', 0, '${unarmedDie}', ${dmgMod})`;
             atkDiv.innerHTML += `
                 <div class="card card-feature">
                     <div class="card-header"><span>Flurry of Blows</span><small>Monk</small></div>
@@ -406,6 +410,7 @@
         }
     }
 
+    // --- HTML GENERATOR FOR CARDS ---
     function createCardHtml(data) {
         let useStat = data.stat || "STR";
         let descSafe = data.desc || ""; 
@@ -440,13 +445,17 @@
             let mod = STATS[useStat] || 0;
             let hit = mod + PROF + (data.attack_bonus || 0);
             
-            // --- FIX: ADD ATTRIBUTE MOD TO DAMAGE IF NOT SPELL ---
-            let dmgMod = (data.damage_bonus || 0);
-            if (!isSpell) dmgMod += mod; 
-            // ---------------------------------------------------
+            // --- CALC FINAL DAMAGE BONUS ---
+            // If weapon/physical, add Attribute Mod. If Spell, usually don't (unless feature says so, simple logic: Spells = 0 mod unless noted).
+            // Actually, simply adding 'mod' here ensures 5e rules for weapons.
+            // For spells, damage_bonus in DB should handle it, or we assume 0 mod.
+            // Let's use the 'isSpell' flag.
+            
+            let finalDmgMod = (data.damage_bonus || 0);
+            if(!isSpell) finalDmgMod += mod; 
             
             let hitAction = `checkAndRoll('${data.name}', ${lvl}, 'hit', ${hit}, 0, 0)`;
-            let dmgAction = `checkAndRoll('${data.name}', ${lvl}, 'dmg', 0, '${data.dice}', ${dmgMod})`;
+            let dmgAction = `checkAndRoll('${data.name}', ${lvl}, 'dmg', 0, '${data.dice}', ${finalDmgMod})`;
 
             let hitBtn = `<button class="roll-btn btn-hit" onclick="${hitAction}">Hit +${hit}</button>`;
             if(isSave) hitBtn = `<button class="roll-btn btn-save">DC ${dc} ${saveType}</button>`;
@@ -473,6 +482,8 @@
             </div>`;
     }
 
+    // --- CHECK SLOT BEFORE ROLLING ---
+    // FIXED: Now accepts pre-calculated final modifiers
     window.checkAndRoll = function(name, level, type, hitMod, dice, dmgMod) {
         let proceed = true;
         if (level > 0) proceed = consumeSpellSlot(level);
@@ -483,6 +494,7 @@
         }
     };
 
+    // --- RENDER RESOURCES ---
     function renderResources() {
         const div = document.getElementById('resourcesDisplay'); div.innerHTML = ""; let hasRes = false;
         CHAR.classes.forEach(c => {
@@ -500,6 +512,7 @@
         div.style.display = hasRes ? "block" : "none";
     }
     
+    // --- GENERIC UTILS ---
     function renderCard(data, container) { container.innerHTML += createCardHtml(data); }
     window.toggleResource = function(key, idx) { let current = CHAR.resources_used[key] || 0; let newVal = (idx >= current) ? idx + 1 : idx; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${key}`).set(newVal); };
     window.consumeResource = function(className) { if(!CHAR.resources_used) CHAR.resources_used={}; const clsObj=CHAR.classes.find(c=>c.name===className); if(!clsObj)return false; const def=CLASS_RESOURCES[className]; const max=def.count(clsObj.level, STATS); const used=CHAR.resources_used[className]||0; if(used<max){ window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/resources_used/${className}`).set(used+1); window.pushChat("System", def.name, "Consumed 1"); return true; } alert("No charges!"); return false; };
@@ -512,6 +525,42 @@
 
     window.useFeature = function(name) { if(name==="Rage") window.consumeResource("Barbarian"); else if(name==="Bardic Inspiration") window.consumeResource("Bard"); else if(name==="Wild Shape") window.consumeResource("Druid"); else if(name==="Action Surge") window.consumeResource("Fighter"); window.pushChat(name, "Used Feature", "-"); };
     
+    function renderSpellSlots() {
+        let casterLvl = 0, warlockLvl = 0;
+        CHAR.classes.forEach(c => {
+            if(["Bard","Cleric","Druid","Sorcerer","Wizard"].includes(c.name)) casterLvl += c.level;
+            else if(["Paladin","Ranger"].includes(c.name)) casterLvl += Math.floor(c.level/2);
+            else if(["Artificer"].includes(c.name)) casterLvl += Math.ceil(c.level/2);
+            else if(["Warlock"].includes(c.name)) warlockLvl += c.level;
+        });
+        const slotDiv = document.getElementById('slotDisplay'); slotDiv.innerHTML = ""; let hasMagic = false;
+        if(warlockLvl > 0) {
+            hasMagic = true; const wData = WARLOCK_SLOTS[warlockLvl]; const count = wData[0], tier = wData[1];
+            let html = `<div class="slot-row"><div class="slot-label" style="color:#b0f">Pact (L${tier})</div><div class="slot-bubbles">`;
+            for(let i=0; i<count; i++) {
+                let used = (CHAR.slots_used['p'] || 0) > i;
+                html += `<input type="checkbox" class="slot-chk pact" ${used?'checked':''} onclick="toggleSlot('p', ${i})">`;
+            }
+            html += `</div></div>`; slotDiv.innerHTML += html;
+        }
+        if(casterLvl > 0) {
+            hasMagic = true; const sData = SPELL_SLOTS[casterLvl];
+            sData.forEach((count, idx) => {
+                if(count > 0) {
+                    const lvl = idx + 1;
+                    let html = `<div class="slot-row"><div class="slot-label">Lvl ${lvl}</div><div class="slot-bubbles">`;
+                    for(let i=0; i<count; i++) {
+                        let usedCount = CHAR.slots_used[lvl] || 0;
+                        let isChecked = usedCount > i;
+                        html += `<input type="checkbox" class="slot-chk" ${isChecked?'checked':''} onclick="toggleSlot('${lvl}', ${i})">`;
+                    }
+                    html += `</div></div>`; slotDiv.innerHTML += html;
+                }
+            });
+        }
+        if(!hasMagic) slotDiv.innerHTML = "<small style='color:#555'>No spell slots available.</small>";
+    }
+
     function consumeSpellSlot(reqLevel) {
         let casterLvl = 0, warlockLvl = 0;
         CHAR.classes.forEach(c => {
@@ -542,6 +591,7 @@
         return false;
     }
 
+    // --- STANDARD RENDERERS ---
     window.openSpellModal = function() { document.getElementById('spellModal').style.display = 'block'; window.renderSpellModalList(); };
     window.closeSpellModal = function() { document.getElementById('spellModal').style.display = 'none'; };
     window.toggleSlot = function(lvl, idx) { let current = CHAR.slots_used[lvl] || 0; let newVal = (idx >= current) ? idx + 1 : idx; window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}/slots_used/${lvl}`).set(newVal); };
