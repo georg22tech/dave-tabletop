@@ -7,87 +7,117 @@
     <script src="config.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #111; color: #eee; margin: 0; display: flex; height: 100vh; overflow:hidden; }
-        .col-left { width: 350px; border-right: 1px solid #333; display: flex; flex-direction: column; background: #1a1a1a; }
+        
+        /* --- LEFT COLUMN (Tracker & Dice) --- */
+        .col-left { width: 350px; border-right: 1px solid #333; display: flex; flex-direction: column; background: #1a1a1a; z-index: 10; }
+        
+        .campaign-header { padding: 15px; background: #222; border-bottom: 1px solid #444; text-align: center; }
+        h2 { margin: 0; font-size: 1.2em; color: #e51e25; }
+        
+        .tracker-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .track-row { display: flex; align-items: center; background: #333; margin-bottom: 5px; padding: 8px; border-radius: 4px; border-left: 4px solid transparent; transition: 0.2s; }
+        .track-row.active-turn { background: #2f3a2f; border-left-color: #4f4 !important; box-shadow: 0 0 8px rgba(0, 255, 0, 0.2); }
+        .track-init { width: 35px; font-weight: bold; text-align: center; background: #222; border: 1px solid #444; color: #fff; margin-right: 10px; padding: 5px; }
+        .track-name { flex: 1; font-weight: bold; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-hp { width: 45px; margin-right: 5px; }
+        .track-hp input { width: 100%; background: #222; border: 1px solid #444; color: #4f4; padding: 3px; text-align: center; }
+        .btn-del { color: #f44; cursor: pointer; padding: 0 5px; font-weight:bold; }
+
+        /* DICE TRAY (New) */
+        .dice-tray { background: #151515; padding: 15px; border-top: 1px solid #333; }
+        .dice-result { background: #000; color: #4f4; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 1.1em; margin-bottom: 10px; min-height: 20px; border: 1px solid #333; white-space: pre-wrap; }
+        .dice-row { display: flex; gap: 5px; margin-bottom: 8px; }
+        .dice-btn { flex: 1; background: #333; color: #ccc; border: 1px solid #444; border-radius: 4px; cursor: pointer; padding: 5px 0; font-weight: bold; }
+        .dice-btn:hover { background: #444; color: white; border-color: #666; }
+        .custom-roll { display: flex; gap: 5px; }
+        .custom-roll input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 5px; }
+        
+        .tracker-controls { padding: 10px; background: #222; display: flex; gap: 5px; border-top: 1px solid #333; }
+        .btn { padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; background: #444; width: 100%; }
+        .btn-next { background: #4f4; color: #000; } 
+        .btn-next:hover { background: #6f6; }
+        
+        /* --- MIDDLE COLUMN (Content) --- */
         .col-mid { flex: 1; display: flex; flex-direction: column; background: #222; position:relative; }
         
-        /* HEADER */
-        .campaign-header { padding: 20px; background: #222; border-bottom: 1px solid #444; text-align: center; }
-        h2 { margin: 0; padding: 15px; border-bottom: 2px solid #e51e25; font-size: 1.2em; background: #222; }
-
-        /* TRACKER */
-        .tracker-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .track-row { display: flex; align-items: center; background: #333; margin-bottom: 5px; padding: 8px; border-radius: 4px; border-left: 4px solid transparent; transition: 0.3s; }
-        .track-row.active-turn { background: #2f3a2f; border-left-color: #4f4 !important; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); transform: scale(1.02); }
-        .track-init { width: 40px; font-weight: bold; text-align: center; background: #222; border: 1px solid #444; color: #fff; margin-right: 10px; padding: 5px; }
-        .track-name { flex: 1; font-weight: bold; cursor: pointer; }
-        .track-hp { width: 50px; text-align: right; margin-right: 10px; }
-        .track-hp input { width: 100%; background: #222; border: 1px solid #444; color: #4f4; padding: 3px; text-align: center; }
-        .btn-del { color: #f44; cursor: pointer; padding: 0 5px; font-weight:bold;}
-
-        /* CONTROLS */
-        .tracker-controls { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 5px; flex-direction: column; }
-        .btn { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; background: #444; }
-        .btn-next { background: #4f4; color: #000; font-size: 1.1em; margin-bottom: 5px; }
-        .btn-next:hover { background: #6f6; }
-        .btn-blue { background: #2b5fa3; }
-        .btn:hover { opacity: 0.9; }
-
-        /* SEARCH & TABS */
         .mode-bar { display: flex; padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; gap: 5px; }
-        .mode-btn { flex: 1; padding: 8px; background: #333; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .mode-btn { flex: 1; padding: 8px; background: #333; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .mode-btn.active { background: #e51e25; color: white; border-color: #e51e25; }
 
         .search-bar { padding: 10px; background: #252525; border-bottom: 1px solid #444; display: flex; gap: 10px; align-items: center; }
+        .filter-select { padding: 8px; background: #111; border: 1px solid #444; color: #8af; border-radius: 4px; font-weight: bold; display: none; max-width: 150px; }
         .search-bar input { flex: 1; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
         
-        .filter-select { padding: 8px; background: #111; border: 1px solid #444; color: #8af; border-radius: 4px; font-weight: bold; display: none; max-width: 150px; }
-
         .tabs-header { display: flex; overflow-x: auto; background: #1a1a1a; border-bottom: 1px solid #444; height: 40px; }
         .tab-btn { padding: 0 15px; border: none; background: #222; color: #888; cursor: pointer; border-right: 1px solid #333; line-height: 40px; white-space: nowrap; }
         .tab-btn.active { background: #333; color: #fff; border-top: 2px solid #e51e25; }
         .tab-close { margin-left: 8px; color: #f44; font-weight: bold; }
 
-        /* STAT BLOCK & ADDER */
         .tab-content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
-        .stat-block { background: #e0d5b5; color: #222; padding: 15px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; }
+        
+        /* STAT BLOCK STYLES */
+        .stat-block { background: #e0d5b5; color: #222; padding: 15px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family: 'Georgia', serif; max-width: 700px; margin: 0 auto; }
         .stat-block h1 { color: #58180d; border-bottom: 2px solid #58180d; font-size: 1.5em; margin: 0 0 5px 0; }
         
         .add-row { background: rgba(88, 24, 13, 0.1); padding: 10px; border-radius: 4px; display: flex; gap: 10px; margin-bottom: 15px; border: 1px dashed #58180d; align-items: center; }
-        .add-row input { flex: 1; padding: 5px; background: rgba(255,255,255,0.5); border: 1px solid #58180d; color: #58180d; placeholder-color: #58180d; font-weight: bold; }
+        .add-row input { flex: 1; padding: 5px; background: rgba(255,255,255,0.5); border: 1px solid #58180d; color: #58180d; font-weight: bold; }
         .add-row button { background: #58180d; color: #e0d5b5; border: none; padding: 5px 15px; font-weight: bold; cursor: pointer; }
 
         .stat-grid { display: flex; justify-content: space-around; color: #58180d; font-weight: bold; margin: 10px 0; }
-        .stat-box { text-align: center; padding: 5px; }
+        .stat-box { text-align: center; padding: 5px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .stat-box:hover { background: rgba(88,24,13,0.1); }
         .stat-val { font-size: 1.2em; }
+        
         .red-line { height: 2px; background: #58180d; margin: 5px 0; }
+        
         .action-item { margin-bottom: 8px; padding: 5px; border-bottom: 1px dotted #58180d; }
+        .roll-btn { background: #fff; border: 1px solid #58180d; color: #58180d; cursor: pointer; font-size: 0.8em; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+        .roll-btn:hover { background: #58180d; color: #fff; }
+        
+        .prof-list { font-size: 0.9em; margin-bottom: 10px; color: #58180d; }
+        .prof-tag { display: inline-block; background: rgba(88,24,13,0.1); padding: 2px 6px; border-radius: 4px; margin: 2px; cursor: pointer; border: 1px solid transparent; }
+        .prof-tag:hover { border-color: #58180d; background: rgba(88,24,13,0.2); }
 
+        /* SEARCH RESULTS */
         #searchResults { position: absolute; top: 125px; left: 15px; right: 15px; background: #111; border: 1px solid #555; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
         .result-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
         .result-item:hover { background: #2b5fa3; }
         
+        /* CUSTOM MONSTER FORM */
         #customMonsterForm { background:#252525; padding:15px; border-bottom:1px solid #444; display:none; }
         .form-row { display:flex; gap:10px; margin-bottom:10px; }
         .form-row input { flex:1; background:#111; border:1px solid #444; color:#fff; padding:5px; }
-        
-        .invite-box { padding: 10px; text-align: center; border-bottom: 1px solid #333; font-size: 0.9em; color: #888; }
-        .code { color: #e51e25; font-weight: bold; font-family: monospace; font-size: 1.2em; }
     </style>
 </head>
 <body>
 
 <div class="col-left">
-    <div class="campaign-header"><h1 id="campNameDisplay">DM Screen</h1></div>
-    <div class="invite-box">Join Code: <span id="codeDisplay" class="code">...</span></div>
+    <div class="campaign-header">
+        <h2>DM Screen</h2>
+        <div style="font-size:0.8em; color:#888;">Code: <span id="codeDisplay" style="color:#e51e25; font-weight:bold;">...</span></div>
+    </div>
     
     <div class="tracker-list" id="trackerList"></div>
     
+    <div class="dice-tray">
+        <div class="dice-result" id="diceLog">Rolls appear here...</div>
+        <div class="dice-row">
+            <button class="dice-btn" onclick="rollSimple(4)">d4</button>
+            <button class="dice-btn" onclick="rollSimple(6)">d6</button>
+            <button class="dice-btn" onclick="rollSimple(8)">d8</button>
+            <button class="dice-btn" onclick="rollSimple(10)">d10</button>
+            <button class="dice-btn" onclick="rollSimple(12)">d12</button>
+            <button class="dice-btn" onclick="rollSimple(20)">d20</button>
+        </div>
+        <div class="custom-roll">
+            <input type="text" id="customDiceInput" placeholder="e.g. 2d8+5" onkeydown="if(event.key==='Enter') rollCustom()">
+            <button class="dice-btn" style="flex:0; padding:0 15px;" onclick="rollCustom()">Roll</button>
+        </div>
+    </div>
+
     <div class="tracker-controls">
         <button class="btn btn-next" onclick="nextTurn()">Next Turn ➔</button>
-        <div style="display:flex; gap:5px;">
-            <button class="btn" onclick="clearTracker()" style="flex:1; background:#a33;">Clear All</button>
-            <button class="btn" onclick="resetTurns()" style="flex:1;">Reset Turn</button>
-        </div>
+        <button class="btn" onclick="clearTracker()" style="background:#a33; width:60px;">Clr</button>
     </div>
 </div>
 
@@ -130,21 +160,21 @@
     <div id="searchResults"></div>
 
     <div id="customMonsterForm">
-        <div class="form-row"><input type="text" id="custName" placeholder="Name"><input type="number" id="custHP" placeholder="HP" style="width:60px"><input type="number" id="custAC" placeholder="AC" style="width:60px"><input type="number" id="custDex" placeholder="Dex Score" style="width:60px"></div>
-        <button class="btn btn-blue" onclick="addCustomMonster()">Open Stat Block</button>
+        <div class="form-row"><input type="text" id="custName" placeholder="Name"><input type="number" id="custHP" placeholder="HP"><input type="number" id="custAC" placeholder="AC"><input type="number" id="custDex" placeholder="Dex Score"></div>
+        <button class="btn" style="background:#2b5fa3" onclick="addCustomMonster()">Open Stat Block</button>
     </div>
     
     <div class="tabs-header" id="tabsHeader"></div>
     <div class="tab-content-area" id="tabContent">
-        <div style="text-align:center; color:#555; margin-top:50px;">Select a mode and search for content.</div>
+        <div style="text-align:center; color:#555; margin-top:50px;">Select a mode to begin.</div>
     </div>
 </div>
 
 <script>
+    // --- SETUP ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     if (!ROOM_ID) window.location.href = "index.html";
-
     document.getElementById('codeDisplay').innerText = ROOM_ID;
     
     let encounterData = [];
@@ -153,7 +183,78 @@
     let currentTab = null;
     let searchTimeout;
     let currentMode = 'monster';
-    let equipmentCache = []; // Stores filtered equipment for instant search
+    let equipmentCache = [];
+
+    // --- DICE SYSTEM ---
+    function logDice(text) {
+        const log = document.getElementById('diceLog');
+        log.innerText = text;
+        log.style.color = '#fff';
+        setTimeout(() => log.style.color = '#4f4', 100);
+    }
+
+    function rollSimple(sides) {
+        const val = Math.floor(Math.random() * sides) + 1;
+        logDice(`d${sides} Result: ${val}`);
+    }
+
+    function rollCustom() {
+        const input = document.getElementById('customDiceInput').value.toLowerCase().replace(/\s/g,'');
+        if(!input) return;
+        
+        // Simple Parser: XdY+Z
+        const parts = input.match(/^(\d*)d(\d+)([+-]\d+)?$/);
+        if(parts) {
+            const count = parseInt(parts[1]) || 1;
+            const sides = parseInt(parts[2]);
+            const mod = parseInt(parts[3]) || 0;
+            let total = 0;
+            let rolls = [];
+            for(let i=0; i<count; i++) {
+                let r = Math.floor(Math.random() * sides) + 1;
+                total += r;
+                rolls.push(r);
+            }
+            total += mod;
+            logDice(`[${input}]: ${rolls.join('+')}${mod? (mod>0?'+'+mod:mod) : ''} = ${total}`);
+        } else {
+            // Fallback for flat numbers or simple math
+            try {
+               // Security note: eval is dangerous, but for this local tool valid input is limited. 
+               // Better to use a safe math parser, but for this snippet:
+               logDice("Invalid format. Use '1d20+5'");
+            } catch(e) { logDice("Error"); }
+        }
+    }
+
+    function rollCheck(name, mod) {
+        const d20 = Math.floor(Math.random() * 20) + 1;
+        const total = d20 + mod;
+        logDice(`${name}: ${d20} + ${mod} = ${total}`);
+    }
+
+    function rollDmg(name, formula) {
+        // formula looks like "2d6+3"
+        const parts = formula.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
+        if(!parts) { logDice(`Cannot parse ${formula}`); return; }
+        
+        const count = parseInt(parts[1]);
+        const sides = parseInt(parts[2]);
+        const op = parts[3] || '+';
+        const mod = parseInt(parts[4]) || 0;
+        
+        let total = 0;
+        let details = [];
+        for(let i=0; i<count; i++) {
+            let r = Math.floor(Math.random() * sides) + 1;
+            total += r;
+            details.push(r);
+        }
+        
+        if(op === '+') total += mod; else total -= mod;
+        const modTxt = mod ? `${op}${mod}` : '';
+        logDice(`${name}: [${details.join(',')}]${modTxt} = ${total} Dmg`);
+    }
 
     // --- FIREBASE LISTENERS ---
     db.ref(`campaigns/${ROOM_ID}/active_turn`).on('value', snap => {
@@ -168,11 +269,10 @@
         renderTracker();
     });
 
-    // --- TRACKER RENDER ---
+    // --- TRACKER LOGIC ---
     function renderTracker() {
         const list = document.getElementById('trackerList');
         list.innerHTML = "";
-        
         encounterData.forEach(c => {
             const isActive = c.name === currentTurnName;
             const row = document.createElement('div');
@@ -180,7 +280,7 @@
             
             let hpDisplay = (c.type === 'monster') ? 
                 `<input type="number" value="${c.hp}" onchange="updateMon('${c.key}', 'hp', this.value)">` : 
-                `<span style="color:#aaa; font-size:0.8em;">PC</span>`;
+                `<span style="color:#aaa; font-size:0.8em; width:45px; display:inline-block; text-align:center;">PC</span>`;
 
             let nameAction = (c.type === 'monster' && c.index) ? 
                 `onclick="openTab('${c.index}', '${c.realName||c.name}', 'monster')"` : "";
@@ -189,7 +289,7 @@
                 <input type="number" class="track-init" value="${c.init}" onchange="updateMon('${c.key}', 'init', this.value)">
                 <div class="track-name" ${nameAction}>${c.name}</div>
                 <div class="track-hp">${hpDisplay}</div>
-                <div class="btn-del" onclick="delMon('${c.key}')">x</div>
+                <div class="btn-del" onclick="delMon('${c.key}')">×</div>
             `;
             list.appendChild(row);
         });
@@ -201,65 +301,46 @@
         let nextIdx = (idx + 1) % encounterData.length;
         db.ref(`campaigns/${ROOM_ID}/active_turn`).set(encounterData[nextIdx].name);
     }
-    function resetTurns() { db.ref(`campaigns/${ROOM_ID}/active_turn`).set(null); }
-    function updateMon(key, field, val) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}/${field}`).set(parseInt(val)); }
+    function updateMon(key, f, v) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}/${f}`).set(parseInt(v)); }
     function delMon(key) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}`).remove(); }
-    function clearTracker() { if(confirm("Clear All?")) { db.ref(`campaigns/${ROOM_ID}/encounters`).remove(); resetTurns(); } }
+    function clearTracker() { if(confirm("Clear All?")) { db.ref(`campaigns/${ROOM_ID}/encounters`).remove(); db.ref(`campaigns/${ROOM_ID}/active_turn`).set(null); } }
 
-    // --- MODE & SEARCH ---
+    // --- SEARCH SYSTEM ---
     function setMode(mode) {
         currentMode = mode;
-        document.getElementById('btnModeMon').className = mode === 'monster' ? 'mode-btn active' : 'mode-btn';
-        document.getElementById('btnModeSpl').className = mode === 'spell' ? 'mode-btn active' : 'mode-btn';
-        document.getElementById('btnModeEqp').className = mode === 'equipment' ? 'mode-btn active' : 'mode-btn';
+        ['Mon','Spl','Eqp'].forEach(x => document.getElementById(`btnMode${x}`).className = 'mode-btn');
+        document.getElementById(`btnMode${mode.charAt(0).toUpperCase()+mode.slice(1,3)}`).className = 'mode-btn active';
         
-        document.getElementById('searchInput').placeholder = `Search ${mode.charAt(0).toUpperCase() + mode.slice(1)}s...`;
-        
-        // Toggle Filters
+        document.getElementById('searchInput').placeholder = `Search ${mode}...`;
         document.getElementById('classFilter').style.display = (mode === 'spell') ? 'block' : 'none';
         document.getElementById('eqFilter').style.display = (mode === 'equipment') ? 'block' : 'none';
         document.getElementById('searchResults').style.display = 'none';
-        
-        // Reset Eq Filter
-        if(mode === 'equipment') { 
-            document.getElementById('eqFilter').value = ""; 
-            equipmentCache = []; 
-        }
+        if(mode === 'equipment') { document.getElementById('eqFilter').value=""; equipmentCache=[]; }
     }
 
-    // LOAD FILTERED EQUIPMENT (CACHING STRATEGY)
     async function loadEquipmentFilter() {
         const filter = document.getElementById('eqFilter').value;
         const resDiv = document.getElementById('searchResults');
         document.getElementById('searchInput').value = "";
         
         if (!filter) { equipmentCache = []; search(); return; }
-
+        
         resDiv.innerHTML = "<div class='result-item'>Loading...</div>";
         resDiv.style.display = 'block';
 
-        let cats = [];
-        if (filter === 'melee') cats = ['simple-melee-weapons', 'martial-melee-weapons'];
-        else if (filter === 'ranged') cats = ['simple-ranged-weapons', 'martial-ranged-weapons'];
-        else if (filter === 'gear') cats = ['adventuring-gear', 'standard-gear', 'equipment-packs'];
-        else if (filter === 'tools') cats = ['tools', 'artisan-tools', 'gaming-sets'];
-        else if (filter === 'instruments') cats = ['musical-instruments'];
-        else cats = [filter]; // Direct mapping (light-armor, etc)
+        let cats = (filter==='melee')?['simple-melee-weapons','martial-melee-weapons']:
+                   (filter==='ranged')?['simple-ranged-weapons','martial-ranged-weapons']:
+                   (filter==='gear')?['adventuring-gear','standard-gear','equipment-packs']:
+                   (filter==='tools')?['tools','artisan-tools','gaming-sets']:
+                   (filter==='instruments')?['musical-instruments']:[filter];
 
         try {
-            // Fetch all categories in parallel
             const promises = cats.map(c => fetch(`https://www.dnd5eapi.co/api/equipment-categories/${c}`).then(r => r.json()));
             const results = await Promise.all(promises);
-            
-            // Merge all equipment lists
             equipmentCache = [];
-            results.forEach(data => {
-                if(data.equipment) equipmentCache.push(...data.equipment);
-            });
-            
-            resDiv.innerHTML = "";
-            search(); // Trigger render with empty query (shows list)
-        } catch (e) { console.error(e); }
+            results.forEach(d => { if(d.equipment) equipmentCache.push(...d.equipment); });
+            resDiv.innerHTML = ""; search();
+        } catch(e){console.error(e);}
     }
 
     function search() {
@@ -267,14 +348,12 @@
         const q = document.getElementById('searchInput').value.toLowerCase(); 
         const resDiv = document.getElementById('searchResults');
         
-        // EQUIPMENT LOCAL SEARCH (If filter is active)
-        if (currentMode === 'equipment' && equipmentCache.length > 0) {
-            const hits = equipmentCache.filter(i => i.name.toLowerCase().includes(q));
-            renderResults(hits);
+        if(currentMode==='equipment' && equipmentCache.length>0) {
+            renderResults(equipmentCache.filter(i=>i.name.toLowerCase().includes(q)));
             return;
         }
 
-        if(q.length < 2 && currentMode !== 'spell' && currentMode !== 'equipment'){ resDiv.style.display='none'; return; }
+        if(q.length < 2 && currentMode!=='spell'){ resDiv.style.display='none'; return; }
 
         searchTimeout = setTimeout(() => {
             let url = "";
@@ -283,48 +362,37 @@
             if (currentMode === 'monster') url = `https://www.dnd5eapi.co/api/monsters?name=${q}`;
             else if (currentMode === 'equipment') url = `https://www.dnd5eapi.co/api/equipment?name=${q}`;
             else if (currentMode === 'spell') {
-                if (cls) url = `https://www.dnd5eapi.co/api/classes/${cls}/spells`; 
-                else url = `https://www.dnd5eapi.co/api/spells?name=${q}`;
+                url = cls ? `https://www.dnd5eapi.co/api/classes/${cls}/spells` : `https://www.dnd5eapi.co/api/spells?name=${q}`;
             }
 
             fetch(url).then(r => r.json()).then(data => {
                 let results = data.results || [];
-                // Client-side spell filtering
-                if (currentMode === 'spell' && cls && q.length > 0) {
-                    results = results.filter(s => s.name.toLowerCase().includes(q));
-                }
+                if(currentMode==='spell' && cls && q.length>0) results = results.filter(s=>s.name.toLowerCase().includes(q));
                 renderResults(results);
             });
         }, 300);
     }
 
     function renderResults(results) {
-        const resDiv = document.getElementById('searchResults');
-        resDiv.innerHTML = "";
-        
+        const div = document.getElementById('searchResults');
+        div.innerHTML = "";
         if(results.length > 0){ 
-            resDiv.style.display = 'block'; 
+            div.style.display = 'block'; 
             results.forEach(m => { 
                 const item = document.createElement('div'); 
                 item.className = 'result-item'; 
                 item.innerText = m.name; 
-                item.onclick = () => { 
-                    openTab(m.index, m.name, currentMode); 
-                    resDiv.style.display = 'none'; 
-                    document.getElementById('searchInput').value = ''; 
-                }; 
-                resDiv.appendChild(item); 
+                item.onclick = () => { openTab(m.index, m.name, currentMode); div.style.display = 'none'; document.getElementById('searchInput').value=''; }; 
+                div.appendChild(item); 
             }); 
-        } else { resDiv.style.display = 'none'; }
+        } else { div.style.display = 'none'; }
     }
 
-    // --- TABS ---
+    // --- TAB SYSTEM ---
     function openTab(index, name, type) {
         if(!tabs.find(t => t.id === index)) {
-            let endpointType = type + "s"; 
-            if(type === 'equipment') endpointType = "equipment"; 
-
-            fetch(`https://www.dnd5eapi.co/api/${endpointType}/${index}`).then(r => r.json()).then(data => {
+            let ep = (type==='equipment') ? 'equipment' : type+'s';
+            fetch(`https://www.dnd5eapi.co/api/${ep}/${index}`).then(r => r.json()).then(data => {
                 tabs.push({id: index, name: name, data: data, type: type});
                 renderTabsHeader(); setActiveTab(index);
             });
@@ -344,7 +412,7 @@
     function closeTab(id, e) {
         e.stopPropagation(); tabs = tabs.filter(t => t.id !== id); renderTabsHeader();
         if(tabs.length > 0) setActiveTab(tabs[tabs.length-1].id);
-        else document.getElementById('tabContent').innerHTML = "<div style='text-align:center; color:#555; margin-top:50px;'>Select content...</div>";
+        else document.getElementById('tabContent').innerHTML = "<div style='text-align:center;color:#555;margin-top:50px;'>Select content...</div>";
     }
 
     function renderTabsHeader() {
@@ -360,53 +428,81 @@
 
     // --- RENDERERS ---
     function renderMonsterBlock(m, tabId) {
+        // 1. Stats with Roll OnClick
         let statsHtml = "";
         ['strength','dexterity','constitution','intelligence','wisdom','charisma'].forEach(s => {
             const short = s.substring(0,3).toUpperCase();
             const val = m[s] || 10;
             const mod = Math.floor((val-10)/2);
-            statsHtml += `<div class="stat-box"><div class="stat-val">${short}</div><div>${val} (${mod>=0?'+':''}${mod})</div></div>`;
+            statsHtml += `<div class="stat-box" onclick="rollCheck('${short} Check', ${mod})">
+                <div class="stat-val">${short}</div>
+                <div>${val} (${mod>=0?'+':''}${mod})</div>
+            </div>`;
         });
-        let actHtml = "";
-        if(m.actions) m.actions.forEach(a => actHtml += `<div class="action-item"><strong>${a.name}.</strong> ${a.desc}</div>`);
-        const acVal = (m.armor_class && m.armor_class[0]) ? m.armor_class[0].value : (m.armor_class || 10);
 
+        // 2. Proficiencies (Skills & Saves)
+        let profHtml = "";
+        if(m.proficiencies) {
+            m.proficiencies.forEach(p => {
+                const name = p.proficiency.name.replace('Skill: ', '').replace('Saving Throw: ', 'Save: ');
+                profHtml += `<span class="prof-tag" onclick="rollCheck('${name}', ${p.value})">${name} +${p.value}</span>`;
+            });
+        }
+
+        // 3. Actions with Buttons
+        let actHtml = "";
+        if(m.actions) {
+            m.actions.forEach(a => {
+                let btns = "";
+                // Attack Button
+                if(a.attack_bonus) btns += `<button class="roll-btn" onclick="rollCheck('${a.name} Attack', ${a.attack_bonus})">Atk +${a.attack_bonus}</button>`;
+                // Damage Button
+                if(a.damage && a.damage[0] && a.damage[0].damage_dice) {
+                     btns += `<button class="roll-btn" onclick="rollDmg('${a.name}', '${a.damage[0].damage_dice}')">Dmg ${a.damage[0].damage_dice}</button>`;
+                }
+                actHtml += `<div class="action-item"><strong>${a.name}.</strong> ${btns} ${a.desc}</div>`;
+            });
+        }
+
+        const acVal = (m.armor_class && m.armor_class[0]) ? m.armor_class[0].value : (m.armor_class || 10);
+        
         document.getElementById('tabContent').innerHTML = `
             <div class="stat-block">
                 <h1>${m.name}</h1>
-                <div style="font-style:italic;">${m.size} ${m.type}, ${m.alignment||""}</div>
+                <div style="font-style:italic;">${m.size} ${m.type}</div>
+                
                 <div class="add-row">
                     <span>Tracker:</span>
-                    <input type="text" id="lbl_${tabId}" placeholder="Label (e.g. 1)">
-                    <button onclick="addToTracker('${tabId}')">Roll & Add</button>
+                    <input type="text" id="lbl_${tabId}" placeholder="Label (e.g. Red)">
+                    <button onclick="addToTracker('${tabId}')">Roll Init & Add</button>
                 </div>
+
                 <div class="red-line"></div>
                 <div style="display:flex; justify-content:space-between;">
                     <div><strong>AC</strong> ${acVal}</div>
                     <div><strong>HP</strong> ${m.hit_points}</div>
-                    <div><strong>Spd</strong> ${JSON.stringify(m.speed).replace(/[{"}]/g,'').replace(/,/g,', ')}</div>
+                    <div><strong>Spd</strong> ${JSON.stringify(m.speed||"").replace(/[{"}]/g,'').replace(/,/g,', ')}</div>
                 </div>
+                
                 <div class="red-line"></div>
                 <div class="stat-grid">${statsHtml}</div>
+                
+                ${profHtml ? `<div class="prof-list"><strong>Skills/Saves:</strong> ${profHtml}</div>` : ''}
+                
                 <div class="red-line"></div>
                 ${actHtml}
             </div>`;
     }
 
     function renderSpellBlock(s) {
-        const classes = s.classes ? s.classes.map(c => c.name).join(", ") : "None";
+        const classes = s.classes ? s.classes.map(c => c.name).join(", ") : "-";
         document.getElementById('tabContent').innerHTML = `
             <div class="stat-block">
                 <h1>${s.name}</h1>
-                <div style="font-style:italic;">${s.level > 0 ? "Level "+s.level : "Cantrip"} ${s.school.name}</div>
+                <div style="font-style:italic;">Level ${s.level} ${s.school.name}</div>
                 <div class="red-line"></div>
-                <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
-                    <div style="margin-right:15px;"><strong>Time:</strong> ${s.casting_time}</div>
-                    <div style="margin-right:15px;"><strong>Range:</strong> ${s.range}</div>
-                    <div style="margin-right:15px;"><strong>Dur:</strong> ${s.duration}</div>
-                </div>
+                <div><strong>Time:</strong> ${s.casting_time} | <strong>Range:</strong> ${s.range} | <strong>Dur:</strong> ${s.duration}</div>
                 <div style="margin-top:5px;"><strong>Comp:</strong> ${s.components.join(', ')}</div>
-                <div style="margin-top:5px;"><strong>Classes:</strong> ${classes}</div>
                 <div class="red-line"></div>
                 <div style="white-space: pre-wrap;">${s.desc.join('\n\n')}</div>
                 ${s.higher_level ? `<div class="red-line"></div><strong>At Higher Levels:</strong> ${s.higher_level.join(' ')}` : ''}
@@ -415,13 +511,10 @@
 
     function renderItemBlock(i) {
         let props = [];
-        if(i.weapon_category) props.push(i.weapon_category);
-        if(i.armor_category) props.push(i.armor_category);
         if(i.properties) i.properties.forEach(p => props.push(p.name));
-        
         let dmg = "";
         if(i.damage) dmg = `${i.damage.damage_dice} ${i.damage.damage_type.name}`;
-        if(i.armor_class) dmg = `AC ${i.armor_class.base} ${i.armor_class.dex_bonus ? '+ Dex' : ''}`;
+        if(i.armor_class) dmg = `AC ${i.armor_class.base}`;
 
         document.getElementById('tabContent').innerHTML = `
             <div class="stat-block">
@@ -430,11 +523,11 @@
                 <div class="red-line"></div>
                 <div style="display:flex; justify-content:space-between;">
                     <div><strong>Cost:</strong> ${i.cost ? i.cost.quantity + i.cost.unit : '-'}</div>
-                    <div><strong>Weight:</strong> ${i.weight ? i.weight + ' lb' : '-'}</div>
+                    <div><strong>Wt:</strong> ${i.weight ? i.weight + ' lb' : '-'}</div>
                 </div>
                 ${dmg ? `<div style="margin-top:10px; font-size:1.2em; font-weight:bold; color:#a33;">${dmg}</div>` : ''}
                 <div class="red-line"></div>
-                ${props.length > 0 ? `<div><strong>Properties:</strong> ${props.join(', ')}</div>` : ''}
+                ${props.length ? `<div>${props.join(', ')}</div>` : ''}
                 ${i.desc ? `<div style="margin-top:10px;">${i.desc.join(' ')}</div>` : ''}
             </div>`;
     }
@@ -445,11 +538,11 @@
         const hp = parseInt(document.getElementById('custHP').value) || 10;
         const ac = parseInt(document.getElementById('custAC').value) || 10;
         const dex = parseInt(document.getElementById('custDex').value) || 10;
-        const id = "cust_" + name.replace(/\s/g, "") + Date.now();
-        const data = { name: name, size: "Medium", type: "Custom", hit_points: hp, armor_class: [{value: ac}], dexterity: dex, strength:10, constitution:10, intelligence:10, wisdom:10, charisma:10, actions: [] };
+        const id = "cust_" + Date.now();
+        const data = { name: name, size: "Med", type: "Custom", hit_points: hp, armor_class: [{value: ac}], dexterity: dex, strength:10, constitution:10, intelligence:10, wisdom:10, charisma:10, actions: [] };
         tabs.push({id: id, name: name, data: data, type: 'custom'});
         renderTabsHeader(); setActiveTab(id);
-        toggleCustomForm();
+        document.getElementById('customMonsterForm').style.display='none';
     }
 
     function addToTracker(tabId) {
