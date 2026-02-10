@@ -33,8 +33,15 @@
         .btn:hover { opacity: 0.9; }
 
         /* SEARCH & TABS */
-        .search-bar { padding: 15px; background: #252525; border-bottom: 1px solid #444; display: flex; gap: 10px; }
+        .mode-bar { display: flex; padding: 10px; background: #1a1a1a; border-bottom: 1px solid #333; gap: 5px; }
+        .mode-btn { flex: 1; padding: 8px; background: #333; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .mode-btn.active { background: #e51e25; color: white; border-color: #e51e25; }
+
+        .search-bar { padding: 10px; background: #252525; border-bottom: 1px solid #444; display: flex; gap: 10px; align-items: center; }
         .search-bar input { flex: 1; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
+        
+        #classFilter { padding: 8px; background: #111; border: 1px solid #444; color: #8af; border-radius: 4px; font-weight: bold; display: none; }
+
         .tabs-header { display: flex; overflow-x: auto; background: #1a1a1a; border-bottom: 1px solid #444; height: 40px; }
         .tab-btn { padding: 0 15px; border: none; background: #222; color: #888; cursor: pointer; border-right: 1px solid #333; line-height: 40px; white-space: nowrap; }
         .tab-btn.active { background: #333; color: #fff; border-top: 2px solid #e51e25; }
@@ -45,11 +52,9 @@
         .stat-block { background: #e0d5b5; color: #222; padding: 15px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; }
         .stat-block h1 { color: #58180d; border-bottom: 2px solid #58180d; font-size: 1.5em; margin: 0 0 5px 0; }
         
-        /* NEW: ADD TO TRACKER BAR */
         .add-row { background: rgba(88, 24, 13, 0.1); padding: 10px; border-radius: 4px; display: flex; gap: 10px; margin-bottom: 15px; border: 1px dashed #58180d; align-items: center; }
         .add-row input { flex: 1; padding: 5px; background: rgba(255,255,255,0.5); border: 1px solid #58180d; color: #58180d; placeholder-color: #58180d; font-weight: bold; }
         .add-row button { background: #58180d; color: #e0d5b5; border: none; padding: 5px 15px; font-weight: bold; cursor: pointer; }
-        .add-row button:hover { background: #802010; }
 
         .stat-grid { display: flex; justify-content: space-around; color: #58180d; font-weight: bold; margin: 10px 0; }
         .stat-box { text-align: center; padding: 5px; }
@@ -57,7 +62,7 @@
         .red-line { height: 2px; background: #58180d; margin: 5px 0; }
         .action-item { margin-bottom: 8px; padding: 5px; border-bottom: 1px dotted #58180d; }
 
-        #searchResults { position: absolute; top: 120px; left: 15px; right: 15px; background: #111; border: 1px solid #555; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
+        #searchResults { position: absolute; top: 125px; left: 15px; right: 15px; background: #111; border: 1px solid #555; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
         .result-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
         .result-item:hover { background: #2b5fa3; }
         
@@ -87,8 +92,26 @@
 </div>
 
 <div class="col-mid">
+    <div class="mode-bar">
+        <button class="mode-btn active" id="btnModeMon" onclick="setMode('monster')">Monsters</button>
+        <button class="mode-btn" id="btnModeSpl" onclick="setMode('spell')">Spells</button>
+        <button class="mode-btn" id="btnModeEqp" onclick="setMode('equipment')">Equipment</button>
+    </div>
+    
     <div class="search-bar">
-        <input type="text" id="monsterSearch" placeholder="Search Monsters..." onkeyup="search()">
+        <select id="classFilter" onchange="search()">
+            <option value="">All Classes</option>
+            <option value="bard">Bard</option>
+            <option value="cleric">Cleric</option>
+            <option value="druid">Druid</option>
+            <option value="paladin">Paladin</option>
+            <option value="ranger">Ranger</option>
+            <option value="sorcerer">Sorcerer</option>
+            <option value="warlock">Warlock</option>
+            <option value="wizard">Wizard</option>
+        </select>
+        
+        <input type="text" id="searchInput" placeholder="Search Monsters..." onkeyup="search()">
         <button class="btn" style="flex:0; width:70px;" onclick="toggleCustomForm()">+ Custom</button>
     </div>
     <div id="searchResults"></div>
@@ -100,7 +123,7 @@
     
     <div class="tabs-header" id="tabsHeader"></div>
     <div class="tab-content-area" id="tabContent">
-        <div style="text-align:center; color:#555; margin-top:50px;">Search for a monster to view stats and add to tracker.</div>
+        <div style="text-align:center; color:#555; margin-top:50px;">Select a mode and search for content.</div>
     </div>
 </div>
 
@@ -116,6 +139,7 @@
     let tabs = [];
     let currentTab = null;
     let searchTimeout;
+    let currentMode = 'monster';
 
     // --- FIREBASE LISTENERS ---
     db.ref(`campaigns/${ROOM_ID}/active_turn`).on('value', snap => {
@@ -140,14 +164,12 @@
             const row = document.createElement('div');
             row.className = `track-row ${isActive ? 'active-turn' : ''}`;
             
-            // HP input only for monsters
             let hpDisplay = (c.type === 'monster') ? 
                 `<input type="number" value="${c.hp}" onchange="updateMon('${c.key}', 'hp', this.value)">` : 
                 `<span style="color:#aaa; font-size:0.8em;">PC</span>`;
 
-            // Onclick name opens tab if monster
             let nameAction = (c.type === 'monster' && c.index) ? 
-                `onclick="openTab('${c.index}', '${c.realName||c.name}', 'monster')"` : ""; // Use realName if available (strips label)
+                `onclick="openTab('${c.index}', '${c.realName||c.name}', 'monster')"` : "";
 
             row.innerHTML = `
                 <input type="number" class="track-init" value="${c.init}" onchange="updateMon('${c.key}', 'init', this.value)">
@@ -159,7 +181,6 @@
         });
     }
 
-    // --- TURN LOGIC ---
     function nextTurn() {
         if(encounterData.length === 0) return;
         let idx = encounterData.findIndex(e => e.name === currentTurnName);
@@ -171,45 +192,75 @@
     function delMon(key) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}`).remove(); }
     function clearTracker() { if(confirm("Clear All?")) { db.ref(`campaigns/${ROOM_ID}/encounters`).remove(); resetTurns(); } }
 
-    // --- SEARCH & TABS ---
+    // --- MODE & SEARCH ---
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('btnModeMon').className = mode === 'monster' ? 'mode-btn active' : 'mode-btn';
+        document.getElementById('btnModeSpl').className = mode === 'spell' ? 'mode-btn active' : 'mode-btn';
+        document.getElementById('btnModeEqp').className = mode === 'equipment' ? 'mode-btn active' : 'mode-btn';
+        
+        document.getElementById('searchInput').placeholder = `Search ${mode.charAt(0).toUpperCase() + mode.slice(1)}s...`;
+        
+        // Show/Hide Class Filter
+        document.getElementById('classFilter').style.display = (mode === 'spell') ? 'block' : 'none';
+        document.getElementById('searchResults').style.display = 'none';
+    }
+
     function search() {
-        clearTimeout(searchTimeout); const q = document.getElementById('monsterSearch').value; const resDiv = document.getElementById('searchResults');
-        if(q.length<2){resDiv.style.display='none';return;}
-        searchTimeout = setTimeout(()=>{
-            fetch(`https://www.dnd5eapi.co/api/monsters?name=${q}`).then(r=>r.json()).then(data=>{
-                resDiv.innerHTML=""; 
-                if(data.results.length>0){ 
-                    resDiv.style.display='block'; 
-                    data.results.forEach(m=>{ 
+        clearTimeout(searchTimeout); 
+        const q = document.getElementById('searchInput').value; 
+        const resDiv = document.getElementById('searchResults');
+        
+        if(q.length < 2 && currentMode !== 'spell'){ resDiv.style.display='none'; return; } // Allow spell filter 0 char if class selected? No, wait for input.
+
+        searchTimeout = setTimeout(() => {
+            let url = "";
+            const cls = document.getElementById('classFilter').value;
+
+            // URL CONSTRUCTION
+            if (currentMode === 'monster') url = `https://www.dnd5eapi.co/api/monsters?name=${q}`;
+            else if (currentMode === 'equipment') url = `https://www.dnd5eapi.co/api/equipment?name=${q}`;
+            else if (currentMode === 'spell') {
+                if (cls) url = `https://www.dnd5eapi.co/api/classes/${cls}/spells`; // Fetch ALL for class, then filter client-side
+                else url = `https://www.dnd5eapi.co/api/spells?name=${q}`;
+            }
+
+            fetch(url).then(r => r.json()).then(data => {
+                resDiv.innerHTML = "";
+                
+                let results = data.results || [];
+                
+                // CLIENT SIDE FILTER FOR CLASS SPELLS (Since API returns all spells for class)
+                if (currentMode === 'spell' && cls && q.length > 0) {
+                    results = results.filter(s => s.name.toLowerCase().includes(q.toLowerCase()));
+                }
+
+                if(results.length > 0){ 
+                    resDiv.style.display = 'block'; 
+                    results.forEach(m => { 
                         const item = document.createElement('div'); 
-                        item.className='result-item'; 
-                        item.innerText=m.name; 
-                        // CLICKING SEARCH NOW JUST OPENS TAB
-                        item.onclick=()=>{ openTab(m.index, m.name, 'monster'); resDiv.style.display='none'; document.getElementById('monsterSearch').value=''; }; 
+                        item.className = 'result-item'; 
+                        item.innerText = m.name; 
+                        item.onclick = () => { 
+                            openTab(m.index, m.name, currentMode); 
+                            resDiv.style.display = 'none'; 
+                            document.getElementById('searchInput').value = ''; 
+                        }; 
                         resDiv.appendChild(item); 
                     }); 
-                } else { resDiv.style.display='none'; }
+                } else { resDiv.style.display = 'none'; }
             });
         }, 300);
     }
 
-    function addCustomMonster() {
-        const name = document.getElementById('custName').value || "Custom";
-        const hp = parseInt(document.getElementById('custHP').value) || 10;
-        const ac = parseInt(document.getElementById('custAC').value) || 10;
-        const dex = parseInt(document.getElementById('custDex').value) || 10;
-        
-        const id = "cust_" + name.replace(/\s/g, "") + Date.now();
-        const data = { name: name, size: "Medium", type: "Custom", hit_points: hp, armor_class: [{value: ac}], dexterity: dex, strength:10, constitution:10, intelligence:10, wisdom:10, charisma:10, actions: [] };
-        
-        tabs.push({id: id, name: name, data: data, type: 'custom'});
-        renderTabsHeader(); setActiveTab(id);
-        toggleCustomForm();
-    }
-
+    // --- TABS ---
     function openTab(index, name, type) {
         if(!tabs.find(t => t.id === index)) {
-            fetch(`https://www.dnd5eapi.co/api/monsters/${index}`).then(r => r.json()).then(data => {
+            // API endpoint varies slightly
+            let endpointType = type + "s"; // monsters, spells, equipments
+            if(type === 'equipment') endpointType = "equipment"; // singular in API url base, plural in list? No, /api/equipment/{index}
+
+            fetch(`https://www.dnd5eapi.co/api/${endpointType}/${index}`).then(r => r.json()).then(data => {
                 tabs.push({id: index, name: name, data: data, type: type});
                 renderTabsHeader(); setActiveTab(index);
             });
@@ -219,13 +270,17 @@
     function setActiveTab(id) {
         currentTab = id; renderTabsHeader();
         const t = tabs.find(t => t.id === id);
-        if(t) renderStatBlock(t.data, t.id);
+        if(t) {
+            if(t.type === 'monster' || t.type === 'custom') renderMonsterBlock(t.data, t.id);
+            else if(t.type === 'spell') renderSpellBlock(t.data);
+            else if(t.type === 'equipment') renderItemBlock(t.data);
+        }
     }
 
     function closeTab(id, e) {
         e.stopPropagation(); tabs = tabs.filter(t => t.id !== id); renderTabsHeader();
         if(tabs.length > 0) setActiveTab(tabs[tabs.length-1].id);
-        else document.getElementById('tabContent').innerHTML = "<div style='text-align:center; color:#555; margin-top:50px;'>Search for a monster...</div>";
+        else document.getElementById('tabContent').innerHTML = "<div style='text-align:center; color:#555; margin-top:50px;'>Select content...</div>";
     }
 
     function renderTabsHeader() {
@@ -239,9 +294,10 @@
         });
     }
 
-    // --- STAT BLOCK & TRACKER ADDER ---
-    function renderStatBlock(m, tabId) {
-        // Stats Logic
+    // --- RENDERERS ---
+    
+    // 1. MONSTER
+    function renderMonsterBlock(m, tabId) {
         let statsHtml = "";
         ['strength','dexterity','constitution','intelligence','wisdom','charisma'].forEach(s => {
             const short = s.substring(0,3).toUpperCase();
@@ -249,29 +305,24 @@
             const mod = Math.floor((val-10)/2);
             statsHtml += `<div class="stat-box"><div class="stat-val">${short}</div><div>${val} (${mod>=0?'+':''}${mod})</div></div>`;
         });
-
-        // Actions Logic
         let actHtml = "";
         if(m.actions) m.actions.forEach(a => actHtml += `<div class="action-item"><strong>${a.name}.</strong> ${a.desc}</div>`);
-
         const acVal = (m.armor_class && m.armor_class[0]) ? m.armor_class[0].value : (m.armor_class || 10);
 
         document.getElementById('tabContent').innerHTML = `
             <div class="stat-block">
                 <h1>${m.name}</h1>
                 <div style="font-style:italic;">${m.size} ${m.type}, ${m.alignment||""}</div>
-                
                 <div class="add-row">
-                    <span>Add to Tracker:</span>
-                    <input type="text" id="lbl_${tabId}" placeholder="Label (e.g. 1, Red)">
-                    <button onclick="addToTracker('${tabId}')">Roll Init & Add</button>
+                    <span>Tracker:</span>
+                    <input type="text" id="lbl_${tabId}" placeholder="Label (e.g. 1)">
+                    <button onclick="addToTracker('${tabId}')">Roll & Add</button>
                 </div>
-
                 <div class="red-line"></div>
                 <div style="display:flex; justify-content:space-between;">
                     <div><strong>AC</strong> ${acVal}</div>
                     <div><strong>HP</strong> ${m.hit_points}</div>
-                    <div><strong>Speed</strong> ${JSON.stringify(m.speed).replace(/[{"}]/g,'').replace(/,/g,', ')}</div>
+                    <div><strong>Spd</strong> ${JSON.stringify(m.speed).replace(/[{"}]/g,'').replace(/,/g,', ')}</div>
                 </div>
                 <div class="red-line"></div>
                 <div class="stat-grid">${statsHtml}</div>
@@ -280,35 +331,80 @@
             </div>`;
     }
 
-    // --- ADD TO TRACKER LOGIC ---
+    // 2. SPELL
+    function renderSpellBlock(s) {
+        const classes = s.classes ? s.classes.map(c => c.name).join(", ") : "None";
+        document.getElementById('tabContent').innerHTML = `
+            <div class="stat-block">
+                <h1>${s.name}</h1>
+                <div style="font-style:italic;">${s.level > 0 ? "Level "+s.level : "Cantrip"} ${s.school.name}</div>
+                <div class="red-line"></div>
+                <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+                    <div style="margin-right:15px;"><strong>Time:</strong> ${s.casting_time}</div>
+                    <div style="margin-right:15px;"><strong>Range:</strong> ${s.range}</div>
+                    <div style="margin-right:15px;"><strong>Dur:</strong> ${s.duration}</div>
+                </div>
+                <div style="margin-top:5px;"><strong>Components:</strong> ${s.components.join(', ')}</div>
+                <div style="margin-top:5px;"><strong>Classes:</strong> ${classes}</div>
+                <div class="red-line"></div>
+                <div style="white-space: pre-wrap;">${s.desc.join('\n\n')}</div>
+                ${s.higher_level ? `<div class="red-line"></div><strong>At Higher Levels:</strong> ${s.higher_level.join(' ')}` : ''}
+            </div>`;
+    }
+
+    // 3. EQUIPMENT
+    function renderItemBlock(i) {
+        // Build properties list
+        let props = [];
+        if(i.weapon_category) props.push(i.weapon_category);
+        if(i.armor_category) props.push(i.armor_category);
+        if(i.properties) i.properties.forEach(p => props.push(p.name));
+        
+        // Damage string
+        let dmg = "";
+        if(i.damage) dmg = `${i.damage.damage_dice} ${i.damage.damage_type.name}`;
+        if(i.armor_class) dmg = `AC ${i.armor_class.base} ${i.armor_class.dex_bonus ? '+ Dex' : ''}`;
+
+        document.getElementById('tabContent').innerHTML = `
+            <div class="stat-block">
+                <h1>${i.name}</h1>
+                <div style="font-style:italic;">${i.equipment_category.name}</div>
+                <div class="red-line"></div>
+                <div style="display:flex; justify-content:space-between;">
+                    <div><strong>Cost:</strong> ${i.cost.quantity} ${i.cost.unit}</div>
+                    <div><strong>Weight:</strong> ${i.weight} lb</div>
+                </div>
+                ${dmg ? `<div style="margin-top:10px; font-size:1.2em; font-weight:bold; color:#a33;">${dmg}</div>` : ''}
+                <div class="red-line"></div>
+                ${props.length > 0 ? `<div><strong>Properties:</strong> ${props.join(', ')}</div>` : ''}
+                ${i.desc ? `<div style="margin-top:10px;">${i.desc.join(' ')}</div>` : ''}
+            </div>`;
+    }
+
+    // --- UTILS ---
+    function addCustomMonster() {
+        const name = document.getElementById('custName').value || "Custom";
+        const hp = parseInt(document.getElementById('custHP').value) || 10;
+        const ac = parseInt(document.getElementById('custAC').value) || 10;
+        const dex = parseInt(document.getElementById('custDex').value) || 10;
+        const id = "cust_" + name.replace(/\s/g, "") + Date.now();
+        const data = { name: name, size: "Medium", type: "Custom", hit_points: hp, armor_class: [{value: ac}], dexterity: dex, strength:10, constitution:10, intelligence:10, wisdom:10, charisma:10, actions: [] };
+        tabs.push({id: id, name: name, data: data, type: 'custom'});
+        renderTabsHeader(); setActiveTab(id);
+        toggleCustomForm();
+    }
+
     function addToTracker(tabId) {
-        const t = tabs.find(x => x.id === tabId);
-        if(!t) return;
-        
-        const labelInput = document.getElementById(`lbl_${tabId}`);
-        const label = labelInput.value.trim();
+        const t = tabs.find(x => x.id === tabId); if(!t) return;
+        const label = document.getElementById(`lbl_${tabId}`).value.trim();
         const finalName = label ? `${t.name} ${label}` : t.name;
-        
-        // Init Calc
         const dex = t.data.dexterity || 10;
         const mod = Math.floor((dex - 10) / 2);
         const roll = Math.floor(Math.random()*20)+1;
-        const total = roll + mod;
-        
         db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-            name: finalName,
-            realName: t.name, // Store original name for referencing
-            init: total,
-            hp: t.data.hit_points || 10,
-            type: 'monster',
-            index: t.id,
-            init_mod: mod
+            name: finalName, realName: t.name, init: roll+mod, hp: t.data.hit_points || 10, type: 'monster', index: t.id, init_mod: mod
         });
-        
-        // Feedback
-        labelInput.value = ""; 
-        labelInput.placeholder = "Added! Add another?";
-        setTimeout(() => labelInput.placeholder = "Label (e.g. 1, Red)", 2000);
+        document.getElementById(`lbl_${tabId}`).value = ""; 
     }
 
     function toggleCustomForm() { const f = document.getElementById('customMonsterForm'); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; }
