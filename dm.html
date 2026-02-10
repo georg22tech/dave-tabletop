@@ -8,396 +8,228 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #111; color: #eee; margin: 0; display: flex; height: 100vh; overflow:hidden; }
         .col-left { width: 350px; border-right: 1px solid #333; display: flex; flex-direction: column; background: #1a1a1a; }
-        .col-mid { flex: 1; display: flex; flex-direction: column; padding: 0; background: #222; position:relative; }
-        .col-right { width: 300px; border-left: 1px solid #333; background: #1a1a1a; display: flex; flex-direction: column; }
-        h2 { margin: 0; padding: 15px; border-bottom: 2px solid #e51e25; font-size: 1.2em; background: #222; }
+        .col-mid { flex: 1; display: flex; flex-direction: column; background: #222; position:relative; }
         
-        /* HEADER & INVITE */
+        /* HEADER */
         .campaign-header { padding: 20px; background: #222; border-bottom: 1px solid #444; text-align: center; }
-        .campaign-header h1 { margin: 0; font-size: 1.4em; color: #fff; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .invite-box { padding: 15px; background: #1a1a1a; border-bottom: 1px solid #444; display: flex; flex-direction: column; gap: 8px; }
-        .invite-code-display { text-align: center; background: #222; border: 1px dashed #444; padding: 10px; border-radius: 6px; }
-        .code-label { display: block; font-size: 0.7em; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
-        .code-val { font-size: 1.8em; font-weight: bold; color: #e51e25; font-family: monospace; letter-spacing: 2px; }
-        .link-row { display: flex; gap: 5px; }
-        .link-row input { flex: 1; background: #111; border: 1px solid #444; color: #8af; padding: 5px; text-align: center; border-radius: 4px; font-size: 0.8em; }
-        .copy-btn { cursor: pointer; background: #333; border: 1px solid #555; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
-        .copy-btn:hover { background: #444; border-color: #8af; }
-
-        /* DICE BAR */
-        .dice-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: #2a2a2a; border-top: 2px solid #e51e25; padding: 10px; display: flex; gap: 10px; align-items: center; justify-content: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); z-index: 10; box-sizing: border-box; }
-        .dice-bar input, .dice-bar select { padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; font-size: 1em; font-weight: bold; text-align: center; }
-        .dice-bar button { padding: 8px 20px; background: #e51e25; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .dice-bar button:hover { background: #ff3b3b; }
+        h2 { margin: 0; padding: 15px; border-bottom: 2px solid #e51e25; font-size: 1.2em; background: #222; }
 
         /* TRACKER */
         .tracker-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .track-row { display: flex; align-items: center; background: #333; margin-bottom: 5px; padding: 8px; border-radius: 4px; border-left: 4px solid transparent; }
-        .track-row.player { border-left-color: #8af; }
-        .track-row.monster { border-left-color: #e51e25; }
-        .track-init { width: 40px; font-weight: bold; font-size: 1.2em; text-align: center; background: #222; border: 1px solid #444; color: #fff; margin-right: 10px; padding: 5px; }
+        .track-row { display: flex; align-items: center; background: #333; margin-bottom: 5px; padding: 8px; border-radius: 4px; border-left: 4px solid transparent; transition: 0.3s; }
+        .track-row.active-turn { background: #2f3a2f; border-left-color: #4f4 !important; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); transform: scale(1.02); }
+        .track-init { width: 40px; font-weight: bold; text-align: center; background: #222; border: 1px solid #444; color: #fff; margin-right: 10px; padding: 5px; }
         .track-name { flex: 1; font-weight: bold; cursor: pointer; }
-        .track-hp { width: 60px; text-align: right; margin-right: 10px; }
+        .track-hp { width: 50px; text-align: right; margin-right: 10px; }
         .track-hp input { width: 100%; background: #222; border: 1px solid #444; color: #4f4; padding: 3px; text-align: center; }
-        .btn-del { color: #f44; cursor: pointer; font-weight: bold; padding: 0 5px; }
-        .btn-reroll { color: #888; cursor: pointer; font-size:0.8em; margin-right:5px; } .btn-reroll:hover { color:#fff; }
-        .tracker-controls { padding: 10px; background: #222; border-top: 1px solid #333; display: flex; gap: 5px; }
-        
+        .btn-del { color: #f44; cursor: pointer; padding: 0 5px; font-weight:bold;}
+
+        /* CONTROLS */
+        .tracker-controls { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 5px; flex-direction: column; }
+        .btn { padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; background: #444; }
+        .btn-next { background: #4f4; color: #000; font-size: 1.1em; margin-bottom: 5px; }
+        .btn-next:hover { background: #6f6; }
+        .btn-blue { background: #2b5fa3; }
+        .btn:hover { opacity: 0.9; }
+
         /* SEARCH & TABS */
         .search-bar { padding: 15px; background: #252525; border-bottom: 1px solid #444; display: flex; gap: 10px; }
         .search-bar input { flex: 1; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
         .tabs-header { display: flex; overflow-x: auto; background: #1a1a1a; border-bottom: 1px solid #444; height: 40px; }
         .tab-btn { padding: 0 15px; border: none; background: #222; color: #888; cursor: pointer; border-right: 1px solid #333; line-height: 40px; white-space: nowrap; }
         .tab-btn.active { background: #333; color: #fff; border-top: 2px solid #e51e25; }
-        .tab-btn:hover { background: #2a2a2a; }
         .tab-close { margin-left: 8px; color: #f44; font-weight: bold; }
+
+        /* STAT BLOCK & ADDER */
+        .tab-content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
+        .stat-block { background: #e0d5b5; color: #222; padding: 15px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; }
+        .stat-block h1 { color: #58180d; border-bottom: 2px solid #58180d; font-size: 1.5em; margin: 0 0 5px 0; }
         
-        /* CUSTOM MONSTER FORM */
+        /* NEW: ADD TO TRACKER BAR */
+        .add-row { background: rgba(88, 24, 13, 0.1); padding: 10px; border-radius: 4px; display: flex; gap: 10px; margin-bottom: 15px; border: 1px dashed #58180d; align-items: center; }
+        .add-row input { flex: 1; padding: 5px; background: rgba(255,255,255,0.5); border: 1px solid #58180d; color: #58180d; placeholder-color: #58180d; font-weight: bold; }
+        .add-row button { background: #58180d; color: #e0d5b5; border: none; padding: 5px 15px; font-weight: bold; cursor: pointer; }
+        .add-row button:hover { background: #802010; }
+
+        .stat-grid { display: flex; justify-content: space-around; color: #58180d; font-weight: bold; margin: 10px 0; }
+        .stat-box { text-align: center; padding: 5px; }
+        .stat-val { font-size: 1.2em; }
+        .red-line { height: 2px; background: #58180d; margin: 5px 0; }
+        .action-item { margin-bottom: 8px; padding: 5px; border-bottom: 1px dotted #58180d; }
+
+        #searchResults { position: absolute; top: 120px; left: 15px; right: 15px; background: #111; border: 1px solid #555; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
+        .result-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
+        .result-item:hover { background: #2b5fa3; }
+        
         #customMonsterForm { background:#252525; padding:15px; border-bottom:1px solid #444; display:none; }
         .form-row { display:flex; gap:10px; margin-bottom:10px; }
         .form-row input { flex:1; background:#111; border:1px solid #444; color:#fff; padding:5px; }
         
-        /* STAT BLOCK */
-        .tab-content-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
-        .stat-block { background: #e0d5b5; color: #222; padding: 15px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; }
-        .stat-block h1 { color: #58180d; border-bottom: 2px solid #58180d; font-size: 1.5em; margin: 0 0 5px 0; }
-        .stat-block .type { font-style: italic; margin-bottom: 10px; }
-        .red-line { height: 2px; background: #58180d; margin: 5px 0; }
-        .stat-grid { display: flex; justify-content: space-around; color: #58180d; font-weight: bold; margin: 10px 0; }
-        .stat-box { text-align: center; cursor: pointer; padding: 5px; border-radius: 4px; transition: 0.2s; }
-        .stat-box:hover { background: rgba(88, 24, 13, 0.1); }
-        .stat-val { font-size: 1.2em; }
-        .action-item { margin-bottom: 8px; padding: 5px; border-bottom: 1px dotted #58180d; }
-        .atk-btn-row { margin-top: 4px; display: flex; gap: 5px; }
-        .atk-btn { background: #58180d; color: #e0d5b5; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-        .atk-btn:hover { background: #802010; } .dmg-btn { background: #802010; }
-
-        /* BUTTONS */
-        .btn { background: #444; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; flex: 1; }
-        .btn:hover { background: #555; }
-        .btn-blue { background: #2b5fa3; }
-        .btn-upload { background: #d4af37; color: #111; font-weight: bold; }
-        
-        #searchResults { position: absolute; top: 120px; left: 365px; width: 300px; background: #111; border: 1px solid #555; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
-        .result-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; }
-        .result-item:hover { background: #2b5fa3; }
-        .mode-toggle { display:flex; gap:5px; margin-bottom:5px; justify-content:center; padding-top:5px; }
-        .mode-btn { background:#333; border:1px solid #444; color:#888; cursor:pointer; padding:2px 8px; font-size:0.8em; }
-        .mode-btn.active { background:#e51e25; color:white; border-color:#e51e25; }
-
-        #chat { flex: 1; overflow-y: auto; padding: 10px; font-family: monospace; }
-        .msg { margin-bottom: 5px; padding: 5px; background: #222; border-left: 3px solid #555; font-size: 0.9em; }
-        .res-hit { color: #8af; font-weight: bold; } .res-dmg { color: #e51e25; font-weight: bold; } 
-        .res-custom { color: #d4af37; font-weight: bold; }
-        .roll-log-header { display:flex; justify-content:space-between; align-items:center; padding-right:10px; }
-        .private-check { font-size:0.8em; color:#e51e25; font-weight:bold; }
+        .invite-box { padding: 10px; text-align: center; border-bottom: 1px solid #333; font-size: 0.9em; color: #888; }
+        .code { color: #e51e25; font-weight: bold; font-family: monospace; font-size: 1.2em; }
     </style>
 </head>
 <body>
 
 <div class="col-left">
-    <div class="campaign-header">
-        <h1 id="campNameDisplay">Loading...</h1>
-    </div>
-
-    <div class="invite-box">
-        <div class="invite-code-display"><span class="code-label">Join Code</span><div class="code-val" id="codeDisplay">...</div></div>
-        <div class="link-row"><input type="text" id="inviteLink" readonly><button class="copy-btn" onclick="copyLink()">Copy</button></div>
-    </div>
-    <h2>Initiative Tracker</h2>
+    <div class="campaign-header"><h1 id="campNameDisplay">DM Screen</h1></div>
+    <div class="invite-box">Join Code: <span id="codeDisplay" class="code">...</span></div>
+    
     <div class="tracker-list" id="trackerList"></div>
-    <div class="tracker-controls"><button class="btn btn-blue" onclick="sortTracker()">Sort</button><button class="btn" onclick="clearTracker()" style="color:#f44">Clear</button></div>
+    
+    <div class="tracker-controls">
+        <button class="btn btn-next" onclick="nextTurn()">Next Turn ➔</button>
+        <div style="display:flex; gap:5px;">
+            <button class="btn" onclick="clearTracker()" style="flex:1; background:#a33;">Clear All</button>
+            <button class="btn" onclick="resetTurns()" style="flex:1;">Reset Turn</button>
+        </div>
+    </div>
 </div>
 
 <div class="col-mid">
-    <div class="mode-toggle">
-        <button class="mode-btn active" id="modeMonster" onclick="setMode('monster')">Monsters</button>
-        <button class="mode-btn" id="modeSpell" onclick="setMode('spell')">Spell Lookup</button>
-    </div>
     <div class="search-bar">
         <input type="text" id="monsterSearch" placeholder="Search Monsters..." onkeyup="search()">
         <button class="btn" style="flex:0; width:70px;" onclick="toggleCustomForm()">+ Custom</button>
-        <button class="btn btn-upload" style="flex:0; width:70px;" onclick="document.getElementById('jsonUpload').click()">Upload</button>
-        <input type="file" id="jsonUpload" accept=".json" style="display:none" onchange="handleFileUpload(this)">
     </div>
     <div id="searchResults"></div>
-    
+
     <div id="customMonsterForm">
-        <div class="form-row"><input type="text" id="custName" placeholder="Name"><input type="number" id="custHP" placeholder="HP" style="width:60px"><input type="number" id="custAC" placeholder="AC" style="width:60px"><input type="number" id="custInit" placeholder="Init Mod" style="width:60px"></div>
-        <button class="btn btn-blue" onclick="addCustomMonster()">Add to Tracker</button>
+        <div class="form-row"><input type="text" id="custName" placeholder="Name"><input type="number" id="custHP" placeholder="HP" style="width:60px"><input type="number" id="custAC" placeholder="AC" style="width:60px"><input type="number" id="custDex" placeholder="Dex Score" style="width:60px"></div>
+        <button class="btn btn-blue" onclick="addCustomMonster()">Open Stat Block</button>
     </div>
     
     <div class="tabs-header" id="tabsHeader"></div>
     <div class="tab-content-area" id="tabContent">
-        <div style="text-align:center; color:#555; margin-top:50px;">Search for a monster or spell.</div>
+        <div style="text-align:center; color:#555; margin-top:50px;">Search for a monster to view stats and add to tracker.</div>
     </div>
-
-    <div class="dice-bar">
-        <input type="number" id="customCount" value="1" min="1" style="width:50px;">
-        <select id="customDie">
-            <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
-            <option value="d10">d10</option><option value="d12">d12</option><option value="d20" selected>d20</option><option value="d100">d100</option>
-        </select>
-        <input type="number" id="customMod" value="0" placeholder="+/-" style="width:60px;">
-        <button onclick="rollCustom()">Roll</button>
-    </div>
-</div>
-
-<div class="col-right">
-    <h2 class="roll-log-header">Roll Log <label class="private-check"><input type="checkbox" id="privateRolls"> Secret</label></h2>
-    <div id="chat"></div>
 </div>
 
 <script>
-    // --- SETUP ---
     const params = new URLSearchParams(window.location.search);
     const ROOM_ID = params.get('room');
     if (!ROOM_ID) window.location.href = "index.html";
 
-    let currentMode = 'monster';
+    document.getElementById('codeDisplay').innerText = ROOM_ID;
+    
+    let encounterData = [];
+    let currentTurnName = "";
     let tabs = [];
     let currentTab = null;
     let searchTimeout;
 
-    // --- INIT ---
-    document.getElementById('codeDisplay').innerText = ROOM_ID;
-    document.getElementById('inviteLink').value = window.location.origin + window.location.pathname.replace('dm.html', 'index.html'); 
-
-    db.ref(`campaigns/${ROOM_ID}/name`).once('value', s => {
-        document.getElementById('campNameDisplay').innerText = s.val() || "Campaign";
+    // --- FIREBASE LISTENERS ---
+    db.ref(`campaigns/${ROOM_ID}/active_turn`).on('value', snap => {
+        currentTurnName = snap.val() || "";
+        renderTracker();
     });
 
-    // --- FIREBASE LISTENERS ---
     db.ref(`campaigns/${ROOM_ID}/encounters`).on('value', snap => {
+        encounterData = [];
+        snap.forEach(child => { encounterData.push({key: child.key, ...child.val()}); });
+        encounterData.sort((a,b) => (b.init||0) - (a.init||0));
+        renderTracker();
+    });
+
+    // --- TRACKER RENDER ---
+    function renderTracker() {
         const list = document.getElementById('trackerList');
         list.innerHTML = "";
-        const arr = [];
-        snap.forEach(child => { arr.push({key: child.key, ...child.val()}); });
         
-        arr.sort((a,b) => (b.init||0) - (a.init||0));
-
-        arr.forEach(c => {
+        encounterData.forEach(c => {
+            const isActive = c.name === currentTurnName;
             const row = document.createElement('div');
-            row.className = "track-row " + c.type;
+            row.className = `track-row ${isActive ? 'active-turn' : ''}`;
             
-            let hpInput = (c.type === 'monster') ? 
+            // HP input only for monsters
+            let hpDisplay = (c.type === 'monster') ? 
                 `<input type="number" value="${c.hp}" onchange="updateMon('${c.key}', 'hp', this.value)">` : 
-                `<div style="color:#aaa">${c.hp||'?'}</div>`;
-            
-            let reroll = (c.type === 'monster') ? 
-                `<span class="btn-reroll" onclick="rerollInit('${c.key}', ${c.init_mod||0})">🎲</span>` : '';
+                `<span style="color:#aaa; font-size:0.8em;">PC</span>`;
 
-            // Open Tab Action
-            let clickAction = "";
-            if (c.index === 'custom') {
-                // For custom, we pass the stored data if we have it, otherwise generated defaults
-                // Note: In a full app, we'd store the full stat block in Firebase. 
-                // Here we reconstruct it or find it in local tabs.
-                clickAction = `openCustomTab('${c.name}', ${c.hp}, ${c.ac||10}, ${c.init_mod||0})`;
-            } else {
-                clickAction = `openMonsterTab('${c.index}', '${c.name}')`;
-            }
+            // Onclick name opens tab if monster
+            let nameAction = (c.type === 'monster' && c.index) ? 
+                `onclick="openTab('${c.index}', '${c.realName||c.name}', 'monster')"` : ""; // Use realName if available (strips label)
 
             row.innerHTML = `
-                ${reroll}
                 <input type="number" class="track-init" value="${c.init}" onchange="updateMon('${c.key}', 'init', this.value)">
-                <div class="track-name" onclick="${clickAction}">${c.name}</div>
-                <div class="track-hp">${hpInput}</div>
+                <div class="track-name" ${nameAction}>${c.name}</div>
+                <div class="track-hp">${hpDisplay}</div>
                 <div class="btn-del" onclick="delMon('${c.key}')">x</div>
             `;
             list.appendChild(row);
         });
-    });
+    }
 
-    db.ref(`campaigns/${ROOM_ID}/chat`).limitToLast(20).on('child_added', snap => {
-        const d = snap.val();
-        const c = document.getElementById('chat');
-        let html = `<div class="msg"><strong>${d.user}</strong>: ${d.lbl}`;
-        if(d.sub_type === 'hit') html += ` -> <span class="${d.nat20?'res-crit':'res-hit'}">${d.val}</span> <small>${d.formula}</small>`; 
-        else if(d.sub_type === 'dmg') html += ` -> <span class="res-dmg">${d.val}</span> <small>${d.formula}</small>`;
-        else if(d.sub_type === 'dice_effect') html += ` -> <span class="res-custom">${d.val}</span> <small>${d.formula}</small>`;
-        else html += ` -> <b>${d.val || d.tot}</b>`;
-        c.innerHTML = html + "</div>" + c.innerHTML;
-    });
-
-    // --- ACTIONS ---
+    // --- TURN LOGIC ---
+    function nextTurn() {
+        if(encounterData.length === 0) return;
+        let idx = encounterData.findIndex(e => e.name === currentTurnName);
+        let nextIdx = (idx + 1) % encounterData.length;
+        db.ref(`campaigns/${ROOM_ID}/active_turn`).set(encounterData[nextIdx].name);
+    }
+    function resetTurns() { db.ref(`campaigns/${ROOM_ID}/active_turn`).set(null); }
     function updateMon(key, field, val) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}/${field}`).set(parseInt(val)); }
     function delMon(key) { db.ref(`campaigns/${ROOM_ID}/encounters/${key}`).remove(); }
-    function clearTracker() { db.ref(`campaigns/${ROOM_ID}/encounters`).remove(); }
-    function sortTracker() { /* Sorting is automatic */ } 
-    function rerollInit(key, mod) { updateMon(key, 'init', Math.floor(Math.random()*20)+1+mod); }
+    function clearTracker() { if(confirm("Clear All?")) { db.ref(`campaigns/${ROOM_ID}/encounters`).remove(); resetTurns(); } }
 
-    // --- JSON UPLOAD ---
-    function handleFileUpload(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const json = JSON.parse(e.target.result);
-                const monsters = Array.isArray(json) ? json : [json];
-                monsters.forEach(m => importMonster(m));
-                alert(`Imported ${monsters.length} monster(s)!`);
-            } catch (err) { alert("Invalid JSON: " + err.message); }
-        };
-        reader.readAsText(file);
-        input.value = ''; 
+    // --- SEARCH & TABS ---
+    function search() {
+        clearTimeout(searchTimeout); const q = document.getElementById('monsterSearch').value; const resDiv = document.getElementById('searchResults');
+        if(q.length<2){resDiv.style.display='none';return;}
+        searchTimeout = setTimeout(()=>{
+            fetch(`https://www.dnd5eapi.co/api/monsters?name=${q}`).then(r=>r.json()).then(data=>{
+                resDiv.innerHTML=""; 
+                if(data.results.length>0){ 
+                    resDiv.style.display='block'; 
+                    data.results.forEach(m=>{ 
+                        const item = document.createElement('div'); 
+                        item.className='result-item'; 
+                        item.innerText=m.name; 
+                        // CLICKING SEARCH NOW JUST OPENS TAB
+                        item.onclick=()=>{ openTab(m.index, m.name, 'monster'); resDiv.style.display='none'; document.getElementById('monsterSearch').value=''; }; 
+                        resDiv.appendChild(item); 
+                    }); 
+                } else { resDiv.style.display='none'; }
+            });
+        }, 300);
     }
 
-    function importMonster(m) {
-        const name = m.name || "Unnamed";
-        const hp = parseInt(m.hit_points) || 10;
-        let ac = 10;
-        if (m.armor_class) {
-            if (Array.isArray(m.armor_class) && m.armor_class[0]) ac = m.armor_class[0].value;
-            else if (typeof m.armor_class === 'number') ac = m.armor_class;
-        }
-
-        // Add to Tracker
-        const dexMod = Math.floor(((m.dexterity||10) - 10) / 2);
-        const init = Math.floor(Math.random()*20)+1+dexMod;
-        
-        db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-            name: name, init: init, hp: hp, type: 'monster', init_mod: dexMod, index: 'custom', ac: ac
-        });
-
-        // Register Tab Data
-        const id = "cust_" + name.replace(/\s/g, "") + Date.now(); // Unique ID
-        
-        const cleanData = {
-            name: name, size: m.size || "Medium", type: m.type || "Custom",
-            hit_points: hp, armor_class: [{value: ac}],
-            strength: m.strength||10, dexterity: m.dexterity||10, constitution: m.constitution||10, 
-            intelligence: m.intelligence||10, wisdom: m.wisdom||10, charisma: m.charisma||10,
-            actions: m.actions || [],
-            spells: m.spells || [] 
-        };
-
-        tabs.push({id: id, name: name, data: cleanData, type: 'custom'});
-        renderTabsHeader();
-        setActiveTab(id);
-    }
-
-    // --- CUSTOM MONSTER LOGIC ---
     function addCustomMonster() {
-        const name = document.getElementById('custName').value || "Unknown";
+        const name = document.getElementById('custName').value || "Custom";
         const hp = parseInt(document.getElementById('custHP').value) || 10;
         const ac = parseInt(document.getElementById('custAC').value) || 10;
-        const mod = parseInt(document.getElementById('custInit').value) || 0;
-        const init = Math.floor(Math.random()*20)+1+mod;
+        const dex = parseInt(document.getElementById('custDex').value) || 10;
         
-        db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-            name: name, init: init, hp: hp, type: 'monster', init_mod: mod, index: 'custom', ac: ac
-        });
+        const id = "cust_" + name.replace(/\s/g, "") + Date.now();
+        const data = { name: name, size: "Medium", type: "Custom", hit_points: hp, armor_class: [{value: ac}], dexterity: dex, strength:10, constitution:10, intelligence:10, wisdom:10, charisma:10, actions: [] };
         
-        openCustomTab(name, hp, ac, mod);
+        tabs.push({id: id, name: name, data: data, type: 'custom'});
+        renderTabsHeader(); setActiveTab(id);
         toggleCustomForm();
     }
 
-    function openCustomTab(name, hp, ac, initMod) {
-        const id = "cust_" + name.replace(/\s/g, "");
-        const existing = tabs.find(t => t.id === id);
-        if (existing) { setActiveTab(existing.id); return; }
-
-        const mockData = {
-            name: name, size: "Medium", type: "Custom",
-            hit_points: hp, armor_class: [{value: ac}],
-            // Defaults to 10, Init Mod is handled separately in tracker but can guide Dex here
-            strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10,
-            actions: [], spells: [] 
-        };
-        
-        tabs.push({id: id, name: name, data: mockData, type: 'custom'});
-        renderTabsHeader(); setActiveTab(id);
-    }
-
-    // --- EDITING FUNCTIONS ---
-    window.updateCustomStat = function(tabId, statName, value) {
-        const t = tabs.find(t => t.id === tabId);
-        if(t) {
-            t.data[statName] = parseInt(value);
-            // Don't re-render whole block, just update modifier text
-            const mod = Math.floor((parseInt(value)-10)/2);
-            const modSpan = document.getElementById(`mod_${statName}_${tabId}`);
-            if(modSpan) modSpan.innerText = `(${mod>=0?'+':''}${mod})`;
-        }
-    };
-
-    window.addCustomAction = function(tabId) {
-        const name = prompt("Attack Name (e.g. Longsword):"); if(!name) return;
-        const hit = prompt("Hit Bonus (e.g. 5):", "0");
-        const dmg = prompt("Damage Dice (e.g. 1d8+3):", "1d6");
-        
-        const t = tabs.find(t => t.id === tabId);
-        if(t) {
-            if(!t.data.actions) t.data.actions = [];
-            t.data.actions.push({ name: name, desc: "Melee Attack", attack_bonus: parseInt(hit), damage: [{damage_dice: dmg}] });
-            // Re-render Actions Section Only to avoid input flicker
-            renderCustomActions(t.data, tabId);
-        }
-    };
-
-    window.addCustomSpell = function(tabId) {
-        const name = prompt("Spell/Ability Name:"); if(!name) return;
-        const desc = prompt("Description:");
-        const t = tabs.find(t => t.id === tabId);
-        if(t) {
-            if(!t.data.spells) t.data.spells = [];
-            t.data.spells.push({ name: name, desc: desc });
-            renderCustomActions(t.data, tabId);
-        }
-    };
-
-    window.removeCustomItem = function(tabId, type, index) {
-        const t = tabs.find(t => t.id === tabId);
-        if(t) {
-            if(type === 'action') t.data.actions.splice(index, 1);
-            if(type === 'spell') t.data.spells.splice(index, 1);
-            renderCustomActions(t.data, tabId);
-        }
-    };
-
-    // --- TABS & RENDERING ---
-    function openMonsterTab(index, name) { openTab(index, name, 'monster'); }
-
-    function openTab(index, name, type, preloadedData=null) {
+    function openTab(index, name, type) {
         if(!tabs.find(t => t.id === index)) {
-            if(preloadedData) {
-                tabs.push({id: index, name: name, data: preloadedData, type: type});
+            fetch(`https://www.dnd5eapi.co/api/monsters/${index}`).then(r => r.json()).then(data => {
+                tabs.push({id: index, name: name, data: data, type: type});
                 renderTabsHeader(); setActiveTab(index);
-            } else {
-                fetch(`https://www.dnd5eapi.co/api/${type}s/${index}`).then(r => r.json()).then(data => {
-                    tabs.push({id: index, name: name, data: data, type: type});
-                    renderTabsHeader(); setActiveTab(index);
-                });
-            }
-        } else {
-            setActiveTab(index);
-        }
+            });
+        } else { setActiveTab(index); }
     }
 
     function setActiveTab(id) {
-        currentTab = id;
-        renderTabsHeader();
+        currentTab = id; renderTabsHeader();
         const t = tabs.find(t => t.id === id);
-        if(t) {
-            if(t.type === 'monster' || t.type === 'custom') renderStatBlock(t.data, t.id, t.type === 'custom');
-            else renderSpellBlock(t.data);
-        }
+        if(t) renderStatBlock(t.data, t.id);
     }
 
     function closeTab(id, e) {
-        e.stopPropagation();
-        tabs = tabs.filter(t => t.id !== id);
-        renderTabsHeader();
+        e.stopPropagation(); tabs = tabs.filter(t => t.id !== id); renderTabsHeader();
         if(tabs.length > 0) setActiveTab(tabs[tabs.length-1].id);
-        else document.getElementById('tabContent').innerHTML = "<div style='text-align:center; color:#555; margin-top:50px;'>Search for a monster or spell.</div>";
+        else document.getElementById('tabContent').innerHTML = "<div style='text-align:center; color:#555; margin-top:50px;'>Search for a monster...</div>";
     }
 
     function renderTabsHeader() {
-        const h = document.getElementById('tabsHeader');
-        h.innerHTML = "";
+        const h = document.getElementById('tabsHeader'); h.innerHTML = "";
         tabs.forEach(t => {
             const btn = document.createElement('div');
             btn.className = `tab-btn ${currentTab === t.id ? 'active' : ''}`;
@@ -407,125 +239,79 @@
         });
     }
 
-    function renderStatBlock(m, tabId, isCustom = false) {
-        // Render Stats Row
+    // --- STAT BLOCK & TRACKER ADDER ---
+    function renderStatBlock(m, tabId) {
+        // Stats Logic
         let statsHtml = "";
         ['strength','dexterity','constitution','intelligence','wisdom','charisma'].forEach(s => {
             const short = s.substring(0,3).toUpperCase();
             const val = m[s] || 10;
             const mod = Math.floor((val-10)/2);
-            
-            let valDisplay = isCustom 
-                ? `<input type="number" value="${val}" onchange="updateCustomStat('${tabId}', '${s}', this.value)" style="width:35px; background:transparent; border:none; border-bottom:1px dotted #58180d; text-align:center; font-weight:bold; font-size:1em; color:#58180d;">` 
-                : val;
-
-            statsHtml += `
-                <div class="stat-box" onclick="${!isCustom ? `rollStat('${m.name}', '${short}', ${mod})` : ''}">
-                    <div class="stat-val">${short}</div>
-                    <div class="stat-val">${valDisplay} <span id="mod_${s}_${tabId}" style="font-size:0.8em">(${mod>=0?'+':''}${mod})</span></div>
-                    ${isCustom ? `<button style="font-size:0.7em; cursor:pointer; border:none; background:none;" onclick="rollStat('${m.name}', '${short}', ${mod})">🎲</button>` : ''}
-                </div>`;
+            statsHtml += `<div class="stat-box"><div class="stat-val">${short}</div><div>${val} (${mod>=0?'+':''}${mod})</div></div>`;
         });
 
-        // Basic Info
+        // Actions Logic
+        let actHtml = "";
+        if(m.actions) m.actions.forEach(a => actHtml += `<div class="action-item"><strong>${a.name}.</strong> ${a.desc}</div>`);
+
         const acVal = (m.armor_class && m.armor_class[0]) ? m.armor_class[0].value : (m.armor_class || 10);
-        
+
         document.getElementById('tabContent').innerHTML = `
             <div class="stat-block">
                 <h1>${m.name}</h1>
-                <div class="type">${m.size} ${m.type}</div>
+                <div style="font-style:italic;">${m.size} ${m.type}, ${m.alignment||""}</div>
+                
+                <div class="add-row">
+                    <span>Add to Tracker:</span>
+                    <input type="text" id="lbl_${tabId}" placeholder="Label (e.g. 1, Red)">
+                    <button onclick="addToTracker('${tabId}')">Roll Init & Add</button>
+                </div>
+
                 <div class="red-line"></div>
                 <div style="display:flex; justify-content:space-between;">
                     <div><strong>AC</strong> ${acVal}</div>
                     <div><strong>HP</strong> ${m.hit_points}</div>
+                    <div><strong>Speed</strong> ${JSON.stringify(m.speed).replace(/[{"}]/g,'').replace(/,/g,', ')}</div>
                 </div>
                 <div class="red-line"></div>
                 <div class="stat-grid">${statsHtml}</div>
                 <div class="red-line"></div>
-                <div id="actions_${tabId}" class="actions">
-                    </div>
-                ${isCustom ? `<div class="red-line"></div><div style="display:flex; gap:10px; justify-content:center;"><button class="btn btn-blue" onclick="addCustomAction('${tabId}')">+ Add Attack</button><button class="btn" onclick="addCustomSpell('${tabId}')">+ Add Trait/Spell</button></div>` : ''}
+                ${actHtml}
             </div>`;
-
-        // Render Actions immediately
-        renderCustomActions(m, tabId, isCustom);
     }
 
-    function renderCustomActions(m, tabId, isCustom) {
-        const container = document.getElementById(`actions_${tabId}`);
-        if(!container) return; // Tab closed or switched
-
-        let html = `<div class="section-header">Actions</div>`;
+    // --- ADD TO TRACKER LOGIC ---
+    function addToTracker(tabId) {
+        const t = tabs.find(x => x.id === tabId);
+        if(!t) return;
         
-        // Standard/Custom Actions
-        if(m.actions) {
-            m.actions.forEach((a, idx) => {
-                let btns = "";
-                if(a.attack_bonus !== undefined || (isCustom && a.attack_bonus)) {
-                    const dmgDice = (a.damage && a.damage[0]) ? a.damage[0].damage_dice : "";
-                    btns = `<div class="atk-btn-row">
-                        <button class="atk-btn" onclick="rollAttack('${m.name}', '${a.name}', ${a.attack_bonus})">⚔️ +${a.attack_bonus}</button>
-                        ${dmgDice ? `<button class="atk-btn dmg-btn" onclick="rollDamage('${m.name}', '${a.name}', '${dmgDice}')">🩸 ${dmgDice}</button>` : ''}
-                    </div>`;
-                }
-                let delBtn = isCustom ? `<span style="color:#a33; cursor:pointer; font-size:0.8em; margin-left:5px;" onclick="removeCustomItem('${tabId}', 'action', ${idx})">(x)</span>` : "";
-                html += `<div class="action-item"><strong>${a.name}.</strong> ${a.desc} ${btns} ${delBtn}</div>`;
-            });
-        }
-
-        // Custom Spells/Traits
-        if(m.spells && m.spells.length > 0) {
-            html += `<div class="red-line"></div><div class="section-header"><strong>Traits & Spells</strong></div>`;
-            m.spells.forEach((s, idx) => {
-                let delBtn = isCustom ? `<span style="color:#a33; cursor:pointer; font-size:0.8em; margin-left:5px;" onclick="removeCustomItem('${tabId}', 'spell', ${idx})">(x)</span>` : "";
-                html += `<div class="action-item"><strong>${s.name}.</strong> ${s.desc} ${delBtn}</div>`;
-            });
-        }
+        const labelInput = document.getElementById(`lbl_${tabId}`);
+        const label = labelInput.value.trim();
+        const finalName = label ? `${t.name} ${label}` : t.name;
         
-        container.innerHTML = html;
-    }
-
-    function renderSpellBlock(s) {
-        document.getElementById('tabContent').innerHTML = `<div class="stat-block"><h1>${s.name}</h1><div class="type">${s.level>0?"Lvl "+s.level:"Cantrip"} ${s.school.name}</div><div class="red-line"></div><div><strong>Time:</strong> ${s.casting_time} | <strong>Range:</strong> ${s.range}</div><div><strong>Duration:</strong> ${s.duration}</div><div class="red-line"></div><div>${s.desc.join('<br><br>')}</div></div>`;
-    }
-
-    // --- ROLLING LOGIC ---
-    function rollAttack(user, name, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(user, `Atk ${name}`, d20+mod, `${d20} + ${mod}`, 'hit', d20===20); }
-    function rollDamage(user, name, dice) {
-        let total = 0; let formula = "";
-        if(dice.includes('+')) { const p = dice.split('+'); const mod = parseInt(p[1]); const d = p[0].split('d'); for(let i=0; i<d[0]; i++) total += Math.floor(Math.random()*d[1])+1; total += mod; formula = `[${p[0]}] + ${mod}`; } 
-        else { const d = dice.split('d'); for(let i=0; i<d[0]; i++) total += Math.floor(Math.random()*d[1])+1; formula = `[${dice}]`; }
-        pushChat(user, `Dmg ${name}`, total, formula, 'dmg');
-    }
-    function rollStat(user, stat, mod) { const d20 = Math.floor(Math.random()*20)+1; pushChat(user, `${stat} Check`, d20+mod, `${d20} + ${mod}`, 'skill'); }
-    function rollCustom() {
-        const cnt = document.getElementById('customCount').value; const sides = document.getElementById('customDie').value; const mod = document.getElementById('customMod').value;
-        let total = 0; const n = parseInt(cnt); const s = parseInt(sides.replace('d',''));
-        for(let i=0; i<n; i++) total += Math.floor(Math.random()*s)+1; total += parseInt(mod);
-        pushChat('DM', 'Custom Roll', total, `${cnt}${sides} + ${mod}`, 'dice_effect');
-    }
-    function pushChat(user, lbl, val, formula, subType='gen', nat20=false) {
-        const private = document.getElementById('privateRolls').checked;
-        if(private) { const c = document.getElementById('chat'); c.innerHTML = `<div class="msg" style="border-left-color:#888;"><strong>${user} (Secret)</strong>: ${lbl} -> ${val}</div>` + c.innerHTML; } 
-        else { db.ref(`campaigns/${ROOM_ID}/chat`).push({ user: user, lbl: lbl, val: val, formula: formula, sub_type: subType, nat20: nat20 }); }
-    }
-    function copyLink() { const copyText = document.getElementById("inviteLink"); copyText.select(); document.execCommand("copy"); alert("Invite link copied!"); }
-    function toggleCustomForm() { const f = document.getElementById('customMonsterForm'); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; }
-    function setMode(m) { currentMode = m; document.getElementById('modeMonster').className = m==='monster'?'mode-btn active':'mode-btn'; document.getElementById('modeSpell').className = m==='spell'?'mode-btn active':'mode-btn'; document.getElementById('monsterSearch').placeholder = m==='monster'?'Search Monsters...':'Search Spells...'; }
-    function search() {
-        clearTimeout(searchTimeout); const q = document.getElementById('monsterSearch').value; const resDiv = document.getElementById('searchResults'); if(q.length<2){resDiv.style.display='none';return;}
-        searchTimeout = setTimeout(()=>{
-            const url = currentMode==='monster' ? `https://www.dnd5eapi.co/api/monsters?name=${q}` : `https://www.dnd5eapi.co/api/spells?name=${q}`;
-            fetch(url).then(r=>r.json()).then(data=>{
-                resDiv.innerHTML=""; if(data.results.length>0){ resDiv.style.display='block'; data.results.forEach(m=>{ const item = document.createElement('div'); item.className='result-item'; item.innerText=m.name; item.onclick=()=>{ if(currentMode==='monster') addMonsterToTracker(m.index, m.name); else openTab(m.index, m.name, 'spell'); resDiv.style.display='none'; document.getElementById('monsterSearch').value=''; }; resDiv.appendChild(item); }); } else { resDiv.style.display='none'; }
-            });
-        }, 300);
-    }
-    function addMonsterToTracker(index, name) {
-        fetch(`https://www.dnd5eapi.co/api/monsters/${index}`).then(r => r.json()).then(data => {
-            const dexMod = Math.floor((data.dexterity - 10) / 2);
-            db.ref(`campaigns/${ROOM_ID}/encounters`).push({ name: name, init: Math.floor(Math.random()*20)+1+dexMod, hp: data.hit_points, type: 'monster', index: index, init_mod: dexMod });
-            openTab(index, name, 'monster', data);
+        // Init Calc
+        const dex = t.data.dexterity || 10;
+        const mod = Math.floor((dex - 10) / 2);
+        const roll = Math.floor(Math.random()*20)+1;
+        const total = roll + mod;
+        
+        db.ref(`campaigns/${ROOM_ID}/encounters`).push({
+            name: finalName,
+            realName: t.name, // Store original name for referencing
+            init: total,
+            hp: t.data.hit_points || 10,
+            type: 'monster',
+            index: t.id,
+            init_mod: mod
         });
+        
+        // Feedback
+        labelInput.value = ""; 
+        labelInput.placeholder = "Added! Add another?";
+        setTimeout(() => labelInput.placeholder = "Label (e.g. 1, Red)", 2000);
     }
+
+    function toggleCustomForm() { const f = document.getElementById('customMonsterForm'); f.style.display = (f.style.display === 'block') ? 'none' : 'block'; }
 </script>
+</body>
+</html>
