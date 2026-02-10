@@ -8,60 +8,68 @@
     <script src="config.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 20px; display:flex; flex-direction:column; align-items: center; justify-content: center; min-height:100vh; box-sizing:border-box;}
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; padding: 0; display:flex; flex-direction:column; align-items: center; min-height:100vh; }
         
-        .card { background: #252525; padding: 30px; border-radius: 12px; border: 1px solid #444; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        /* NOTIFICATION BAR */
+        #turnNotification {
+            width: 100%;
+            background: #4f4;
+            color: #000;
+            text-align: center;
+            padding: 20px;
+            font-weight: 900;
+            font-size: 1.5em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: none; /* Hidden by default */
+            box-shadow: 0 0 20px #4f4;
+            animation: pulse 1s infinite;
+            z-index: 100;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        .container { padding: 20px; width: 100%; max-width: 400px; display:flex; flex-direction:column; align-items:center; }
+        .card { background: #252525; padding: 30px; border-radius: 12px; border: 1px solid #444; width: 100%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         
         h1 { margin: 0 0 10px 0; color: #fff; font-size: 2em; }
         .sub-text { color: #888; font-size: 0.9em; margin-bottom: 30px; }
 
-        /* ROLL BUTTON */
-        .roll-container { position: relative; width: 150px; height: 150px; margin: 0 auto 30px auto; }
         .d20-btn { 
-            width: 100%; height: 100%; 
-            border-radius: 50%; 
-            background: #e51e25; 
-            border: 4px solid #ff5b5b; 
-            color: white; 
-            font-size: 3em; 
-            font-weight: bold; 
-            cursor: pointer; 
-            box-shadow: 0 0 20px rgba(229, 30, 37, 0.4);
-            transition: transform 0.1s, box-shadow 0.2s;
-            display: flex; align-items: center; justify-content: center;
+            width: 150px; height: 150px; border-radius: 50%; 
+            background: #e51e25; border: 4px solid #ff5b5b; 
+            color: white; font-size: 3em; font-weight: bold; 
+            cursor: pointer; box-shadow: 0 0 20px rgba(229, 30, 37, 0.4);
+            margin-bottom: 30px; transition: 0.1s;
         }
-        .d20-btn:active { transform: scale(0.95); box-shadow: 0 0 10px rgba(229, 30, 37, 0.2); }
-        .d20-btn:disabled { background: #444; border-color: #666; cursor: not-allowed; }
+        .d20-btn:active { transform: scale(0.95); }
 
-        /* MODIFIER INPUT */
-        .mod-box { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-        .mod-box label { color: #8af; font-weight: bold; }
-        .mod-box input { width: 60px; padding: 8px; text-align: center; background: #333; border: 1px solid #555; color: white; border-radius: 4px; font-weight: bold; font-size: 1.2em; }
-
-        .last-roll { font-size: 1.1em; color: #aaa; min-height: 1.2em; }
-        .roll-val { color: #e51e25; font-weight: bold; font-size: 1.3em; }
-
-        .btn-link { background: none; border: none; color: #666; cursor: pointer; text-decoration: underline; margin-top: 20px; }
+        .mod-box { margin-bottom: 20px; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; display:inline-block;}
+        .mod-box input { width: 50px; padding: 5px; text-align: center; background: #333; border: 1px solid #555; color: white; font-weight: bold; font-size: 1.2em; }
+        
+        .result-area { min-height: 40px; font-size: 1.2em; color:#aaa; }
+        .roll-val { color: #e51e25; font-weight: bold; font-size: 1.4em; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1 id="charName">Loading...</h1>
-    <div class="sub-text">Initiative Tracker</div>
+<div id="turnNotification">IT IS YOUR TURN!</div>
 
-    <div class="roll-container">
+<div class="container">
+    <div class="card">
+        <h1 id="charName">...</h1>
+        <div class="sub-text">Initiative Tracker</div>
+
         <button class="d20-btn" onclick="rollInitiative()">D20</button>
-    </div>
 
-    <div class="mod-box">
-        <label>Modifier:</label>
-        <input type="number" id="initMod" value="0" onchange="updateModifier()">
-    </div>
+        <div class="mod-box">
+            <label>Mod:</label>
+            <input type="number" id="initMod" value="0" onchange="updateModifier()">
+        </div>
 
-    <div class="last-roll" id="resultDisplay">Tap D20 to Roll</div>
-    
-    <button class="btn-link" onclick="window.location.href='index.html'">Exit</button>
+        <div class="result-area" id="resultDisplay">Tap to Roll</div>
+        <br>
+        <a href="index.html" style="color:#666;">Exit</a>
+    </div>
 </div>
 
 <script>
@@ -71,64 +79,59 @@
     const ROOM_ID = params.get('room');
     const CHAR_ID = params.get('id');
     
-    let CHAR = { name: "Character", init_mod: 0 };
+    let CHAR = { name: "Unknown", init_mod: 0 };
 
     if(!ROOM_ID || !CHAR_ID) window.location.href="index.html";
 
-    // LOAD CHARACTER
+    // 1. LISTEN FOR CHARACTER DATA
     window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).on('value', snap => {
         if(!snap.exists()) return;
         CHAR = snap.val();
-        
         document.getElementById('charName').innerText = CHAR.name;
         document.getElementById('initMod').value = CHAR.init_mod || 0;
+        if(CHAR.last_roll) document.getElementById('resultDisplay').innerHTML = `Rolled: <span class="roll-val">${CHAR.last_roll}</span>`;
+    });
+
+    // 2. LISTEN FOR TURN NOTIFICATION
+    window.db.ref(`campaigns/${ROOM_ID}/active_turn`).on('value', snap => {
+        const activeName = snap.val();
+        const banner = document.getElementById('turnNotification');
         
-        if (CHAR.last_roll) {
-             document.getElementById('resultDisplay').innerHTML = `Last Roll: <span class="roll-val">${CHAR.last_roll}</span>`;
+        // Check if the active turn name matches my character name
+        if (activeName && activeName === CHAR.name) {
+            banner.style.display = 'block';
+            // Optional: Navigator Vibrate for mobile
+            if(navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+        } else {
+            banner.style.display = 'none';
         }
     });
 
-    // UPDATE MODIFIER
     function updateModifier() {
-        const newMod = parseInt(document.getElementById('initMod').value) || 0;
-        CHAR.init_mod = newMod;
-        
-        // Update character record
-        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).update({ init_mod: newMod });
-        
-        // Update live encounter tracker entry if it exists
-        window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', snapshot => {
-            snapshot.forEach(child => {
-                child.ref.update({ init_mod: newMod });
-            });
+        const val = parseInt(document.getElementById('initMod').value) || 0;
+        window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).update({ init_mod: val });
+        // Also update DM tracker row if exists
+        window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', s => {
+            s.forEach(c => c.ref.update({init_mod: val}));
         });
     }
 
-    // ROLL INITIATIVE
     function rollInitiative() {
         const d20 = Math.floor(Math.random() * 20) + 1;
-        const total = d20 + parseInt(CHAR.init_mod);
+        const total = d20 + parseInt(CHAR.init_mod || 0);
         
         document.getElementById('resultDisplay').innerHTML = `Rolled: ${d20} + ${CHAR.init_mod} = <span class="roll-val">${total}</span>`;
         
-        // 1. Update Character Record (for persistence)
+        // Update DB
         window.db.ref(`campaigns/${ROOM_ID}/characters/${CHAR_ID}`).update({ last_roll: total });
-
-        // 2. Find and Update in DM Encounter Tracker
-        // We query by name to find the correct row in the DM screen
-        window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', snapshot => {
-            if (snapshot.exists()) {
-                snapshot.forEach(child => {
-                    child.ref.update({ init: total });
-                });
+        
+        // Update DM Tracker
+        window.db.ref(`campaigns/${ROOM_ID}/encounters`).orderByChild('name').equalTo(CHAR.name).once('value', s => {
+            if(s.exists()) {
+                s.forEach(c => c.ref.update({init: total}));
             } else {
-                // If not in tracker (DM cleared it?), re-add them
                 window.db.ref(`campaigns/${ROOM_ID}/encounters`).push({
-                    name: CHAR.name,
-                    hp: 0,
-                    init: total,
-                    type: 'player',
-                    init_mod: CHAR.init_mod
+                    name: CHAR.name, hp: 0, init: total, type: 'player', init_mod: CHAR.init_mod
                 });
             }
         });
