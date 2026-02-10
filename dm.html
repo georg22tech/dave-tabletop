@@ -40,7 +40,7 @@
         .search-bar { padding: 10px; background: #252525; border-bottom: 1px solid #444; display: flex; gap: 10px; align-items: center; }
         .search-bar input { flex: 1; padding: 8px; background: #111; border: 1px solid #444; color: white; border-radius: 4px; }
         
-        #classFilter { padding: 8px; background: #111; border: 1px solid #444; color: #8af; border-radius: 4px; font-weight: bold; display: none; }
+        .filter-select { padding: 8px; background: #111; border: 1px solid #444; color: #8af; border-radius: 4px; font-weight: bold; display: none; max-width: 150px; }
 
         .tabs-header { display: flex; overflow-x: auto; background: #1a1a1a; border-bottom: 1px solid #444; height: 40px; }
         .tab-btn { padding: 0 15px; border: none; background: #222; color: #888; cursor: pointer; border-right: 1px solid #333; line-height: 40px; white-space: nowrap; }
@@ -99,7 +99,7 @@
     </div>
     
     <div class="search-bar">
-        <select id="classFilter" onchange="search()">
+        <select id="classFilter" class="filter-select" onchange="search()">
             <option value="">All Classes</option>
             <option value="bard">Bard</option>
             <option value="cleric">Cleric</option>
@@ -109,6 +109,19 @@
             <option value="sorcerer">Sorcerer</option>
             <option value="warlock">Warlock</option>
             <option value="wizard">Wizard</option>
+        </select>
+        
+        <select id="eqFilter" class="filter-select" onchange="loadEquipmentFilter()">
+            <option value="">All Items</option>
+            <option value="melee">Melee Weapons</option>
+            <option value="ranged">Ranged Weapons</option>
+            <option value="light-armor">Light Armor</option>
+            <option value="medium-armor">Medium Armor</option>
+            <option value="heavy-armor">Heavy Armor</option>
+            <option value="shields">Shields</option>
+            <option value="gear">Adventuring Gear</option>
+            <option value="tools">Tools</option>
+            <option value="instruments">Instruments</option>
         </select>
         
         <input type="text" id="searchInput" placeholder="Search Monsters..." onkeyup="search()">
@@ -140,6 +153,7 @@
     let currentTab = null;
     let searchTimeout;
     let currentMode = 'monster';
+    let equipmentCache = []; // Stores filtered equipment for instant search
 
     // --- FIREBASE LISTENERS ---
     db.ref(`campaigns/${ROOM_ID}/active_turn`).on('value', snap => {
@@ -201,64 +215,114 @@
         
         document.getElementById('searchInput').placeholder = `Search ${mode.charAt(0).toUpperCase() + mode.slice(1)}s...`;
         
-        // Show/Hide Class Filter
+        // Toggle Filters
         document.getElementById('classFilter').style.display = (mode === 'spell') ? 'block' : 'none';
+        document.getElementById('eqFilter').style.display = (mode === 'equipment') ? 'block' : 'none';
         document.getElementById('searchResults').style.display = 'none';
+        
+        // Reset Eq Filter
+        if(mode === 'equipment') { 
+            document.getElementById('eqFilter').value = ""; 
+            equipmentCache = []; 
+        }
+    }
+
+    // LOAD FILTERED EQUIPMENT (CACHING STRATEGY)
+    async function loadEquipmentFilter() {
+        const filter = document.getElementById('eqFilter').value;
+        const resDiv = document.getElementById('searchResults');
+        document.getElementById('searchInput').value = "";
+        
+        if (!filter) { equipmentCache = []; search(); return; }
+
+        resDiv.innerHTML = "<div class='result-item'>Loading...</div>";
+        resDiv.style.display = 'block';
+
+        let cats = [];
+        if (filter === 'melee') cats = ['simple-melee-weapons', 'martial-melee-weapons'];
+        else if (filter === 'ranged') cats = ['simple-ranged-weapons', 'martial-ranged-weapons'];
+        else if (filter === 'gear') cats = ['adventuring-gear', 'standard-gear', 'equipment-packs'];
+        else if (filter === 'tools') cats = ['tools', 'artisan-tools', 'gaming-sets'];
+        else if (filter === 'instruments') cats = ['musical-instruments'];
+        else cats = [filter]; // Direct mapping (light-armor, etc)
+
+        try {
+            // Fetch all categories in parallel
+            const promises = cats.map(c => fetch(`https://www.dnd5eapi.co/api/equipment-categories/${c}`).then(r => r.json()));
+            const results = await Promise.all(promises);
+            
+            // Merge all equipment lists
+            equipmentCache = [];
+            results.forEach(data => {
+                if(data.equipment) equipmentCache.push(...data.equipment);
+            });
+            
+            resDiv.innerHTML = "";
+            search(); // Trigger render with empty query (shows list)
+        } catch (e) { console.error(e); }
     }
 
     function search() {
         clearTimeout(searchTimeout); 
-        const q = document.getElementById('searchInput').value; 
+        const q = document.getElementById('searchInput').value.toLowerCase(); 
         const resDiv = document.getElementById('searchResults');
         
-        if(q.length < 2 && currentMode !== 'spell'){ resDiv.style.display='none'; return; } // Allow spell filter 0 char if class selected? No, wait for input.
+        // EQUIPMENT LOCAL SEARCH (If filter is active)
+        if (currentMode === 'equipment' && equipmentCache.length > 0) {
+            const hits = equipmentCache.filter(i => i.name.toLowerCase().includes(q));
+            renderResults(hits);
+            return;
+        }
+
+        if(q.length < 2 && currentMode !== 'spell' && currentMode !== 'equipment'){ resDiv.style.display='none'; return; }
 
         searchTimeout = setTimeout(() => {
             let url = "";
             const cls = document.getElementById('classFilter').value;
 
-            // URL CONSTRUCTION
             if (currentMode === 'monster') url = `https://www.dnd5eapi.co/api/monsters?name=${q}`;
             else if (currentMode === 'equipment') url = `https://www.dnd5eapi.co/api/equipment?name=${q}`;
             else if (currentMode === 'spell') {
-                if (cls) url = `https://www.dnd5eapi.co/api/classes/${cls}/spells`; // Fetch ALL for class, then filter client-side
+                if (cls) url = `https://www.dnd5eapi.co/api/classes/${cls}/spells`; 
                 else url = `https://www.dnd5eapi.co/api/spells?name=${q}`;
             }
 
             fetch(url).then(r => r.json()).then(data => {
-                resDiv.innerHTML = "";
-                
                 let results = data.results || [];
-                
-                // CLIENT SIDE FILTER FOR CLASS SPELLS (Since API returns all spells for class)
+                // Client-side spell filtering
                 if (currentMode === 'spell' && cls && q.length > 0) {
-                    results = results.filter(s => s.name.toLowerCase().includes(q.toLowerCase()));
+                    results = results.filter(s => s.name.toLowerCase().includes(q));
                 }
-
-                if(results.length > 0){ 
-                    resDiv.style.display = 'block'; 
-                    results.forEach(m => { 
-                        const item = document.createElement('div'); 
-                        item.className = 'result-item'; 
-                        item.innerText = m.name; 
-                        item.onclick = () => { 
-                            openTab(m.index, m.name, currentMode); 
-                            resDiv.style.display = 'none'; 
-                            document.getElementById('searchInput').value = ''; 
-                        }; 
-                        resDiv.appendChild(item); 
-                    }); 
-                } else { resDiv.style.display = 'none'; }
+                renderResults(results);
             });
         }, 300);
+    }
+
+    function renderResults(results) {
+        const resDiv = document.getElementById('searchResults');
+        resDiv.innerHTML = "";
+        
+        if(results.length > 0){ 
+            resDiv.style.display = 'block'; 
+            results.forEach(m => { 
+                const item = document.createElement('div'); 
+                item.className = 'result-item'; 
+                item.innerText = m.name; 
+                item.onclick = () => { 
+                    openTab(m.index, m.name, currentMode); 
+                    resDiv.style.display = 'none'; 
+                    document.getElementById('searchInput').value = ''; 
+                }; 
+                resDiv.appendChild(item); 
+            }); 
+        } else { resDiv.style.display = 'none'; }
     }
 
     // --- TABS ---
     function openTab(index, name, type) {
         if(!tabs.find(t => t.id === index)) {
-            // API endpoint varies slightly
-            let endpointType = type + "s"; // monsters, spells, equipments
-            if(type === 'equipment') endpointType = "equipment"; // singular in API url base, plural in list? No, /api/equipment/{index}
+            let endpointType = type + "s"; 
+            if(type === 'equipment') endpointType = "equipment"; 
 
             fetch(`https://www.dnd5eapi.co/api/${endpointType}/${index}`).then(r => r.json()).then(data => {
                 tabs.push({id: index, name: name, data: data, type: type});
@@ -295,8 +359,6 @@
     }
 
     // --- RENDERERS ---
-    
-    // 1. MONSTER
     function renderMonsterBlock(m, tabId) {
         let statsHtml = "";
         ['strength','dexterity','constitution','intelligence','wisdom','charisma'].forEach(s => {
@@ -331,7 +393,6 @@
             </div>`;
     }
 
-    // 2. SPELL
     function renderSpellBlock(s) {
         const classes = s.classes ? s.classes.map(c => c.name).join(", ") : "None";
         document.getElementById('tabContent').innerHTML = `
@@ -344,7 +405,7 @@
                     <div style="margin-right:15px;"><strong>Range:</strong> ${s.range}</div>
                     <div style="margin-right:15px;"><strong>Dur:</strong> ${s.duration}</div>
                 </div>
-                <div style="margin-top:5px;"><strong>Components:</strong> ${s.components.join(', ')}</div>
+                <div style="margin-top:5px;"><strong>Comp:</strong> ${s.components.join(', ')}</div>
                 <div style="margin-top:5px;"><strong>Classes:</strong> ${classes}</div>
                 <div class="red-line"></div>
                 <div style="white-space: pre-wrap;">${s.desc.join('\n\n')}</div>
@@ -352,15 +413,12 @@
             </div>`;
     }
 
-    // 3. EQUIPMENT
     function renderItemBlock(i) {
-        // Build properties list
         let props = [];
         if(i.weapon_category) props.push(i.weapon_category);
         if(i.armor_category) props.push(i.armor_category);
         if(i.properties) i.properties.forEach(p => props.push(p.name));
         
-        // Damage string
         let dmg = "";
         if(i.damage) dmg = `${i.damage.damage_dice} ${i.damage.damage_type.name}`;
         if(i.armor_class) dmg = `AC ${i.armor_class.base} ${i.armor_class.dex_bonus ? '+ Dex' : ''}`;
@@ -371,8 +429,8 @@
                 <div style="font-style:italic;">${i.equipment_category.name}</div>
                 <div class="red-line"></div>
                 <div style="display:flex; justify-content:space-between;">
-                    <div><strong>Cost:</strong> ${i.cost.quantity} ${i.cost.unit}</div>
-                    <div><strong>Weight:</strong> ${i.weight} lb</div>
+                    <div><strong>Cost:</strong> ${i.cost ? i.cost.quantity + i.cost.unit : '-'}</div>
+                    <div><strong>Weight:</strong> ${i.weight ? i.weight + ' lb' : '-'}</div>
                 </div>
                 ${dmg ? `<div style="margin-top:10px; font-size:1.2em; font-weight:bold; color:#a33;">${dmg}</div>` : ''}
                 <div class="red-line"></div>
