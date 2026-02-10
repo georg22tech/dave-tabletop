@@ -1,638 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Character Builder</title>
+    <title>Join Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="config.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .builder-container { max-width: 800px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; }
-        h1 { color: #e51e25; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .container { max-width: 400px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 8px; border: 1px solid #333; text-align: center; }
+        h1 { color: #e51e25; margin-top: 0; }
         
-        /* STEPS */
-        .step { display: none; }
-        .step.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        label { display: block; color: #8af; font-weight: bold; margin-bottom: 5px; margin-top: 15px; font-size: 0.9em; }
-        input, select, textarea { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
-        input:focus, select:focus { border-color: #e51e25; outline: none; }
+        label { display: block; color: #8af; font-weight: bold; margin-bottom: 5px; margin-top: 15px; text-align: left; }
+        input { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; font-size: 1.1em; }
+        input:focus { border-color: #e51e25; outline: none; }
         
-        /* CLASS ROWS */
-        .class-row { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: center; background: #252525; padding: 10px; border-radius: 4px;}
-        .class-row input { text-align: center; }
-        .btn-small { padding: 8px 12px; background: #444; color: #fff; border: none; cursor: pointer; border-radius: 4px;}
-        .btn-remove { background: #a33; }
-
-        /* STATS */
-        .stat-toggle { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
-        .stat-btn { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; font-weight: bold; text-align: center; }
-        .stat-btn.active { background: #e51e25; color: white; border-color: #e51e25; }
-
-        .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-        .stat-box { text-align: center; background: #252525; padding: 10px; border-radius: 4px; border: 1px solid #333; }
-        .stat-box select, .stat-box input { padding: 5px; text-align: center; font-weight: bold; font-size: 1.1em; }
-        .bonus-badge { color: #4f4; font-size: 0.8em; display: block; margin-top: 5px; }
-
-        /* RP GRID */
-        .rp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-
-        /* INVENTORY */
-        .search-results { max-height: 200px; overflow-y: auto; background: #252525; border: 1px solid #444; display:none; position: absolute; width: 90%; z-index: 100; }
-        .search-item { padding: 8px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; }
-        .search-item:hover { background: #333; }
-        .inv-item { background: #222; padding: 8px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #555; }
-        
-        .choice-container { background: #252525; padding: 10px; border-radius: 4px; border: 1px dashed #555; margin-bottom: 15px; }
-        .gear-choice-row { margin-bottom: 8px; }
-        .gear-choice-row label { margin-top: 0; color: #ccc; font-size: 0.85em; font-weight: normal; }
-
-        /* NAV */
-        .nav-btns { margin-top: 30px; padding-top: 20px; display: flex; justify-content: space-between; border-top: 1px solid #333; }
-        .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1em; }
-        .btn-next { background: #e51e25; color: white; }
-        .btn-prev { background: #444; color: white; }
-        
-        .pill { background: #2a7a3a; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 5px; display: inline-block; }
+        .btn { margin-top: 25px; padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1.1em; width: 100%; background: #e51e25; color: white; transition: 0.2s; }
+        .btn:hover { background: #ff3b3b; }
+        .btn-back { background: #444; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="builder-container">
-    <h1 id="headerTitle">Character Builder</h1>
+<div class="container">
+    <h1>Join Encounter</h1>
     
-    <div id="step1" class="step active">
-        <label>Character Name</label>
-        <input type="text" id="charName" placeholder="Name">
+    <label>Character Name</label>
+    <input type="text" id="charName" placeholder="e.g. Aragorn">
 
-        <label>Race</label>
-        <select id="charRace" onchange="updateRaceInfo()"></select>
-        <div id="raceSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
-
-        <label>Background</label>
-        <select id="charBackground" onchange="updateBackgroundInfo()">
-            <option value="">Select Background...</option>
-        </select>
-        <div id="bgSummary" style="color:#aaa; font-size:0.9em; margin-top:5px;"></div>
-
-        <label>Classes & Subclasses</label>
-        <div id="classContainer"></div>
-        <button class="btn-small" onclick="addClassRow()" style="margin-top:5px;">+ Add Multiclass</button>
-        <div id="classSummary" style="color:#aaa; font-size:0.9em; margin-top:10px;"></div>
-    </div>
-
-    <div id="step2" class="step">
-        <label style="text-align:center; margin-bottom:10px;">Generation Method</label>
-        <div class="stat-toggle">
-            <div id="btnStatArray" class="stat-btn active" onclick="setStatMode('array')">Standard Array</div>
-            <div id="btnStatManual" class="stat-btn" onclick="setStatMode('manual')">Manual / Rolled</div>
-        </div>
-
-        <div id="statContainer" class="stat-grid"></div>
-
-        <div style="margin-top:20px; text-align:center; background:#222; padding:10px;">
-            <strong>Total Level:</strong> <span id="totalLevelDisplay">1</span> | 
-            <strong>Max HP:</strong> <span id="calcHP" style="color:#4f4;">0</span>
-        </div>
-    </div>
-
-    <div id="step3" class="step">
-        <label>Auto-Granted Skills</label>
-        <div id="fixedSkillsArea" style="margin-bottom:15px; padding:10px; background:#222; border-radius:4px;"></div>
-        <label>Class Skills</label>
-        <div id="classSkillArea"></div>
-    </div>
-
-    <div id="step4" class="step">
-        <label>Class Starting Equipment</label>
-        <div id="classGearArea" class="choice-container"></div>
-
-        <label>Additional Equipment</label>
-        <div style="position:relative;">
-            <input type="text" id="itemSearch" placeholder="Search Game Items..." onkeyup="filterItems()">
-            <div id="searchResults" class="search-results"></div>
-        </div>
-        <div id="inventoryList" style="margin-top:10px;"></div>
-        
-        <label>Gold (GP)</label>
-        <input type="number" id="charGold" value="10">
-
-        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-
-        <label>Appearance</label>
-        <div class="rp-grid">
-            <input type="text" id="rpAge" placeholder="Age">
-            <input type="text" id="rpHeight" placeholder="Height">
-            <input type="text" id="rpWeight" placeholder="Weight">
-        </div>
-        <div class="rp-grid" style="margin-top:10px;">
-            <input type="text" id="rpEyes" placeholder="Eyes">
-            <input type="text" id="rpHair" placeholder="Hair">
-            <input type="text" id="rpSkin" placeholder="Skin">
-        </div>
-
-        <label>Alignment</label>
-        <select id="charAlign">
-            <option value="True Neutral">Select...</option>
-            <option value="Lawful Good">Lawful Good</option>
-            <option value="Neutral Good">Neutral Good</option>
-            <option value="Chaotic Good">Chaotic Good</option>
-            <option value="Lawful Neutral">Lawful Neutral</option>
-            <option value="True Neutral">True Neutral</option>
-            <option value="Chaotic Neutral">Chaotic Neutral</option>
-            <option value="Lawful Evil">Lawful Evil</option>
-            <option value="Neutral Evil">Neutral Evil</option>
-            <option value="Chaotic Evil">Chaotic Evil</option>
-        </select>
-
-        <label>Backstory</label>
-        <textarea id="charBack" rows="3"></textarea>
-    </div>
-
-    <div class="nav-btns">
-        <button class="btn btn-prev" onclick="changeStep(-1)" id="btnPrev" style="visibility:hidden;">Back</button>
-        <button class="btn btn-next" onclick="changeStep(1)" id="btnNext">Next</button>
-    </div>
+    <label>Initiative Modifier</label>
+    <input type="number" id="initMod" placeholder="+0" value="0">
+    
+    <button class="btn" id="btnSave" onclick="saveCharacter()">Join Game</button>
+    <button class="btn btn-back" onclick="window.history.back()">Back</button>
 </div>
 
-<script type="module">
-    import { RACES, CLASSES, SKILLS_LIST, ALL_ACTIONS } from './game_rules.js';
-
-    // --- CONFIG & LOADOUTS ---
-    const SUBCLASS_UNLOCK_LEVELS = { "Artificer": 3, "Barbarian": 3, "Bard": 3, "Cleric": 1, "Druid": 2, "Fighter": 3, "Monk": 3, "Paladin": 3, "Ranger": 3, "Rogue": 3, "Sorcerer": 1, "Warlock": 1, "Wizard": 2 };
-    
-    const CLASS_LOADOUTS = {
-        "Artificer": { fixed: ["Thieves' Tools"], choices: [ ["Simple Weapon", "Simple Weapon"], ["Scale Mail", "Studded Leather"], ["Light Crossbow", "Simple Weapon"] ] },
-        "Barbarian": { fixed: ["Explorer's Pack", "Javelin", "Javelin", "Javelin", "Javelin"], choices: [ ["Greataxe", "Martial Melee"], ["Handaxe", "Simple Weapon"] ] },
-        "Bard": { fixed: ["Leather Armor", "Dagger"], choices: [ ["Rapier", "Longsword", "Simple Weapon"], ["Diplomat's Pack", "Entertainer's Pack"], ["Lute", "Drum", "Flute", "Lyre"] ] },
-        "Cleric": { fixed: ["Shield", "Holy Symbol (Amulet)"], choices: [ ["Mace", "Warhammer"], ["Scale Mail", "Leather Armor", "Chain Mail"], ["Light Crossbow", "Simple Weapon"], ["Priest's Pack", "Explorer's Pack"] ] },
-        "Druid": { fixed: ["Leather Armor", "Explorer's Pack", "Druidic Focus (Sprig)"], choices: [ ["Shield", "Simple Weapon"], ["Scimitar", "Simple Melee"] ] },
-        "Fighter": { fixed: [], choices: [ ["Chain Mail", "Leather Armor, Longbow, 20 Arrows"], ["Martial Weapon, Shield", "Martial Weapon, Martial Weapon"], ["Light Crossbow", "Handaxe"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Monk": { fixed: ["Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart", "Dart"], choices: [ ["Shortsword", "Simple Weapon"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Paladin": { fixed: ["Chain Mail", "Holy Symbol (Emblem)"], choices: [ ["Martial Weapon, Shield", "Martial Weapon, Martial Weapon"], ["Javelin", "Simple Melee"], ["Priest's Pack", "Explorer's Pack"] ] },
-        "Ranger": { fixed: ["Longbow", "20 Arrows"], choices: [ ["Scale Mail", "Leather Armor"], ["Shortsword", "Simple Melee"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Rogue": { fixed: ["Leather Armor", "Thieves' Tools", "Dagger", "Dagger"], choices: [ ["Rapier", "Shortsword"], ["Shortbow", "Shortsword"], ["Burglar's Pack", "Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Sorcerer": { fixed: ["Dagger", "Dagger"], choices: [ ["Light Crossbow", "Simple Weapon"], ["Component Pouch", "Arcane Focus (Orb)"], ["Dungeoneer's Pack", "Explorer's Pack"] ] },
-        "Warlock": { fixed: ["Leather Armor", "Dagger", "Dagger"], choices: [ ["Light Crossbow", "Simple Weapon"], ["Component Pouch", "Arcane Focus (Rod)"], ["Scholar's Pack", "Dungeoneer's Pack"] ] },
-        "Wizard": { fixed: ["Spellbook"], choices: [ ["Quarterstaff", "Dagger"], ["Component Pouch", "Arcane Focus (Staff)"], ["Scholar's Pack", "Explorer's Pack"] ] }
-    };
-
-    const BACKGROUNDS = {
-        "Acolyte": { skills: ["Insight", "Religion"], items: ["Holy Symbol (Amulet)", "Prayer Book", "Vestments", "Rations"] },
-        "Criminal": { skills: ["Deception", "Stealth"], items: ["Crowbar", "Dark Clothes", "Rations"] },
-        "Folk Hero": { skills: ["Animal Handling", "Survival"], items: ["Shovel", "Pot", "Civilian Clothes", "Rations", "Smith's Tools"] },
-        "Noble": { skills: ["History", "Persuasion"], items: ["Fine Clothes", "Signet Ring", "Dice Set"] },
-        "Sage": { skills: ["Arcana", "History"], items: ["Ink Pen", "Small Knife", "Common Clothes"] },
-        "Soldier": { skills: ["Athletics", "Intimidation"], items: ["Rank Insignia", "Dice Set", "Common Clothes"] },
-        "Charlatan": { skills: ["Deception", "Sleight of Hand"], items: ["Disguise Kit", "Fine Clothes"] },
-        "Entertainer": { skills: ["Acrobatics", "Performance"], items: ["Lute", "Costume", "Disguise Kit"] },
-        "Outlander": { skills: ["Athletics", "Survival"], items: ["Arcane Focus (Staff)", "Hunting Trap", "Traveler's Clothes"] },
-        "Urchin": { skills: ["Sleight of Hand", "Stealth"], items: ["Small Knife", "Map of the City", "Pet Mouse", "Common Clothes"] }
-    };
-
-    const STAT_KEYS = ['STR','DEX','CON','INT','WIS','CHA'];
-    const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
-    let statMode = 'array'; 
-    let selectedInventory = []; // Manual additions
-    let classInventory = [];    // Class choices
-    let backgroundInventory = []; // Background items
-    let currentStep = 1;
-    let totalLevels = 1;
-
-    // --- INIT ---
-    const params = new URLSearchParams(window.location.search);
-    const ROOM_ID = params.get('room');
-    const EDIT_ID = params.get('id');
-    
+<script>
     if (!window.db && typeof firebase !== 'undefined') window.db = firebase.database();
 
-    const raceSel = document.getElementById('charRace');
-    raceSel.innerHTML = "";
-    Object.keys(RACES).sort().forEach(r => raceSel.add(new Option(r,r)));
+    const params = new URLSearchParams(window.location.search);
+    const ROOM_ID = params.get('room');
+    if(!ROOM_ID) alert("No Room ID found.");
 
-    const bgSel = document.getElementById('charBackground');
-    bgSel.innerHTML = '<option value="">Select Background...</option>';
-    Object.keys(BACKGROUNDS).sort().forEach(b => bgSel.add(new Option(b,b)));
+    function saveCharacter() {
+        const name = document.getElementById('charName').value.trim();
+        const mod = parseInt(document.getElementById('initMod').value) || 0;
 
-    const statGrid = document.querySelector('.stat-grid');
-    statGrid.innerHTML = ""; 
-    STAT_KEYS.forEach(stat => {
-        statGrid.innerHTML += `
-            <div class="stat-box">
-                <label>${stat}</label>
-                <select id="base_${stat}" onchange="recalcStats()">
-                    <option value="">-</option>
-                    ${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}
-                </select>
-                <span id="bon_${stat}" class="bonus-badge"></span>
-            </div>
-        `;
-    });
+        if(!name) return alert("Name required.");
 
-    // --- GEAR LOGIC (Updated for Backgrounds) ---
+        const btn = document.getElementById('btnSave');
+        btn.innerText = "Joining..."; btn.disabled = true;
 
-    // 1. Render Class Choices (Step 4)
-    window.renderClassGearOptions = function() {
-        const rows = document.querySelectorAll('.class-row');
-        if(rows.length === 0) return;
-        const clsName = rows[0].querySelector('.cls-select').value;
-        const loadout = CLASS_LOADOUTS[clsName];
-        const container = document.getElementById('classGearArea');
-        container.innerHTML = `<strong>${clsName} Equipment</strong>`;
+        // Simple data structure
+        const charData = {
+            name: name,
+            init_mod: mod,
+            last_roll: 0
+        };
 
-        if (!loadout) return;
-
-        if (loadout.fixed.length > 0) {
-            container.innerHTML += `<div style="color:#aaa; font-size:0.9em; margin:5px 0;">Includes: ${loadout.fixed.join(", ")}</div>`;
-        }
-
-        if (loadout.choices) {
-            loadout.choices.forEach((choiceSet, idx) => {
-                const div = document.createElement('div');
-                div.className = 'gear-choice-row';
-                let selectHTML = `<select id="gear_choice_${idx}" onchange="updateClassInventory()">`;
-                
-                choiceSet.forEach(opt => {
-                    if (opt === "Simple Weapon" || opt === "Simple Melee") {
-                         let simple = ALL_ACTIONS.filter(i => i.category === "Simple Melee" || i.category === "Simple Ranged");
-                         simple.forEach(w => selectHTML += `<option value="${w.name}">${w.name}</option>`);
-                    } else if (opt === "Martial Weapon" || opt === "Martial Melee") {
-                         let martial = ALL_ACTIONS.filter(i => i.category === "Martial Melee" || i.category === "Martial Ranged");
-                         martial.forEach(w => selectHTML += `<option value="${w.name}">${w.name}</option>`);
-                    } else if (opt === "Musical Instrument") {
-                         let instruments = ALL_ACTIONS.filter(i => i.category === "Tool" && i.desc.includes("Instrument"));
-                         instruments.forEach(i => selectHTML += `<option value="${i.name}">${i.name}</option>`);
-                    } else if (opt === "Arcane Focus") {
-                         selectHTML += `<option value="Arcane Focus (Staff)">Staff</option><option value="Arcane Focus (Wand)">Wand</option><option value="Arcane Focus (Orb)">Orb</option>`;
-                    } else {
-                         selectHTML += `<option value="${opt}">${opt}</option>`;
-                    }
-                });
-                selectHTML += `</select>`;
-                div.innerHTML = `<label>Choice ${idx+1}</label>` + selectHTML;
-                container.appendChild(div);
+        // Create Character in DB
+        const ref = window.db.ref(`campaigns/${ROOM_ID}/characters`).push();
+        ref.set(charData).then(() => {
+            // Add to DM's Encounter Tracker immediately
+            window.db.ref(`campaigns/${ROOM_ID}/encounters`).push({
+                name: name,
+                hp: 0, // Not tracking HP anymore? Or you can add an input for it.
+                init: 0, 
+                type: 'player',
+                init_mod: mod
             });
-        }
-        window.updateClassInventory();
-    };
-
-    // 2. Capture Selections
-    window.updateClassInventory = function() {
-        const rows = document.querySelectorAll('.class-row');
-        if(rows.length === 0) return;
-        const clsName = rows[0].querySelector('.cls-select').value;
-        const loadout = CLASS_LOADOUTS[clsName];
-        
-        classInventory = [];
-
-        if(loadout && loadout.fixed) {
-            loadout.fixed.forEach(i => addItemToInventory(i, "Class (Fixed)", classInventory));
-        }
-
-        const selects = document.querySelectorAll('#classGearArea select');
-        selects.forEach(sel => {
-            let items = sel.value.split(',');
-            items.forEach(i => addItemToInventory(i.trim(), "Class (Choice)", classInventory));
-        });
-
-        window.renderInventory();
-    };
-
-    // 3. Update Background Inventory (Auto)
-    window.updateBackgroundInfo = function() {
-        const bg = BACKGROUNDS[bgSel.value];
-        if(!bg) { document.getElementById('bgSummary').innerText = ""; return; }
-        document.getElementById('bgSummary').innerText = `Skills: ${bg.skills.join(', ')}`;
-        window.renderSkills();
-        
-        backgroundInventory = [];
-        if(bg.items) {
-            bg.items.forEach(itemName => addItemToInventory(itemName, "Background", backgroundInventory));
-        }
-        window.renderInventory();
-    };
-
-    // Helper to Add Item Objects
-    function addItemToInventory(name, source, targetArray) {
-        const found = ALL_ACTIONS.find(i => i.name.toLowerCase() === name.toLowerCase());
-        if(found) targetArray.push({ ...found, source: source, equip: false });
-        else targetArray.push({ name: name, category: "Item", source: source, equip: false });
-    }
-
-    // --- INVENTORY RENDERER ---
-    window.renderInventory = function() {
-        const list = document.getElementById('inventoryList');
-        list.innerHTML = "";
-        const combined = [...classInventory, ...backgroundInventory, ...selectedInventory];
-        
-        combined.forEach((item, idx) => {
-            const div = document.createElement('div');
-            div.className = 'inv-item';
-            div.innerHTML = `<div><strong style="color: ${item.source === 'Custom' ? '#fff' : '#8af'};">${item.name}</strong> <small>(${item.source})</small></div>`;
-            if(item.source === "Custom") {
-                // Must adjust index to match selectedInventory index
-                const realIdx = idx - (classInventory.length + backgroundInventory.length);
-                div.innerHTML += `<button class="btn-small btn-remove" onclick="removeCustomItem(${realIdx})">x</button>`;
-            }
-            list.appendChild(div);
-        });
-    };
-
-    window.removeCustomItem = function(idx) {
-        selectedInventory.splice(idx, 1);
-        window.renderInventory();
-    };
-
-    // --- OTHER UI LOGIC (Stats, Classes, etc.) ---
-    window.setStatMode = function(mode) {
-        statMode = mode;
-        document.getElementById('btnStatArray').className = mode==='array' ? 'stat-btn active' : 'stat-btn';
-        document.getElementById('btnStatManual').className = mode==='manual' ? 'stat-btn active' : 'stat-btn';
-        renderStatInputs();
-        window.recalcStats();
-    };
-
-    function renderStatInputs() {
-        const container = document.getElementById('statContainer');
-        const currentVals = {};
-        STAT_KEYS.forEach(s => { let el = document.getElementById(`base_${s}`); if(el) currentVals[s] = el.value; });
-        container.innerHTML = "";
-        
-        STAT_KEYS.forEach(stat => {
-            let inputHtml = statMode === 'array' 
-                ? `<select id="base_${stat}" onchange="updateArrayOptions(); recalcStats()"><option value="">--</option>${STANDARD_ARRAY.map(n => `<option value="${n}">${n}</option>`).join('')}</select>`
-                : `<input type="number" id="base_${stat}" value="${currentVals[stat]||10}" onchange="recalcStats()" style="width:100%;">`;
-            container.innerHTML += `<div class="stat-box"><label>${stat}</label>${inputHtml}<span id="bon_${stat}" class="bonus-badge"></span></div>`;
-        });
-        if(statMode === 'array') window.updateArrayOptions();
-    }
-
-    window.updateArrayOptions = function() {
-        if(statMode !== 'array') return;
-        const currentSelections = {};
-        STAT_KEYS.forEach(s => { const el = document.getElementById(`base_${s}`); if(el.value) currentSelections[s] = parseInt(el.value); });
-        STAT_KEYS.forEach(s => {
-            const el = document.getElementById(`base_${s}`);
-            const myValue = currentSelections[s];
-            el.innerHTML = '<option value="">--</option>';
-            STANDARD_ARRAY.forEach(num => {
-                if (!Object.values(currentSelections).includes(num) || num === myValue) {
-                    const opt = new Option(num, num);
-                    if(num === myValue) opt.selected = true;
-                    el.add(opt);
-                }
-            });
-        });
-    };
-
-    window.updateRaceInfo = function() {
-        const r = RACES[raceSel.value];
-        if (!r) return;
-        let txt = "Bonuses: "; for(let s in r.bonuses) txt+=`${s} +${r.bonuses[s]} `;
-        document.getElementById('raceSummary').innerText = txt;
-        window.recalcStats();
-    };
-
-    window.addClassRow = function(name = null, level = 1, subclass = null) {
-        const container = document.getElementById('classContainer');
-        const div = document.createElement('div');
-        div.className = 'class-row';
-        let classOpts = Object.keys(CLASSES).sort().map(c => `<option value="${c}" ${name === c ? 'selected' : ''}>${c}</option>`).join('');
-        div.innerHTML = `<select class="cls-select" onchange="updateSubclassOptions(this); recalcClassDetails(); renderClassGearOptions();">${classOpts}</select>
-            <select class="sub-select" onchange="recalcClassDetails()"><option value="">Subclass...</option></select>
-            <input type="number" class="cls-level" value="${level}" min="1" max="20" onchange="recalcClassDetails()">
-            <button class="btn-small btn-remove" onclick="this.parentElement.remove(); recalcClassDetails()">X</button>`;
-        container.appendChild(div);
-        let selectEl = div.querySelector('.cls-select');
-        window.updateSubclassOptions(selectEl, subclass);
-        window.recalcClassDetails();
-        window.renderClassGearOptions();
-    };
-
-    window.updateSubclassOptions = function(selectElement, selectedSub = null) {
-        const row = selectElement.parentElement;
-        const subSelect = row.querySelector('.sub-select');
-        const cData = CLASSES[selectElement.value];
-        subSelect.innerHTML = '<option value="">Subclass...</option>';
-        if (cData && cData.subclasses) {
-            Object.keys(cData.subclasses).sort().forEach(sub => {
-                let opt = new Option(sub, sub);
-                if (selectedSub === sub) opt.selected = true;
-                subSelect.add(opt);
-            });
-        }
-    };
-
-    window.recalcClassDetails = function() {
-        let totalLvl = 0; let hpBase = 0; let summary = [];
-        const rows = document.querySelectorAll('.class-row');
-        if (rows.length === 0) return;
-        rows.forEach((row, index) => {
-            const clsName = row.querySelector('.cls-select').value;
-            const subSelect = row.querySelector('.sub-select');
-            const lvl = parseInt(row.querySelector('.cls-level').value) || 1;
-            const unlockLevel = SUBCLASS_UNLOCK_LEVELS[clsName] || 3;
             
-            if (lvl < unlockLevel) { subSelect.value = ""; subSelect.disabled = true; subSelect.style.opacity = "0.5"; } 
-            else { subSelect.disabled = false; subSelect.style.opacity = "1"; }
-
-            const cData = CLASSES[clsName];
-            totalLvl += lvl;
-            if(index === 0) hpBase += cData.hit_die + (Math.ceil(cData.hit_die / 2) + 1) * (lvl - 1);
-            else hpBase += (Math.ceil(cData.hit_die / 2) + 1) * lvl;
-            summary.push(`${clsName} ${lvl}`);
-        });
-        totalLevels = totalLvl;
-        document.getElementById('totalLevelDisplay').innerText = totalLevels;
-        document.getElementById('classSummary').innerText = summary.join(" / ");
-        document.getElementById('calcHP').dataset.base = hpBase;
-        window.recalcStats();
-        window.renderSkills();
-    };
-
-    window.recalcStats = function() {
-        const rData = RACES[raceSel.value];
-        if (!rData) return;
-        let conMod = 0;
-        STAT_KEYS.forEach(s => {
-            let el = document.getElementById(`base_${s}`);
-            let base = el ? (parseInt(el.value) || 0) : 0;
-            let bonus = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
-            document.getElementById(`bon_${s}`).innerText = bonus > 0 ? `+${bonus}` : "";
-            if(s === 'CON') conMod = Math.floor(((base + bonus) - 10) / 2);
-        });
-        let hpBase = parseInt(document.getElementById('calcHP').dataset.base) || 0;
-        let totalHP = hpBase + (conMod * totalLevels) + (rData.hp_bonus || 0) * totalLevels; 
-        document.getElementById('calcHP').innerText = totalHP > 0 ? totalHP : 0;
-    };
-
-    window.renderSkills = function() {
-        const race = RACES[raceSel.value];
-        const bg = BACKGROUNDS[bgSel.value] || {skills:[]};
-        const fixed = new Set([...(race.skills || []), ...bg.skills]);
-        const fixedArea = document.getElementById('fixedSkillsArea');
-        fixedArea.innerHTML = "";
-        fixed.forEach(s => fixedArea.innerHTML += `<span class="pill">${s}</span>`);
-        const classArea = document.getElementById('classSkillArea');
-        classArea.innerHTML = "";
-        const rows = document.querySelectorAll('.class-row');
-        if(rows.length > 0) {
-            const clsName = rows[0].querySelector('.cls-select').value;
-            const cData = CLASSES[clsName];
-            const num = cData.num_skills || 2;
-            const options = cData.skill_options || Object.keys(SKILLS_LIST);
-            for(let i=0; i<num; i++) {
-                let sel = document.createElement('select');
-                sel.className = 'skill-choice';
-                sel.style.marginBottom = "5px";
-                sel.add(new Option("- Select Skill -", ""));
-                options.forEach(opt => { if(!fixed.has(opt)) sel.add(new Option(opt, opt)); });
-                classArea.appendChild(sel);
-            }
-        }
-    };
-
-    window.filterItems = function() {
-        const q = document.getElementById('itemSearch').value.toLowerCase();
-        const resDiv = document.getElementById('searchResults');
-        resDiv.innerHTML = "";
-        if(q.length < 2) { resDiv.style.display = 'none'; return; }
-        const hits = ALL_ACTIONS.filter(i => i.name.toLowerCase().includes(q)).slice(0, 10);
-        if(hits.length > 0) {
-            resDiv.style.display = 'block';
-            hits.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'search-item';
-                div.innerHTML = `<span>${item.name}</span> <span style="font-size:0.8em; color:#888;">${item.category}</span>`;
-                div.onclick = () => {
-                    selectedInventory.push({ ...item, source: "Custom", equip: false });
-                    window.renderInventory();
-                    document.getElementById('itemSearch').value = "";
-                    resDiv.style.display = 'none';
-                };
-                resDiv.appendChild(div);
-            });
-        }
-    };
-
-    window.changeStep = function(dir) {
-        if(currentStep === 1 && dir === 1) {
-            if(!document.getElementById('charName').value) return alert("Name required.");
-            if(!bgSel.value) return alert("Background required.");
-        }
-        document.getElementById(`step${currentStep}`).classList.remove('active');
-        currentStep += dir;
-        if(currentStep > 4) { window.saveCharacter(); return; }
-        document.getElementById(`step${currentStep}`).classList.add('active');
-        document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
-        document.getElementById('btnNext').innerText = currentStep === 4 ? "Finish" : "Next";
-        const titles = ["", "Identity", "Stats", "Skills", "Gear & Details"];
-        document.getElementById('headerTitle').innerText = titles[currentStep];
-    };
-
-    function cleanData(obj) {
-        const newObj = {};
-        Object.keys(obj).forEach(key => {
-            if (obj[key] === undefined) newObj[key] = null;
-            else if (Array.isArray(obj[key])) newObj[key] = obj[key].map(i => cleanData(i));
-            else if (typeof obj[key] === 'object' && obj[key] !== null) newObj[key] = cleanData(obj[key]);
-            else newObj[key] = obj[key];
-        });
-        return newObj;
-    }
-
-    window.saveCharacter = function() {
-        const btn = document.getElementById('btnNext');
-        btn.innerText = "Saving..."; btn.disabled = true;
-
-        let classesArr = [];
-        document.querySelectorAll('.class-row').forEach(row => {
-            classesArr.push({ name: row.querySelector('.cls-select').value, subclass: row.querySelector('.sub-select').value || "", level: parseInt(row.querySelector('.cls-level').value) });
-        });
-
-        const rData = RACES[raceSel.value];
-        let baseStats = {}; let finalStats = {};
-        STAT_KEYS.forEach(s => {
-            let el = document.getElementById(`base_${s}`);
-            let b = el ? (parseInt(el.value) || 10) : 10;
-            let bon = (rData.bonuses && rData.bonuses[s]) ? rData.bonuses[s] : 0;
-            baseStats[s] = b; finalStats[s] = b + bon;
-        });
-
-        let skills = new Set();
-        document.querySelectorAll('#fixedSkillsArea .pill').forEach(el => skills.add(el.innerText));
-        document.querySelectorAll('.skill-choice').forEach(sel => { if(sel.value) skills.add(sel.value); });
-
-        let knownSpells = [...(rData.auto_spells || [])];
-        classesArr.forEach(c => { if(CLASSES[c.name].auto_spells) knownSpells.push(...CLASSES[c.name].auto_spells); });
-
-        // Merge Inventory
-        const finalInv = [...classInventory, ...backgroundInventory, ...selectedInventory];
-
-        const charData = cleanData({
-            name: document.getElementById('charName').value,
-            race: raceSel.value,
-            background: bgSel.value,
-            classes: classesArr,
-            base_stats: baseStats,
-            stats: finalStats,
-            hp_max: parseInt(document.getElementById('calcHP').innerText) || 10,
-            hp_curr: parseInt(document.getElementById('calcHP').innerText) || 10,
-            alignment: document.getElementById('charAlign').value,
-            backstory: document.getElementById('charBack').value,
-            inventory: finalInv,
-            coins: { gp: parseInt(document.getElementById('charGold').value) || 0 },
-            skills: Array.from(skills),
-            spells_known: knownSpells,
-            age: document.getElementById('rpAge').value,
-            height: document.getElementById('rpHeight').value,
-            weight: document.getElementById('rpWeight').value,
-            eyes: document.getElementById('rpEyes').value,
-            hair: document.getElementById('rpHair').value,
-            skin: document.getElementById('rpSkin').value
-        });
-
-        const ref = EDIT_ID ? window.db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`) : window.db.ref(`campaigns/${ROOM_ID}/characters`).push();
-        (EDIT_ID ? ref.update(charData) : ref.set(charData)).then(() => {
-            if(!EDIT_ID) window.db.ref(`campaigns/${ROOM_ID}/encounters`).push({name: charData.name, hp: charData.hp_max, max_hp: charData.hp_max, init: 0, type: 'player'});
-            window.location.href = `sheet.html?room=${ROOM_ID}&id=${ref.key || EDIT_ID}`;
-        }).catch(err => { console.error(err); alert("Save Failed: " + err.message); btn.innerText = "Finish"; btn.disabled = false; });
-    };
-
-    function loadCharacter() {
-        window.setStatMode('array');
-        if (!EDIT_ID) { window.addClassRow(); window.updateRaceInfo(); return; }
-
-        window.db.ref(`campaigns/${ROOM_ID}/characters/${EDIT_ID}`).once('value', snap => {
-            const c = snap.val(); if(!c) return;
-            document.getElementById('charName').value = c.name; raceSel.value = c.race; bgSel.value = c.background || "";
-            document.getElementById('charGold').value = (c.coins && c.coins.gp) ? c.coins.gp : 0;
-
-            if(c.base_stats) {
-                let isStandard = true; STAT_KEYS.forEach(s => { if(!STANDARD_ARRAY.includes(c.base_stats[s])) isStandard = false; });
-                window.setStatMode(isStandard ? 'array' : 'manual');
-                setTimeout(() => { STAT_KEYS.forEach(s => { let el = document.getElementById(`base_${s}`); if(el) el.value = c.base_stats[s]; }); if(isStandard) window.updateArrayOptions(); window.recalcStats(); }, 50);
-            }
-            document.getElementById('charAlign').value = c.alignment || "True Neutral"; document.getElementById('charBack').value = c.backstory || "";
-            ['Age','Height','Weight','Eyes','Hair','Skin'].forEach(f => { let lower = f.toLowerCase(); if(c[lower]) document.getElementById(`rp${f}`).value = c[lower]; });
-
-            const container = document.getElementById('classContainer'); container.innerHTML = ""; 
-            if (c.classes && Array.isArray(c.classes)) c.classes.forEach(cls => window.addClassRow(cls.name, cls.level, cls.subclass));
-            
-            // For editing, we allow class/bg logic to regenerate based on saved selections to keep data fresh, 
-            // but we must preserve Custom items.
-            if(c.inventory) {
-                selectedInventory = c.inventory.filter(i => i.source === "Custom");
-            }
-            window.updateRaceInfo(); window.updateBackgroundInfo(false); window.recalcClassDetails(); window.renderClassGearOptions();
+            // Go to Sheet
+            window.location.href = `sheet.html?room=${ROOM_ID}&id=${ref.key}`;
+        }).catch(err => {
+            console.error(err);
+            alert("Error: " + err.message);
+            btn.innerText = "Join Game";
+            btn.disabled = false;
         });
     }
-
-    setTimeout(loadCharacter, 200);
-
 </script>
 </body>
 </html>
