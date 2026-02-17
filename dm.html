@@ -23,7 +23,7 @@
         .track-hp input { width: 100%; background: #222; border: 1px solid #444; color: #4f4; padding: 3px; text-align: center; }
         .btn-del { color: #f44; cursor: pointer; padding: 0 5px; font-weight:bold; }
 
-        /* DICE TRAY (New) */
+        /* DICE TRAY */
         .dice-tray { background: #151515; padding: 15px; border-top: 1px solid #333; }
         .dice-result { background: #000; color: #4f4; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 1.1em; margin-bottom: 10px; min-height: 20px; border: 1px solid #333; white-space: pre-wrap; }
         .dice-row { display: flex; gap: 5px; margin-bottom: 8px; }
@@ -218,10 +218,8 @@
             total += mod;
             logDice(`[${input}]: ${rolls.join('+')}${mod? (mod>0?'+'+mod:mod) : ''} = ${total}`);
         } else {
-            // Fallback for flat numbers or simple math
             try {
-               // Security note: eval is dangerous, but for this local tool valid input is limited. 
-               // Better to use a safe math parser, but for this snippet:
+               // Fallback
                logDice("Invalid format. Use '1d20+5'");
             } catch(e) { logDice("Error"); }
         }
@@ -234,7 +232,6 @@
     }
 
     function rollDmg(name, formula) {
-        // formula looks like "2d6+3"
         const parts = formula.match(/(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/);
         if(!parts) { logDice(`Cannot parse ${formula}`); return; }
         
@@ -308,14 +305,27 @@
     // --- SEARCH SYSTEM ---
     function setMode(mode) {
         currentMode = mode;
-        ['Mon','Spl','Eqp'].forEach(x => document.getElementById(`btnMode${x}`).className = 'mode-btn');
-        document.getElementById(`btnMode${mode.charAt(0).toUpperCase()+mode.slice(1,3)}`).className = 'mode-btn active';
+        
+        // Manual ID mapping to avoid errors
+        document.getElementById('btnModeMon').className = 'mode-btn';
+        document.getElementById('btnModeSpl').className = 'mode-btn';
+        document.getElementById('btnModeEqp').className = 'mode-btn';
+        
+        if(mode === 'monster') document.getElementById('btnModeMon').className = 'mode-btn active';
+        if(mode === 'spell') document.getElementById('btnModeSpl').className = 'mode-btn active';
+        if(mode === 'equipment') document.getElementById('btnModeEqp').className = 'mode-btn active';
         
         document.getElementById('searchInput').placeholder = `Search ${mode}...`;
         document.getElementById('classFilter').style.display = (mode === 'spell') ? 'block' : 'none';
         document.getElementById('eqFilter').style.display = (mode === 'equipment') ? 'block' : 'none';
         document.getElementById('searchResults').style.display = 'none';
-        if(mode === 'equipment') { document.getElementById('eqFilter').value=""; equipmentCache=[]; }
+        
+        // Clear equipment cache when switching away from equipment, or keep it?
+        // Let's reset the filter text for UI consistency
+        if(mode !== 'equipment') {
+            document.getElementById('eqFilter').value = "";
+            equipmentCache = [];
+        }
     }
 
     async function loadEquipmentFilter() {
@@ -503,6 +513,7 @@
                 <div class="red-line"></div>
                 <div><strong>Time:</strong> ${s.casting_time} | <strong>Range:</strong> ${s.range} | <strong>Dur:</strong> ${s.duration}</div>
                 <div style="margin-top:5px;"><strong>Comp:</strong> ${s.components.join(', ')}</div>
+                 <div style="margin-top:5px;"><strong>Classes:</strong> ${classes}</div>
                 <div class="red-line"></div>
                 <div style="white-space: pre-wrap;">${s.desc.join('\n\n')}</div>
                 ${s.higher_level ? `<div class="red-line"></div><strong>At Higher Levels:</strong> ${s.higher_level.join(' ')}` : ''}
